@@ -1,5 +1,7 @@
 package com.grupo_d_c2_2026_unla.rentar.dto;
 
+import com.grupo_d_c2_2026_unla.rentar.enums.EstadoVehiculo;
+import com.grupo_d_c2_2026_unla.rentar.enums.TipoVehiculo;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,8 +15,8 @@ public class VehiculoResponseDTO {
     private String marca;
     private String modelo;
     private int anio;
-    private String tipoVehiculo;
-    private String estado;
+    private TipoVehiculo tipoVehiculo;
+    private EstadoVehiculo estado;
     private String color;
     private String precio_diario;
     private boolean activo;
@@ -22,7 +24,7 @@ public class VehiculoResponseDTO {
     public VehiculoResponseDTO() {
     }
 
-    public VehiculoResponseDTO(int id, String patente, String marca, String modelo, int anio, String tipoVehiculo, String estado, String color, String precio_diario, boolean activo) {
+    public VehiculoResponseDTO(int id, String patente, String marca, String modelo, int anio, TipoVehiculo tipoVehiculo, EstadoVehiculo estado, String color, String precio_diario, boolean activo) {
         this.id = id;
         this.patente = patente;
         this.marca = marca;
@@ -51,15 +53,5 @@ public class VehiculoResponseDTO {
                 '}';
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        VehiculoResponseDTO that = (VehiculoResponseDTO) o;
-        return id == that.id && anio == that.anio && activo == that.activo && Objects.equals(patente, that.patente) && Objects.equals(marca, that.marca) && Objects.equals(modelo, that.modelo) && Objects.equals(tipoVehiculo, that.tipoVehiculo) && Objects.equals(estado, that.estado) && Objects.equals(color, that.color) && Objects.equals(precio_diario, that.precio_diario);
-    }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, patente, marca, modelo, anio, tipoVehiculo, estado, color, precio_diario, activo);
-    }
 }

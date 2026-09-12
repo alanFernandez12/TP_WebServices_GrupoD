@@ -8,9 +8,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.Objects;
+import java.math.BigDecimal;
 
 @Entity
+@Table(name = "lk_vehiculos")
 @Getter
 @Setter
 @AllArgsConstructor
@@ -18,29 +19,35 @@ import java.util.Objects;
 public class Vehiculo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    @Column(nullable = false, unique = true)
+    @Column(name = "id_vehiculo")
+    private Integer id;
+
+    @Column(name = "cod_patente", nullable = false, unique = true, updatable = false)
     private String patente;
-    @Column(nullable = false, unique = true)
+
+    @Column(name = "desc_marca", nullable = false)
     private String marca;
-    @Column(nullable = false, unique = true)
+
+    @Column(name = "desc_modelo", nullable = false)
     private String modelo;
-    @Column(nullable = false, unique = true)
-    private int anio;
+
+    @Column(name = "num_anio", nullable = false)
+    private Integer anio;
+
+    @Column(name = "desc_color")
+    private String color;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "desc_tipo_vehiculo", nullable = false)
     private TipoVehiculo tipoVehiculo;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "desc_estado_vehiculo", nullable = false)
     private EstadoVehiculo estado;
 
-    private String color;
+    @Column(name = "f_val_precio_diario", nullable = false, precision = 10, scale = 2)
+    private BigDecimal precio_diario;
 
-    @Column(nullable = false)
-    private String precio_diario;
-
+    @Column(name = "flag_activo", nullable = false)
     private boolean activo;
-
 }

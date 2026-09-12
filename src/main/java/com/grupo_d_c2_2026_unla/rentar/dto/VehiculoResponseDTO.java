@@ -5,7 +5,8 @@ import com.grupo_d_c2_2026_unla.rentar.enums.TipoVehiculo;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Objects;
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 public class VehiculoResponseDTO {
@@ -18,13 +19,13 @@ public class VehiculoResponseDTO {
     private TipoVehiculo tipoVehiculo;
     private EstadoVehiculo estado;
     private String color;
-    private String precio_diario;
+    private BigDecimal precio_diario;
     private boolean activo;
 
     public VehiculoResponseDTO() {
     }
 
-    public VehiculoResponseDTO(int id, String patente, String marca, String modelo, int anio, TipoVehiculo tipoVehiculo, EstadoVehiculo estado, String color, String precio_diario, boolean activo) {
+    public VehiculoResponseDTO(int id, String patente, String marca, String modelo, int anio, TipoVehiculo tipoVehiculo, EstadoVehiculo estado, String color, BigDecimal precio_diario, boolean activo) {
         this.id = id;
         this.patente = patente;
         this.marca = marca;
@@ -52,6 +53,4 @@ public class VehiculoResponseDTO {
                 ", activo=" + activo +
                 '}';
     }
-
-
 }

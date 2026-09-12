@@ -27,6 +27,7 @@ public class VehiculoServiceImpl implements VehiculoService {
         vehiculo.setMarca(dto.getMarca());
         vehiculo.setModelo(dto.getModelo());
         vehiculo.setAnio(dto.getAnio());
+        vehiculo.setColor(dto.getColor());
         vehiculo.setTipoVehiculo(dto.getTipoVehiculo());
         vehiculo.setPrecio_diario(dto.getPrecio_diario());
         vehiculo.setEstado(EstadoVehiculo.DISPONIBLE);

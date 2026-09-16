@@ -1,5 +1,6 @@
 package com.grupo_d_c2_2026_unla.rentar.service.implementation;
 
+import com.grupo_d_c2_2026_unla.rentar.dto.HistorialAlquilerDTO;
 import com.grupo_d_c2_2026_unla.rentar.dto.ReservaRequestDTO;
 import com.grupo_d_c2_2026_unla.rentar.dto.ReservaResponseDTO;
 import com.grupo_d_c2_2026_unla.rentar.entity.Cliente;
@@ -19,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service("reservaService")
 public class ReservaServiceImpl implements ReservaService {
@@ -102,6 +104,24 @@ public class ReservaServiceImpl implements ReservaService {
         Reserva reservaguardada = reservaRepository.save(reserva);
 
         return toResponseDTO(reservaguardada);
+    }
+
+     @Override
+    @Transactional(readOnly = true)
+    public List<HistorialAlquilerDTO> consultarHistorial(Long clienteId) {
+        if (clienteId == null) {
+            throw new IllegalArgumentException("El identificador del cliente es obligatorio.");
+        }
+        if (!clienteRepository.existsById(clienteId)) {
+            throw new IllegalArgumentException("Cliente no encontrado.");
+        }
+
+        return reservaRepository.buscarHistorialPorCliente(
+                        clienteId,
+                        List.of(EstadoReserva.TERMINADA, EstadoReserva.CANCELADA)
+                ).stream()
+                .map(HistorialAlquilerDTO::fromEntity)
+                .toList();
     }
 
     private int calcularDuracionDias(LocalDateTime inicio, LocalDateTime fin) {

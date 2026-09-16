@@ -5,6 +5,9 @@ type Query {
     Las reservas canceladas no bloquean la disponibilidad.
     """
     vehiculosDisponibles(filtro: DisponibilidadFiltroInput!): [VehiculoDisponible!]!
+
+    """Consulta los alquileres finalizados y las reservas canceladas de un cliente."""
+    historialAlquileres(clienteId: ID!): [HistorialAlquiler!]!
 }
 
 """Filtros para consultar disponibilidad. Inicio y fin usan formato ISO-8601."""
@@ -37,4 +40,28 @@ enum TipoVehiculo {
     PICKUP
     COUPE
     HATCHBACK
+}
+
+"""Registro perteneciente al historial de alquileres de un cliente."""
+type HistorialAlquiler {
+    vehiculo: VehiculoHistorial!
+    patente: String!
+    fechaInicio: String!
+    fechaFin: String!
+    cantidadDias: Int!
+    importeTotal: Float!
+    estado: EstadoReserva!
+}
+
+"""Datos identificatorios del vehículo alquilado."""
+type VehiculoHistorial {
+    marca: String!
+    modelo: String!
+}
+
+enum EstadoReserva {
+    PENDIENTE
+    CONFIRMADA
+    CANCELADA
+    TERMINADA
 }

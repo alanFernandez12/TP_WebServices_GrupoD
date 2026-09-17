@@ -9,5 +9,6 @@ import com.grupo_d_c2_2026_unla.rentar.dto.ReservaResponseDTO;
 public interface ReservaService {
 
     ReservaResponseDTO crear(ReservaRequestDTO dto);
-     List<HistorialAlquilerDTO> consultarHistorial(Long clienteId);
+    ReservaResponseDTO cancelar(Long reservaId);
+    List<HistorialAlquilerDTO> consultarHistorial(Long clienteId);
 }

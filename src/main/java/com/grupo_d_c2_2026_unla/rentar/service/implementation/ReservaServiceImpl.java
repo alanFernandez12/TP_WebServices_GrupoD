@@ -72,10 +72,11 @@ public class ReservaServiceImpl implements ReservaService {
         }
 
 
-        boolean reservado = reservaRepository.existsByVehiculo_IdAndHoraInicioLessThanAndHoraFinGreaterThan(
+        boolean reservado = reservaRepository.existsByVehiculoIdAndHoraInicioLessThanAndHoraFinGreaterThanAndEstadoReservaNot(
                 vehiculo.getId(),
                 dto.getHoraFin(),
-                dto.getHoraInicio()
+                dto.getHoraInicio(),
+                EstadoReserva.CANCELADA
         );
         // Validar que el vehículo no este reservado durante el período solicitado
         if (reservado) {
@@ -175,5 +176,30 @@ public class ReservaServiceImpl implements ReservaService {
         dto.setImporteTotal(reserva.getImporteTotal());
         dto.setEstadoReserva(reserva.getEstadoReserva());
         return dto;
+    }
+    @Override
+    @Transactional
+    public ReservaResponseDTO cancelar(Long reservaId) {
+        //Revisa que la ID no sea NULA
+        if (reservaId == null) {
+            throw new IllegalArgumentException("El identificador de reserva es obligatorio.");
+        }
+        //Busca si existe la reserva y la trae
+        Reserva reserva = reservaRepository.findById(reservaId)
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada."));
+        //revisa si ya esta cancelada
+        if (reserva.getEstadoReserva() == EstadoReserva.CANCELADA) {
+            throw new IllegalStateException("La reserva ya se encuentra cancelada.");
+        }
+        //revisa que la fecha de inicio de la reserva no haya pasado o sea = a la fecha actual
+        if (reserva.getHoraInicio().isBefore(LocalDateTime.now()) || reserva.getHoraInicio().isEqual(LocalDateTime.now())) {
+            throw new IllegalStateException("La cancelación solo puede realizarse antes del inicio del alquiler.");
+        }
+        //cambia el estado
+        reserva.setEstadoReserva(EstadoReserva.CANCELADA);
+        //guarda el cambio de estado
+        Reserva actualizada = reservaRepository.save(reserva);
+
+        return toResponseDTO(actualizada);
     }
 }

@@ -23,4 +23,9 @@ public class ReservaController {
         ReservaResponseDTO creada = reservaService.crear(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(creada);
     }
+    @PatchMapping("/{id}/cancelar")
+    public ResponseEntity<ReservaResponseDTO> cancelar(@PathVariable Long id) {
+        ReservaResponseDTO cancelada = reservaService.cancelar(id);
+        return ResponseEntity.ok(cancelada);
+    }
 }

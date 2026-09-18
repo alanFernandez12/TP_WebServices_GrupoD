@@ -1,6 +1,7 @@
 package com.grupo_d_c2_2026_unla.rentar.service.implementation;
 
 import com.grupo_d_c2_2026_unla.rentar.dto.HistorialAlquilerDTO;
+import com.grupo_d_c2_2026_unla.rentar.dto.ReservaFilterInput;
 import com.grupo_d_c2_2026_unla.rentar.dto.ReservaRequestDTO;
 import com.grupo_d_c2_2026_unla.rentar.dto.ReservaResponseDTO;
 import com.grupo_d_c2_2026_unla.rentar.entity.Cliente;
@@ -8,11 +9,9 @@ import com.grupo_d_c2_2026_unla.rentar.entity.Reserva;
 import com.grupo_d_c2_2026_unla.rentar.entity.Tiempo;
 import com.grupo_d_c2_2026_unla.rentar.entity.Vehiculo;
 import com.grupo_d_c2_2026_unla.rentar.enums.EstadoReserva;
-import com.grupo_d_c2_2026_unla.rentar.repository.ClienteRepository;
-import com.grupo_d_c2_2026_unla.rentar.repository.ReservaRepository;
-import com.grupo_d_c2_2026_unla.rentar.repository.TiempoRepository;
-import com.grupo_d_c2_2026_unla.rentar.repository.VehiculoRepository;
+import com.grupo_d_c2_2026_unla.rentar.repository.*;
 import com.grupo_d_c2_2026_unla.rentar.service.ReservaService;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -122,6 +121,21 @@ public class ReservaServiceImpl implements ReservaService {
                         List.of(EstadoReserva.TERMINADA, EstadoReserva.CANCELADA)
                 ).stream()
                 .map(HistorialAlquilerDTO::fromEntity)
+                .toList();
+    }
+
+    @Override
+    public List<ReservaResponseDTO> buscarReservas(ReservaFilterInput filtro) {
+        List<Reserva> todas = reservaRepository.findAll();
+
+        return todas.stream()
+                .filter(r -> filtro.getClienteId() == null || r.getCliente().getIdCliente().equals(filtro.getClienteId()))
+                .filter(r -> filtro.getVehiculoId() == null || r.getVehiculo().getId().equals(filtro.getVehiculoId()))
+                .filter(r -> filtro.getTipoVehiculo() == null || r.getVehiculo().getTipoVehiculo().equals(filtro.getTipoVehiculo()))
+                .filter(r -> filtro.getEstado() == null || r.getEstadoReserva().equals(filtro.getEstado()))
+                .filter(r -> filtro.getFechaDesde() == null || !r.getHoraInicio().isBefore(LocalDateTime.parse(filtro.getFechaDesde())))
+                .filter(r -> filtro.getFechaHasta() == null || !r.getHoraFin().isAfter(LocalDateTime.parse(filtro.getFechaHasta())))
+                .map(this::toResponseDTO)
                 .toList();
     }
 

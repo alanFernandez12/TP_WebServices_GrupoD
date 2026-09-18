@@ -1,12 +1,17 @@
 package com.grupo_d_c2_2026_unla.rentar.controller;
 
+import com.grupo_d_c2_2026_unla.rentar.dto.ReservaFilterInput;
 import com.grupo_d_c2_2026_unla.rentar.dto.ReservaRequestDTO;
 import com.grupo_d_c2_2026_unla.rentar.dto.ReservaResponseDTO;
 import com.grupo_d_c2_2026_unla.rentar.service.ReservaService;
 import jakarta.validation.Valid;
+import org.springframework.graphql.data.method.annotation.Argument;
+import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/reservas")
@@ -28,4 +33,5 @@ public class ReservaController {
         ReservaResponseDTO cancelada = reservaService.cancelar(id);
         return ResponseEntity.ok(cancelada);
     }
+
 }

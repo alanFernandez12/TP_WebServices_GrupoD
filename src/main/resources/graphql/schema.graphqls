@@ -8,6 +8,8 @@ type Query {
 
     """Consulta los alquileres finalizados y las reservas canceladas de un cliente."""
     historialAlquileres(clienteId: ID!): [HistorialAlquiler!]!
+
+    reservas(filtro: ReservaFilterInput): [Reserva!]!
 }
 
 """Filtros para consultar disponibilidad. Inicio y fin usan formato ISO-8601."""
@@ -65,3 +67,40 @@ enum EstadoReserva {
     CANCELADA
     TERMINADA
 }
+
+input ReservaFilterInput {
+    clienteId: ID
+    vehiculoId: ID
+    tipoVehiculo: String
+    estado: String
+    fechaDesde: String
+    fechaHasta: String
+}
+
+type Reserva {
+    id: ID!
+    cliente: Cliente!
+    vehiculo: Vehiculo!
+    fechaInicio: String!
+    fechaFin: String!
+    precioDiario: Float!
+    importeTotal: Float!
+    estado: String!
+}
+
+type Cliente {
+    id: ID!
+    nombre: String!
+    apellido: String!
+    documento: String!
+}
+
+type Vehiculo {
+    id: ID!
+    patente: String!
+    marca: String!
+    modelo: String!
+    tipoVehiculo: String!
+}
+
+

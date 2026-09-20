@@ -6,7 +6,7 @@ Sistema web para la gestión de alquiler de vehículos, desarrollado como Trabaj
 
 **Rentar** es una aplicación destinada a gestionar el alquiler de vehículos, permitiendo administrar vehículos y clientes, consultar disponibilidad, registrar y gestionar reservas y consultar el historial de alquileres.
 
-El proyecto está desarrollado utilizando una arquitectura basada en **Spring Boot**, exponiendo funcionalidades mediante APIs REST y GraphQL.
+El proyecto cuenta con un backend desarrollado con Spring Boot, que expone funcionalidades mediante APIs REST y GraphQL, y un frontend desarrollado con React, TypeScript y Vite, que proporciona la interfaz de usuario para interactuar con la aplicación.
 
 ## Tecnologías
 
@@ -18,6 +18,11 @@ El proyecto está desarrollado utilizando una arquitectura basada en **Spring Bo
 - Swagger / OpenAPI
 - REST
 - GraphQL
+- React 19
+- TypeScript
+- Vite
+- Node.js 22
+- npm
 
 ## Funcionalidades
 
@@ -81,6 +86,7 @@ El sistema utiliza **MySQL** como motor de base de datos.
 
 - **Java 21** instalado.
 - **MySQL Server** instalado y ejecutándose localmente en el puerto 3306.
+- **Node 22** y **npm** instalado.
 - Base de datos **`rentar`** creada mediante el script `Proyecto/BD/rentarBD.sql`.
 - Configurar las credenciales de MySQL en el proyecto.
 
@@ -88,12 +94,78 @@ El sistema utiliza **MySQL** como motor de base de datos.
 
 Una vez cumplidos los requisitos previos:
 
-1. Clonar o descargar el repositorio.
-2. Verificar la configuración de conexión a MySQL.
-3. Confirmar que la base de datos `rentar` haya sido creada mediante `Proyecto/BD/rentarBD.sql`.
-4. Ejecutar la aplicación Spring Boot.
-5. Una vez iniciada la aplicación, utilizar Swagger para consultar y probar los endpoints REST disponibles.
-6. Para las consultas Graph dirigirse a http://localhost:8080/graphiql
+## Ejecución del proyecto
+
+Una vez cumplidos los requisitos previos:
+
+1. **Clonar o descargar el repositorio.**
+
+2. **Crear la base de datos MySQL** ejecutando el script ubicado en:
+
+   ```text
+   Proyecto/BD/rentarBD.sql
+   ```
+
+3. **Configurar la conexión a MySQL** en el backend según el entorno local.
+
+4. **Ejecutar el backend.**
+
+   Ejecutar:
+
+   ```bash
+   ./mvnw spring-boot:run
+   ```
+
+   En Windows también puede utilizarse:
+
+   ```bash
+   mvnw.cmd spring-boot:run
+   ```
+
+   El backend quedará disponible en:
+
+   ```text
+   http://localhost:8080
+   ```
+
+5. **Probar los endpoints REST** desde Swagger una vez iniciado el backend.
+
+   ```text
+   http://localhost:8080/swagger-ui/index.html
+   ```
+
+6. **Acceder a GraphiQL** para ejecutar las consultas GraphQL:
+
+   ```text
+   http://localhost:8080/graphiql
+   ```
+
+7. **Ejecutar el frontend.**
+
+   Desde el directorio:
+
+   ```text
+   frontend/
+   ```
+
+   instalar las dependencias:
+
+   ```bash
+   npm install
+   ```
+
+   y luego iniciar el servidor de desarrollo:
+
+   ```bash
+   npm run dev
+   ```
+
+   El frontend estará disponible en:
+
+   ```text
+   http://localhost:5173
+   ```
+
 
 ## Equipo
 

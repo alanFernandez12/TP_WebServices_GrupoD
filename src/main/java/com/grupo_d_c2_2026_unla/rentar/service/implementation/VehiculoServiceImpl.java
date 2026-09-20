@@ -28,6 +28,10 @@ public class VehiculoServiceImpl implements VehiculoService {
 
     @Override
     public VehiculoResponseDTO crear(VehiculoRequestDTO dto) {
+        if (vehiculoRepository.existsByPatente(dto.getPatente())) {
+            throw new BusinessException("Ya existe un vehículo con la patente que se intenta ingresar");
+        }
+
         Vehiculo vehiculo = new Vehiculo();
         vehiculo.setPatente(dto.getPatente());
         vehiculo.setMarca(dto.getMarca());

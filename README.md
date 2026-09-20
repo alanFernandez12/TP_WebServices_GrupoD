@@ -106,9 +106,17 @@ Una vez cumplidos los requisitos previos:
    Proyecto/BD/rentarBD.sql
    ```
 
-3. **Configurar la conexión a MySQL** en el backend según el entorno local.
+3. **Crear los datos de prueba** ejecutando el script:
 
-4. **Ejecutar el backend.**
+   ```text
+   Proyecto/BD/DatosPrueba.sql
+   ```
+
+   Este script permite cargar datos iniciales de prueba en la base de datos `rentar`.
+
+4. **Configurar la conexión a MySQL** en el backend según el entorno local.
+
+5. **Ejecutar el backend.**
 
    Ejecutar:
 
@@ -128,19 +136,19 @@ Una vez cumplidos los requisitos previos:
    http://localhost:8080
    ```
 
-5. **Probar los endpoints REST** desde Swagger una vez iniciado el backend.
+6. **Probar los endpoints REST** desde Swagger una vez iniciado el backend.
 
    ```text
    http://localhost:8080/swagger-ui/index.html
    ```
 
-6. **Acceder a GraphiQL** para ejecutar las consultas GraphQL:
+7. **Acceder a GraphiQL** para ejecutar las consultas GraphQL:
 
    ```text
    http://localhost:8080/graphiql
    ```
 
-7. **Ejecutar el frontend.**
+8. **Ejecutar el frontend.**
 
    Desde el directorio:
 
@@ -165,6 +173,14 @@ Una vez cumplidos los requisitos previos:
    ```text
    http://localhost:5173
    ```
+
+8. **Ingresar como administrador**
+
+   Para acceder a las funcionalidades correspondientes al usuario administrador, utilizar las siguientes credenciales:
+
+   * **Usuario:** `admin@rentar.com`
+   * **Contraseña:** `admin123`
+
 
 
 ## Equipo

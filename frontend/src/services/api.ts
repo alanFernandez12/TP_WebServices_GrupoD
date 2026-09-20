@@ -12,12 +12,20 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 
       message =
         errorBody.message ||
-        `Error interno al procesar la solicitud`
+        (response.status === 403
+          ? 'No tiene los permisos suficientes para realizar esta acción'
+          : response.status === 401
+            ? 'Debe iniciar sesión para continuar'
+            : 'Error interno al procesar la solicitud')
     } catch {
       message =
-        response.status === 500
-          ? 'Error interno del servidor'
-          : 'La solicitud no pudo completarse'
+        response.status === 403
+          ? 'No tiene los permisos suficientes para realizar esta acción'
+          : response.status === 401
+            ? 'Debe iniciar sesión para continuar'
+            : response.status === 500
+              ? 'Error interno del servidor'
+              : 'La solicitud no pudo completarse'
     }
 
     throw new Error(`Error ${response.status}: ${message}`)

@@ -79,11 +79,12 @@ input ReservaFilterInput {
 
 type Reserva {
     id: ID!
-    cliente: Cliente!
-    vehiculo: Vehiculo!
-    fechaInicio: String!
-    fechaFin: String!
-    precioDiario: Float!
+    idCliente: ID!
+    idVehiculo: ID!
+    horaInicio: String!
+    horaFin: String!
+    duracionDias: Int!
+    precioDiarioHistorico: Float!
     importeTotal: Float!
     estadoReserva: EstadoReserva!
 }
@@ -102,5 +103,4 @@ type Vehiculo {
     modelo: String!
     tipoVehiculo: String!
 }
-
 

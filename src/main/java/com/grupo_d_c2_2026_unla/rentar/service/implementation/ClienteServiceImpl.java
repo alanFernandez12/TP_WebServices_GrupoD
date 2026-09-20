@@ -4,6 +4,8 @@ import com.grupo_d_c2_2026_unla.rentar.dto.ClienteRequestDTO;
 import com.grupo_d_c2_2026_unla.rentar.dto.ClienteResponseDTO;
 import com.grupo_d_c2_2026_unla.rentar.entity.Cliente;
 import com.grupo_d_c2_2026_unla.rentar.entity.Usuario;
+import com.grupo_d_c2_2026_unla.rentar.exception.BusinessException;
+import com.grupo_d_c2_2026_unla.rentar.exception.ResourceNotFoundException;
 import com.grupo_d_c2_2026_unla.rentar.repository.ClienteRepository;
 import com.grupo_d_c2_2026_unla.rentar.repository.UsuarioRepository;
 import com.grupo_d_c2_2026_unla.rentar.service.ClienteService;
@@ -33,11 +35,11 @@ public class ClienteServiceImpl implements ClienteService {
     public ClienteResponseDTO crear(ClienteRequestDTO dto) {
 
         if (usuarioRepository.existsByEmail(dto.getEmail())) {
-            throw new RuntimeException("El email ya está registrado");
+            throw new BusinessException("El email ya está registrado");
         }
 
         if (clienteRepository.existsByDocumento(dto.getDocumento())) {
-            throw new RuntimeException("El documento ya está registrado");
+            throw new BusinessException("El documento ya está registrado");
         }
 
         // Crear usuario
@@ -68,18 +70,18 @@ public class ClienteServiceImpl implements ClienteService {
     public ClienteResponseDTO modificar(Long id, ClienteRequestDTO dto) {
 
         Cliente cliente = clienteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
 
         if (!cliente.getDocumento().equals(dto.getDocumento())
                 && clienteRepository.existsByDocumento(dto.getDocumento())) {
 
-            throw new RuntimeException("El documento ya está registrado");
+            throw new BusinessException("El documento ya está registrado");
         }
 
         if (!cliente.getUsuario().getEmail().equals(dto.getEmail())
                 && usuarioRepository.existsByEmail(dto.getEmail())) {
 
-            throw new RuntimeException("El email ya está registrado");
+            throw new BusinessException("El email ya está registrado");
         }
 
         cliente.setDocumento(dto.getDocumento());
@@ -101,7 +103,7 @@ public class ClienteServiceImpl implements ClienteService {
     public void bajaLogica(Long id) {
 
         Cliente cliente = clienteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
 
         cliente.setActivo(false);
 
@@ -116,7 +118,7 @@ public class ClienteServiceImpl implements ClienteService {
     public ClienteResponseDTO buscarPorId(Long id) {
 
         Cliente cliente = clienteRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
 
         return toResponseDTO(cliente);
     }

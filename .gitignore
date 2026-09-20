@@ -41,3 +41,7 @@ app_run.log
 
 ### Datos locales de MySQL (no versionar) ###
 mysql-data/
+
+### Frontend (React/Vite) ###
+frontend/node_modules/
+frontend/dist/

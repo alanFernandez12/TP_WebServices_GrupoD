@@ -51,6 +51,9 @@ public class SecurityConfig {
                                 "/graphiql/**")
                         .permitAll()
                         .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
+                        .requestMatchers("/api/clientes/**").hasRole("ADMIN")
+                        .requestMatchers("/api/vehiculos/**").hasRole("ADMIN")
+                        .requestMatchers("/api/reservas/**").hasAnyRole("ADMIN", "CLIENTE")
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults());
 

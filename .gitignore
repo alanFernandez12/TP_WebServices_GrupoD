@@ -32,7 +32,17 @@ build/
 ### VS Code ###
 .vscode/
 
-### Frontend ###
+### Kiro steering (interno, no se sube) ###
+.kiro/
+
+### Logs de ejecución local ###
+*.log
+app_run.log
+
+### Datos locales de MySQL (no versionar) ###
+mysql-data/
+
+### Frontend (React/Vite) ###
 frontend/node_modules/
 frontend/dist/
 frontend/.vite

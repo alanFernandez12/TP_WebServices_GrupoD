@@ -19,6 +19,10 @@ public class ClienteRequestDTO {
     private String apellido;
     private String telefono;
     private LocalDate fechaNacimiento;
+    @NotBlank
+    private String password;
+    @NotBlank
+    private String rol;
 
     public ClienteRequestDTO() {
     }
@@ -29,7 +33,9 @@ public class ClienteRequestDTO {
             String nombre,
             String apellido,
             String telefono,
-            LocalDate fechaNacimiento) {
+            LocalDate fechaNacimiento,
+            String password,
+            String rol) {
 
         this.email = email;
         this.documento = documento;
@@ -37,5 +43,7 @@ public class ClienteRequestDTO {
         this.apellido = apellido;
         this.telefono = telefono;
         this.fechaNacimiento = fechaNacimiento;
+        this.password = password;
+        this.rol = rol;
     }
 }

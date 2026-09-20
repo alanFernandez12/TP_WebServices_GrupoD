@@ -2,7 +2,14 @@ package com.grupo_d_c2_2026_unla.rentar.controller;
 
 import com.grupo_d_c2_2026_unla.rentar.dto.ClienteRequestDTO;
 import com.grupo_d_c2_2026_unla.rentar.dto.ClienteResponseDTO;
+import com.grupo_d_c2_2026_unla.rentar.dto.ErrorResponse;
 import com.grupo_d_c2_2026_unla.rentar.service.ClienteService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import jakarta.validation.Valid;
 
@@ -26,21 +33,76 @@ public class ClienteController {
     private final ClienteService clienteService;
 
     public ClienteController(ClienteService clienteService) {
-
         this.clienteService = clienteService;
     }
 
     // ALTA
+    @Operation(
+        summary = "Crear un cliente",
+        description = "Crea un nuevo cliente. El email y documento deben ser únicos."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "201",
+            description = "Cliente creado correctamente",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ClienteResponseDTO.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Datos inválidos o incumplimiento de una regla de negocio",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Error interno del servidor",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
     @PostMapping
-    public ResponseEntity<ClienteResponseDTO> crear(@Valid @RequestBody ClienteRequestDTO cliente) {
-        // Reglas de negocio: email y documento únicos,
-        // creación automática del usuario y activo=true
-        // (esa lógica va en el Service, el controller solo orquesta)
+    public ResponseEntity<ClienteResponseDTO> crear(
+            @Valid @RequestBody ClienteRequestDTO cliente) {
+
         ClienteResponseDTO creado = clienteService.crear(cliente);
-        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(creado);
     }
 
     // LISTADO
+    @Operation(
+        summary = "Listar todos los clientes"
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "Listado obtenido correctamente",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(
+                    type = "array",
+                    implementation = ClienteResponseDTO.class
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Error interno del servidor",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
     @GetMapping
     public ResponseEntity<List<ClienteResponseDTO>> listarTodos() {
 
@@ -50,6 +112,35 @@ public class ClienteController {
     }
 
     // BUSCAR POR ID
+    @Operation(
+        summary = "Buscar un cliente por ID"
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "Cliente encontrado",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ClienteResponseDTO.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Cliente no encontrado",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Error interno del servidor",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
     @GetMapping("/{id}")
     public ResponseEntity<ClienteResponseDTO> buscarPorId(
             @PathVariable("id") Long id) {
@@ -60,17 +151,80 @@ public class ClienteController {
     }
 
     // MODIFICAR
+    @Operation(
+        summary = "Modificar un cliente"
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "Cliente modificado correctamente",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ClienteResponseDTO.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Datos inválidos o incumplimiento de una regla de negocio",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Cliente no encontrado",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Error interno del servidor",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
     @PutMapping("/{id}")
     public ResponseEntity<ClienteResponseDTO> modificar(
             @PathVariable("id") Long id,
             @Valid @RequestBody ClienteRequestDTO cliente) {
 
-        ClienteResponseDTO actualizado = clienteService.modificar(id, cliente);
+        ClienteResponseDTO actualizado =
+                clienteService.modificar(id, cliente);
 
         return ResponseEntity.ok(actualizado);
     }
 
     // BAJA LOGICA
+    @Operation(
+        summary = "Dar de baja un cliente"
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "204",
+            description = "Cliente dado de baja correctamente"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Cliente no encontrado",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Error interno del servidor",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> bajaLogica(
             @PathVariable("id") Long id) {
@@ -79,5 +233,4 @@ public class ClienteController {
 
         return ResponseEntity.noContent().build();
     }
-
 }

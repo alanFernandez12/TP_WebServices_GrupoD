@@ -7,6 +7,7 @@ import com.grupo_d_c2_2026_unla.rentar.entity.Usuario;
 import com.grupo_d_c2_2026_unla.rentar.repository.ClienteRepository;
 import com.grupo_d_c2_2026_unla.rentar.repository.UsuarioRepository;
 import com.grupo_d_c2_2026_unla.rentar.service.ClienteService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,13 +20,16 @@ public class ClienteServiceImpl implements ClienteService {
 
     private final ClienteRepository clienteRepository;
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public ClienteServiceImpl(
             ClienteRepository clienteRepository,
-            UsuarioRepository usuarioRepository) {
+            UsuarioRepository usuarioRepository,
+            PasswordEncoder passwordEncoder) {
 
         this.clienteRepository = clienteRepository;
         this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -43,7 +47,7 @@ public class ClienteServiceImpl implements ClienteService {
         // Crear usuario
         Usuario usuario = new Usuario();
         usuario.setEmail(dto.getEmail());
-        usuario.setPasswordHash(generarClaveTemporal());
+        usuario.setPasswordHash(passwordEncoder.encode(generarClaveTemporal()));
         usuario.setRol("CLIENTE");
         usuario.setActivo(true);
 

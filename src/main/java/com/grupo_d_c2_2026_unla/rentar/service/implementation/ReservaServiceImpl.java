@@ -9,6 +9,8 @@ import com.grupo_d_c2_2026_unla.rentar.entity.Reserva;
 import com.grupo_d_c2_2026_unla.rentar.entity.Tiempo;
 import com.grupo_d_c2_2026_unla.rentar.entity.Vehiculo;
 import com.grupo_d_c2_2026_unla.rentar.enums.EstadoReserva;
+import com.grupo_d_c2_2026_unla.rentar.exception.BusinessException;
+import com.grupo_d_c2_2026_unla.rentar.exception.ResourceNotFoundException;
 import com.grupo_d_c2_2026_unla.rentar.repository.*;
 import com.grupo_d_c2_2026_unla.rentar.service.ReservaService;
 import org.springframework.data.domain.Sort;
@@ -45,30 +47,30 @@ public class ReservaServiceImpl implements ReservaService {
         // Validaciones:
         // Validar que la fecha y hora de inicio y fin no sean nulas
         if (dto.getHoraInicio() == null || dto.getHoraFin() == null) {
-            throw new RuntimeException("La fecha y hora de inicio y fin son obligatorias.");
+            throw new BusinessException("La fecha y hora de inicio y fin son obligatorias.");
         }
         // Validar que la fecha y hora de inicio sea futura
         if (!dto.getHoraInicio().isAfter(LocalDateTime.now())) {
-            throw new RuntimeException("La fecha de inicio debe ser futura.");
+            throw new BusinessException("La fecha de inicio debe ser futura.");
         }
         // Validar que la fecha y hora de fin sea posterior a la fecha y hora de inicio
         if (!dto.getHoraFin().isAfter(dto.getHoraInicio())) {
-            throw new RuntimeException("La fecha de finalización debe ser posterior a la fecha de inicio.");
+            throw new BusinessException("La fecha de finalización debe ser posterior a la fecha de inicio.");
         }
         // Validar que el cliente exista
         Cliente cliente = clienteRepository.findById(dto.getIdCliente())
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado."));
 
         // Valida que el cliente esté activo
         if (cliente.getActivo() == null || !cliente.getActivo()) {
-            throw new RuntimeException("El cliente no está activo.");
+            throw new BusinessException("El cliente no está activo.");
         }
         // Valida que el vehículo exista
         Vehiculo vehiculo = vehiculoRepository.findById(dto.getIdVehiculo())
-                .orElseThrow(() -> new RuntimeException("Vehículo no encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Vehículo no encontrado."));
         // Validar que el vehículo este activo
         if (!vehiculo.isActivo()) {
-            throw new RuntimeException("El vehículo no está activo.");
+            throw new BusinessException("El vehículo no está activo.");
         }
 
 
@@ -80,7 +82,7 @@ public class ReservaServiceImpl implements ReservaService {
         );
         // Validar que el vehículo no este reservado durante el período solicitado
         if (reservado) {
-            throw new RuntimeException("El vehículo no está disponible durante el período solicitado.");
+            throw new BusinessException("El vehículo no está disponible durante el período solicitado.");
         }
 
         int duracionDias = calcularDuracionDias(dto.getHoraInicio(), dto.getHoraFin());
@@ -110,10 +112,10 @@ public class ReservaServiceImpl implements ReservaService {
     @Transactional(readOnly = true)
     public List<HistorialAlquilerDTO> consultarHistorial(Long clienteId) {
         if (clienteId == null) {
-            throw new IllegalArgumentException("El identificador del cliente es obligatorio.");
+            throw new BusinessException("El identificador del cliente es obligatorio.");
         }
         if (!clienteRepository.existsById(clienteId)) {
-            throw new IllegalArgumentException("Cliente no encontrado.");
+            throw new ResourceNotFoundException("Cliente no encontrado.");
         }
 
         return reservaRepository.buscarHistorialPorCliente(
@@ -142,7 +144,7 @@ public class ReservaServiceImpl implements ReservaService {
     private int calcularDuracionDias(LocalDateTime inicio, LocalDateTime fin) {
         long horas = Duration.between(inicio, fin).toHours();
         if (horas <= 0) {
-            throw new RuntimeException("La duración del alquiler debe ser mayor a 0.");
+            throw new BusinessException("La duración del alquiler debe ser mayor a 0.");
         }
         return (int) Math.ceil(horas / 24.0);
     }
@@ -182,18 +184,18 @@ public class ReservaServiceImpl implements ReservaService {
     public ReservaResponseDTO cancelar(Long reservaId) {
         //Revisa que la ID no sea NULA
         if (reservaId == null) {
-            throw new IllegalArgumentException("El identificador de reserva es obligatorio.");
+            throw new BusinessException("El identificador de reserva es obligatorio.");
         }
         //Busca si existe la reserva y la trae
         Reserva reserva = reservaRepository.findById(reservaId)
-                .orElseThrow(() -> new RuntimeException("Reserva no encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada."));
         //revisa si ya esta cancelada
         if (reserva.getEstadoReserva() == EstadoReserva.CANCELADA) {
-            throw new IllegalStateException("La reserva ya se encuentra cancelada.");
+            throw new BusinessException("La reserva ya se encuentra cancelada.");
         }
         //revisa que la fecha de inicio de la reserva no haya pasado o sea = a la fecha actual
         if (reserva.getHoraInicio().isBefore(LocalDateTime.now()) || reserva.getHoraInicio().isEqual(LocalDateTime.now())) {
-            throw new IllegalStateException("La cancelación solo puede realizarse antes del inicio del alquiler.");
+            throw new BusinessException("La cancelación solo puede realizarse antes del inicio del alquiler.");
         }
         //cambia el estado
         reserva.setEstadoReserva(EstadoReserva.CANCELADA);

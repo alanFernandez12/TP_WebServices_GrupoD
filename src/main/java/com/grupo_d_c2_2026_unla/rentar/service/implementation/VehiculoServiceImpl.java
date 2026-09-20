@@ -5,6 +5,8 @@ import com.grupo_d_c2_2026_unla.rentar.dto.VehiculoResponseDTO;
 import com.grupo_d_c2_2026_unla.rentar.entity.Vehiculo;
 import com.grupo_d_c2_2026_unla.rentar.enums.EstadoReserva;
 import com.grupo_d_c2_2026_unla.rentar.enums.EstadoVehiculo;
+import com.grupo_d_c2_2026_unla.rentar.exception.BusinessException;
+import com.grupo_d_c2_2026_unla.rentar.exception.ResourceNotFoundException;
 import com.grupo_d_c2_2026_unla.rentar.repository.VehiculoRepository;
 import com.grupo_d_c2_2026_unla.rentar.service.VehiculoService;
 import com.grupo_d_c2_2026_unla.rentar.dto.DisponibilidadFiltroInput;
@@ -45,7 +47,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     @Override
     public VehiculoResponseDTO modificar(Integer id, VehiculoRequestDTO dto) {
         Vehiculo vehiculo = vehiculoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Vehículo no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Vehículo no encontrado"));
 
         vehiculo.setMarca(dto.getMarca());
         vehiculo.setModelo(dto.getModelo());
@@ -61,7 +63,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     @Override
     public void bajaLogica(Integer id) {
         Vehiculo vehiculo = vehiculoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Vehículo no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Vehículo no encontrado"));
         vehiculo.setActivo(false);
         vehiculoRepository.save(vehiculo);
     }
@@ -69,7 +71,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     @Override
     public VehiculoResponseDTO buscarPorId(Integer id) {
         Vehiculo vehiculo = vehiculoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Vehículo no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Vehículo no encontrado"));
         return toResponseDTO(vehiculo);
     }
 
@@ -98,7 +100,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     @Override
     public List<VehiculoDisponibleDTO> consultarDisponibilidad(DisponibilidadFiltroInput filtro) {
         if (filtro == null) {
-            throw new IllegalArgumentException("El filtro de disponibilidad es obligatorio.");
+            throw new BusinessException("El filtro de disponibilidad es obligatorio.");
         }
         filtro.validar();
 

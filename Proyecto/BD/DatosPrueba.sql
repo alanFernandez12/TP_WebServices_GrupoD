@@ -5,10 +5,11 @@
 -- reservas para poder probar la API (REST y GraphQL).
 --
 -- Uso:
---   mysql -u root -padmin rentar < Proyecto/BD/DatosPrueba.sql
+--   mysql -u root -p rentar < Proyecto/BD/DatosPrueba.sql
 --
 -- Notas:
 --   - Todas las claves de usuario son "admin123" (hash BCrypt).
+--   - Incluye el usuario admin (admin@rentar.com / admin123, rol ADMIN).
 --   - El script es idempotente: limpia las tablas antes de insertar.
 --   - Respeta el orden de las claves foraneas.
 -- =====================================================================
@@ -20,14 +21,15 @@ DELETE FROM `ft_reservas`;
 DELETE FROM `lk_tiempo`;
 DELETE FROM `lk_clientes`;
 DELETE FROM `lk_vehiculos`;
--- Conserva el usuario admin (id 1); elimina el resto para recargar clientes
-DELETE FROM `lk_usuarios` WHERE `desc_email` <> 'admin@rentar.com';
+DELETE FROM `lk_usuarios`;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ---------------------------------------------------------------------
 -- USUARIOS (clave de todos: admin123)
 -- ---------------------------------------------------------------------
 INSERT INTO `lk_usuarios` (`id_usuario`, `desc_email`, `desc_password_hash`, `desc_rol`, `flag_activo`) VALUES
+-- Administrador del sistema (login: admin@rentar.com / admin123)
+(1,  'admin@rentar.com',       '$2a$10$WHwUwJEs3ZEX/TzYylTKVudhRw/amb1yS8Fm5R6OQzLaZ8ncR2Rgm', 'ADMIN',   1),
 (10, 'juan.perez@mail.com',    '$2a$10$WHwUwJEs3ZEX/TzYylTKVudhRw/amb1yS8Fm5R6OQzLaZ8ncR2Rgm', 'CLIENTE', 1),
 (11, 'maria.gomez@mail.com',   '$2a$10$WHwUwJEs3ZEX/TzYylTKVudhRw/amb1yS8Fm5R6OQzLaZ8ncR2Rgm', 'CLIENTE', 1),
 (12, 'carlos.lopez@mail.com',  '$2a$10$WHwUwJEs3ZEX/TzYylTKVudhRw/amb1yS8Fm5R6OQzLaZ8ncR2Rgm', 'CLIENTE', 1),

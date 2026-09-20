@@ -5,7 +5,22 @@ const jsonHeaders = { 'Content-Type': 'application/json' }
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, options)
   if (!response.ok) {
-    throw new Error(`La solicitud no pudo completarse (${response.status})`)
+    let message: string
+
+    try {
+      const errorBody = await response.json()
+
+      message =
+        errorBody.message ||
+        `Error interno al procesar la solicitud`
+    } catch {
+      message =
+        response.status === 500
+          ? 'Error interno del servidor'
+          : 'La solicitud no pudo completarse'
+    }
+
+    throw new Error(`Error ${response.status}: ${message}`)
   }
   return response.status === 204 ? (undefined as T) : response.json()
 }

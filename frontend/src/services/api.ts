@@ -64,3 +64,6 @@ export async function obtenerReservas(): Promise<Reserva[]> {
   if (response.errors?.length) throw new Error(response.errors[0].message)
   return response.data?.reservas ?? []
 }
+export function cancelarReserva(id: number) {
+  return request<Reserva>(`/api/reservas/${id}/cancelar`, { method: 'PATCH' })
+}

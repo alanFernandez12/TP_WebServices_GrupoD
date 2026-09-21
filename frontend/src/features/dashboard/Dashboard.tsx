@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { obtenerClientes, obtenerReservas, obtenerVehiculos } from '../../services/api'
+import {cancelarReserva, obtenerClientes, obtenerReservas, obtenerVehiculos } from '../../services/api'
 import type { Cliente, Reserva, Vehiculo } from '../../types/domain'
 import { ActionCard } from './components/ActionCard'
 import { ClientGrid } from './components/ClientGrid'
@@ -69,6 +69,26 @@ export function Dashboard() {
   })
 
   const openRegistration = (type: RegistrationType) => setModal(type)
+  const [successMessage, setSuccessMessage] = useState('')
+
+  const handleCancelReservation = useCallback(async (id: number) => {
+    const confirmed = window.confirm('¿Desea cancelar esta reserva?')
+    if (!confirmed) return
+
+    try {
+      await cancelarReserva(id)
+      setError('')
+      setSuccessMessage('Reserva cancelada correctamente.')
+      await loadReservations()
+    } catch (requestError) {
+      setError(
+          requestError instanceof Error
+              ? requestError.message
+              : 'No se pudo cancelar la reserva.'
+      )
+      setSuccessMessage('')
+    }
+  }, [loadReservations])
 
   return (
     <div className="app-shell">
@@ -99,8 +119,9 @@ export function Dashboard() {
         <section className="reservations-section">
           <div className="section-heading"><div><p className="eyebrow">Agenda</p><h2>Reservas activas</h2></div><span className="count-badge">{filteredReservations.length} de {reservas.length}</span></div>
           <div className="table-toolbar"><label className="search-box"><span>⌕</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por reserva, cliente o vehículo" /></label><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filtrar por estado"><option value="TODAS">Todos los estados</option><option value="PENDIENTE">Pendientes</option><option value="CONFIRMADA">Confirmadas</option></select></div>
-          {error && <div className="alert">{error} <button onClick={() => void loadReservations()}>Reintentar</button></div>}
-          <ReservationGrid reservations={filteredReservations} loading={loading} />
+          {error && ( <div className="alert error"> {error} <button onClick={() => void loadReservations()}>Reintentar</button> </div> )}
+          {successMessage && ( <div className="alert success"> {successMessage} </div> )}
+          <ReservationGrid reservations={filteredReservations} loading={loading} onCancelReservation={handleCancelReservation}/>
         </section>
         </>}
         {activeView === 'vehiculos' && <section className="reservations-section">

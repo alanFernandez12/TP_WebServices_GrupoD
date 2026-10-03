@@ -1,14 +1,49 @@
+syntax = "proto3";
+
+package rental;
+
 service RentalService {
+  rpc CreateRental(CreateRentalRequest) returns (RentalResponse);
+  rpc GetRentals(GetRentalsRequest) returns (RentalListResponse);
+  rpc GetRental(GetRentalRequest) returns (RentalResponse);
+  rpc CancelRental(CancelRentalRequest) returns (RentalResponse);
+  rpc GetRentalHistory(GetRentalHistoryRequest) returns (RentalListResponse);
+}
 
-  rpc CreateReservation (CreateReservationRequest)
-      returns (ReservationResponse);
+message CreateRentalRequest {
+  int64 cliente_id = 1;
+  int64 vehiculo_id = 2;
+  string fecha_inicio = 3;
+  string fecha_fin = 4;
+}
 
-  rpc GetReservations (GetReservationsRequest)
-      returns (ReservationListResponse);
+message GetRentalsRequest {}
 
-  rpc CancelReservation (CancelReservationRequest)
-      returns (ReservationResponse);
+message GetRentalRequest {
+  int64 id = 1;
+}
 
-  rpc GetRentalHistory (GetRentalHistoryRequest)
-      returns (RentalHistoryResponse);
+message CancelRentalRequest {
+  int64 id = 1;
+}
+
+message GetRentalHistoryRequest {
+  int64 cliente_id = 1;
+}
+
+message RentalListResponse {
+  repeated Rental rentals = 1;
+}
+
+message RentalResponse {
+  Rental rental = 1;
+}
+
+message Rental {
+  int64 id = 1;
+  int64 cliente_id = 2;
+  int64 vehiculo_id = 3;
+  string fecha_inicio = 4;
+  string fecha_fin = 5;
+  string estado = 6;
 }

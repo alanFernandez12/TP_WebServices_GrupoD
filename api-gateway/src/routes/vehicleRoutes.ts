@@ -9,6 +9,6 @@ const router = Router();
 
 router.get("/", getVehicles);
 router.get("/:id", getVehicle);
-router.post("/disponibles", getAvailableVehicles);
+router.get("/disponibles", getAvailableVehicles);
 
 export default router;

@@ -4,9 +4,9 @@ import dotenv from "dotenv";
 
 //import authRoutes from "./routes/authRoutes";
 import vehicleRoutes from "./routes/vehicleRoutes";
-//import customerRoutes from "./routes/customerRoutes";
-//import rentalRoutes from "./routes/rentalRoutes";
-//import { errorHandler } from "./middleware/errorHandler";
+import customerRoutes from "./routes/customerRoutes";
+import rentalRoutes from "./routes/rentalRoutes";
+import { errorHandler } from "./middleware/errorHandler";
 
 dotenv.config();
 
@@ -17,10 +17,10 @@ app.use(express.json());
 
 //app.use("/api/auth", authRoutes);
 app.use("/api/vehiculos", vehicleRoutes);
-//app.use("/api/clientes", customerRoutes);
-//app.use("/api/reservas", rentalRoutes);
+app.use("/api/clientes", customerRoutes);
+app.use("/api/reservas", rentalRoutes);
 
-//app.use(errorHandler);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 8085;
 

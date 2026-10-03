@@ -6,7 +6,9 @@
     "dev": "tsx watch src/app.ts",
     "build": "tsc",
     "start": "node dist/app.js",
-    "mock:vehicle": "tsx src/grpc/mock/vehicleMockServer.ts"
+    "mock:vehicle": "tsx src/grpc/mock/vehicleMockServer.ts",
+    "mock:customer": "tsx src/grpc/mock/customerMockServer.ts",
+    "mock:rental": "tsx src/grpc/mock/rentalMockServer.ts"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.13.4",

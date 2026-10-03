@@ -1,0 +1,14 @@
+service RentalService {
+
+  rpc CreateReservation (CreateReservationRequest)
+      returns (ReservationResponse);
+
+  rpc GetReservations (GetReservationsRequest)
+      returns (ReservationListResponse);
+
+  rpc CancelReservation (CancelReservationRequest)
+      returns (ReservationResponse);
+
+  rpc GetRentalHistory (GetRentalHistoryRequest)
+      returns (RentalHistoryResponse);
+}

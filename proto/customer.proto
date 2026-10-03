@@ -1,0 +1,17 @@
+service CustomerService {
+
+  rpc Authenticate (AuthenticateRequest)
+      returns (AuthenticateResponse);
+
+  rpc GetCustomers (GetCustomersRequest)
+      returns (CustomerListResponse);
+
+  rpc GetCustomer (GetCustomerRequest)
+      returns (CustomerResponse);
+
+  rpc ExistsCustomer (ExistsCustomerRequest)
+      returns (ExistsCustomerResponse);
+
+  rpc IsCustomerActive (IsCustomerActiveRequest)
+      returns (CustomerActiveResponse);
+}

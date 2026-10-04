@@ -23,15 +23,11 @@ message GetVehicleRequest {
 }
 
 message VehicleResponse {
-  int64 id = 1;
-  string patente = 2;
-  string marca = 3;
-  string modelo = 4;
-  string estado = 5;
+  Vehicle vehicle = 1;
 }
 
 message VehicleListResponse {
-  repeated VehicleResponse vehicles = 1;
+  repeated Vehicle vehicles = 1;
 }
 
 message AvailabilityRequest {
@@ -42,4 +38,12 @@ message AvailabilityRequest {
 message UpdateVehicleStatusRequest {
   int64 id = 1;
   string estado = 2;
+}
+
+message Vehicle {
+  int64 id = 1;
+  string patente = 2;
+  string marca = 3;
+  string modelo = 4;
+  string estado = 5;
 }

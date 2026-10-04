@@ -25,12 +25,14 @@ const vehicles = [
     patente: "ABC123",
     marca: "Toyota",
     modelo: "Corolla",
+    estado: "ACTIVO"
   },
   {
     id: "2",
     patente: "DEF456",
     marca: "Ford",
     modelo: "Focus",
+    estado: "INACTIVO"
   },
 ];
 

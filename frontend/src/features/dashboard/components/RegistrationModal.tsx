@@ -24,10 +24,34 @@ export function RegistrationModal({ type, onClose, onSaved }: Props) {
     } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'No se pudo guardar el registro.') } finally { setSaving(false) }
   }
   const field = (key: string, label: string, type = 'text', required = true) => <label><span>{label}</span><input type={type} value={values[key] ?? ''} onChange={update(key)} required={required} /></label>
-  return <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><div className="modal"><div className="modal-heading"><div><p className="eyebrow">Alta</p><h2>{labels[type]}</h2></div><button type="button" className="close-button" onClick={onClose} aria-label="Cerrar">×</button></div><form onSubmit={submit}>
-    {type === 'cliente' && <div className="form-grid">{field('nombre', 'Nombre')}{field('apellido', 'Apellido')}{field('documento', 'Documento')}{field('email', 'Email', 'email')}{field('telefono', 'Teléfono', 'tel', false)}{field('fechaNacimiento', 'Fecha de nacimiento', 'date', false)}{field('password', 'Contraseña', 'password')}{field('passwordConfirm', 'Confirmar contraseña', 'password')}<label><span>Rol</span><select value={values.rol ?? 'CLIENTE'} onChange={update('rol')} required>{['CLIENTE', 'ADMIN'].map((rol) => <option key={rol}>{rol}</option>)}</select></label></div>}
-    {type === 'vehiculo' && <div className="form-grid">{field('patente', 'Patente')}{field('marca', 'Marca')}{field('modelo', 'Modelo')}{field('anio', 'Año', 'number')}{field('color', 'Color', 'text', false)}{field('precio_diario', 'Precio diario', 'number')}<label><span>Tipo</span><select value={values.tipoVehiculo ?? ''} onChange={update('tipoVehiculo')} required><option value="">Seleccionar</option>{['SEDAN', 'SUV', 'PICKUP', 'COUPE', 'HATCHBACK'].map((type) => <option key={type}>{type}</option>)}</select></label></div>}
-    {type === 'reserva' && <div className="form-grid">{field('idCliente', 'ID del cliente', 'number')}{field('idVehiculo', 'ID del vehículo', 'number')}{field('horaInicio', 'Inicio', 'datetime-local')}{field('horaFin', 'Fin', 'datetime-local')}</div>}
-    {error && <p className="form-error">{error}</p>}<div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>Cancelar</button><button className="primary-button" disabled={saving}>{saving ? 'Guardando...' : 'Guardar alta'}</button></div>
-  </form></div></div>
+  return <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+         <div className="modal">
+         <div className="modal-heading"><div><p className="eyebrow">Alta</p><h2>{labels[type]}</h2></div><button type="button" className="close-button" onClick={onClose} aria-label="Cerrar">×</button></div>
+          <form onSubmit={submit}>
+            {type === 'cliente' && <div className="form-grid">{field('nombre', 'Nombre')}{field('apellido', 'Apellido')}{field('documento', 'Documento')}{field('email', 'Email', 'email')}{field('telefono', 'Teléfono', 'tel', false)}{field('fechaNacimiento', 'Fecha de nacimiento', 'date', false)}{field('password', 'Contraseña', 'password')}{field('passwordConfirm', 'Confirmar contraseña', 'password')}<label><span>Rol</span>
+            <select value={values.rol ?? 'CLIENTE'} onChange={update('rol')} required>{['CLIENTE', 'ADMIN'].map((rol) => <option key={rol}>{rol}</option>)}</select></label></div>}
+            {type === 'vehiculo' && <div className="form-grid">{field('patente', 'Patente')}{field('marca', 'Marca')}{field('modelo', 'Modelo')}{field('anio', 'Año', 'number')}{field('color', 'Color', 'text', false)}{field('precio_diario', 'Precio diario', 'number')}<label><span>Tipo</span><select value={values.tipoVehiculo ?? ''} onChange={update('tipoVehiculo')} required><option value="">Seleccionar</option>{['SEDAN', 'SUV', 'PICKUP', 'COUPE', 'HATCHBACK'].map((type) => <option key={type}>{type}</option>)}</select></label></div>}
+            {type === 'reserva' && <div className="form-grid">{field('idCliente', 'ID del cliente', 'number')}{field('idVehiculo', 'ID del vehículo', 'number')}{field('horaInicio', 'Inicio', 'datetime-local')}{field('horaFin', 'Fin', 'datetime-local')}</div>}
+            <div className="modal-actions">
+            <button type="button" className="secondary-button" onClick={onClose}>Cancelar</button>
+            <button className="primary-button" disabled={saving}>{saving ? 'Guardando...' : 'Guardar alta'}</button></div>
+          </form>
+          {error && (<div className="modal-backdrop error-popup-backdrop" onMouseDown=
+          {(event) => {event.stopPropagation()
+            if (event.target === event.currentTarget) {setError('')}}}>
+          <div className="modal error-popup" role="alertdialog" aria-modal="true"
+               aria-labelledby="error-popup-title" aria-describedby="error-popup-message">
+      <div className="modal-heading">
+        <h2 id="error-popup-title">No se pudo guardar</h2>
+        <button type="button" className="close-button" onClick={() => setError('')}
+          aria-label="Cerrar mensaje" autoFocus>×</button>
+      </div>
+      <p id="error-popup-message">{error}</p>
+      <div className="modal-actions">
+        <button type="button" className="primary-button" onClick={() => setError('')}
+        >Entendido</button>
+      </div> </div> </div>
+    )}
+          </div>
+          </div>
 }

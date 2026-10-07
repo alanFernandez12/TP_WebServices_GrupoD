@@ -28,7 +28,7 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
               : 'La solicitud no pudo completarse'
     }
 
-    throw new Error(`Error ${response.status}: ${message}`)
+    throw new Error(message)
   }
   return response.status === 204 ? (undefined as T) : response.json()
 }

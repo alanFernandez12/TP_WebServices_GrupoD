@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package vehicle;
+
+service VehicleService {
+  rpc GetVehicles (GetVehiclesRequest)
+      returns (VehicleListResponse);
+
+  rpc GetVehicle (GetVehicleRequest)
+      returns (VehicleResponse);
+
+  rpc GetAvailableVehicles (AvailabilityRequest)
+      returns (VehicleListResponse);
+
+  rpc UpdateVehicleStatus (UpdateVehicleStatusRequest)
+      returns (VehicleResponse);
+}
+
+message GetVehiclesRequest {}
+
+message GetVehicleRequest {
+  int64 id = 1;
+}
+
+message VehicleResponse {
+  Vehicle vehicle = 1;
+}
+
+message VehicleListResponse {
+  repeated Vehicle vehicles = 1;
+}
+
+message AvailabilityRequest {
+  string fechaInicio = 1;
+  string fechaFin = 2;
+}
+
+message UpdateVehicleStatusRequest {
+  int64 id = 1;
+  string estado = 2;
+}
+
+message Vehicle {
+  int64 id = 1;
+  string patente = 2;
+  string marca = 3;
+  string modelo = 4;
+  string estado = 5;
+}

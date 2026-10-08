@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package customer;
+
+service CustomerService {
+  rpc GetCustomers(GetCustomersRequest) returns (CustomerListResponse);
+  rpc GetCustomer(GetCustomerRequest) returns (CustomerResponse);
+  rpc CustomerExists(CustomerExistsRequest) returns (CustomerExistsResponse);
+  rpc IsCustomerActive(IsCustomerActiveRequest) returns (CustomerActiveResponse);
+}
+
+message GetCustomersRequest {}
+
+message GetCustomerRequest {
+  int64 id = 1;
+}
+
+message CustomerExistsRequest {
+  int64 id = 1;
+}
+
+message IsCustomerActiveRequest {
+  int64 id = 1;
+}
+
+message CustomerListResponse {
+  repeated Customer customers = 1;
+}
+
+message CustomerResponse {
+  Customer customer = 1;
+}
+
+message CustomerExistsResponse {
+  bool exists = 1;
+}
+
+message CustomerActiveResponse {
+  bool active = 1;
+}
+
+message Customer {
+  int64 id = 1;
+  string nombre = 2;
+  string apellido = 3;
+  string email = 4;
+}

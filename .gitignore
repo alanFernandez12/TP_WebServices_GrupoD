@@ -46,3 +46,7 @@ mysql-data/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite
+
+### Gateway ###
+api-gateway/node_modules/
+api-gateway/dist/

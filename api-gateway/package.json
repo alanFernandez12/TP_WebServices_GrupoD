@@ -1,0 +1,27 @@
+{
+  "name": "rentar-api-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "mock:vehicle": "tsx src/grpc/mock/vehicleMockServer.ts",
+    "mock:customer": "tsx src/grpc/mock/customerMockServer.ts",
+    "mock:rental": "tsx src/grpc/mock/rentalMockServer.ts"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.13.4",
+    "@grpc/proto-loader": "^0.7.13",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}

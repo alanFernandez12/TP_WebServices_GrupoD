@@ -22,9 +22,8 @@
 .error-popup-backdrop {z-index: 2000;}
 .error-popup {width: min(420px, calc(100vw - 32px));}
 .error-popup .modal-heading h2 {margin: 0;}
-
-#error-popup-message {
-  margin: 16px 0;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
+#error-popup-message {margin: 16px 0; line-height: 1.5; overflow-wrap: anywhere;}
+.table-actions {display: flex; gap: 8px; flex-wrap: wrap;}
+.danger-button {color: #b42318;}
+.table-actions button:disabled {opacity: 0.5;cursor: not-allowed;}
+input[readonly] {background-color: #f2f4f7; color: #667085;}

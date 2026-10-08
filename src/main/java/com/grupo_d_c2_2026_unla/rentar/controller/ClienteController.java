@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
 
 @RestController
 @RequestMapping("/api/clientes")
@@ -69,8 +70,7 @@ public class ClienteController {
     })
     @PostMapping
     public ResponseEntity<ClienteResponseDTO> crear(
-            @Valid @RequestBody ClienteRequestDTO cliente) {
-
+            @Validated(ClienteRequestDTO.Alta.class) @RequestBody ClienteRequestDTO cliente){
         ClienteResponseDTO creado = clienteService.crear(cliente);
 
         return ResponseEntity

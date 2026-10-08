@@ -67,3 +67,31 @@ export async function obtenerReservas(): Promise<Reserva[]> {
 export function cancelarReserva(id: number) {
   return request<Reserva>(`/api/reservas/${id}/cancelar`, { method: 'PATCH' })
 }
+
+export function modificarVehiculo(id: number, data: unknown) {
+  return request<Vehiculo>(`/api/vehiculos/${id}`, {
+    method: 'PUT',
+    headers: jsonHeaders,
+    body: JSON.stringify(data),
+  })
+}
+
+export function modificarCliente(id: number, data: unknown) {
+  return request<Cliente>(`/api/clientes/${id}`, {
+    method: 'PUT',
+    headers: jsonHeaders,
+    body: JSON.stringify(data),
+  })
+}
+
+export function bajaVehiculo(id: number) {
+  return request<void>(`/api/vehiculos/${id}`, {
+    method: 'DELETE',
+  })
+}
+
+export function bajaCliente(id: number) {
+  return request<void>(`/api/clientes/${id}`, {
+    method: 'DELETE',
+  })
+}

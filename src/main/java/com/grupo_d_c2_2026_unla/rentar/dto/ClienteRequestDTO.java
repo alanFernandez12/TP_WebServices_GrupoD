@@ -3,6 +3,7 @@ package com.grupo_d_c2_2026_unla.rentar.dto;
 import java.time.LocalDate;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.groups.Default;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,9 +20,9 @@ public class ClienteRequestDTO {
     private String apellido;
     private String telefono;
     private LocalDate fechaNacimiento;
-    @NotBlank
+    @NotBlank (groups=Alta.class)
     private String password;
-    @NotBlank
+    @NotBlank (groups=Alta.class)
     private String rol;
 
     public ClienteRequestDTO() {
@@ -46,4 +47,6 @@ public class ClienteRequestDTO {
         this.password = password;
         this.rol = rol;
     }
+
+    public interface Alta extends Default {}
 }

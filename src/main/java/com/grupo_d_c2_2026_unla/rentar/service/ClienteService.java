@@ -13,6 +13,8 @@ public interface ClienteService {
 
     public void bajaLogica(Long id);
 
+    public void reactivar(Long id);
+
     public ClienteResponseDTO buscarPorId(Long id);
 
     public List<ClienteResponseDTO> listarTodos();

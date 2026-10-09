@@ -114,6 +114,14 @@ public class VehiculoController {
         return ResponseEntity.noContent().build();
     }
 
+    //REACTIVAR
+    @Operation(summary = "Reactivar un vehículo")
+    @PatchMapping("/{id}/reactivar")
+    public ResponseEntity<Void> reactivar(@PathVariable Integer id){
+            vehiculoService.reactivar(id);
+            return ResponseEntity.noContent().build();
+    }
+
     // MODIFICACIÓN
     @Operation(
         summary = "Modificar un vehículo",

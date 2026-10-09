@@ -28,7 +28,7 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
               : 'La solicitud no pudo completarse'
     }
 
-    throw new Error(`Error ${response.status}: ${message}`)
+    throw new Error(message)
   }
   return response.status === 204 ? (undefined as T) : response.json()
 }
@@ -66,4 +66,36 @@ export async function obtenerReservas(): Promise<Reserva[]> {
 }
 export function cancelarReserva(id: number) {
   return request<Reserva>(`/api/reservas/${id}/cancelar`, { method: 'PATCH' })
+}
+
+export function modificarVehiculo(id: number, data: unknown) {
+  return request<Vehiculo>(`/api/vehiculos/${id}`, {
+    method: 'PUT',
+    headers: jsonHeaders,
+    body: JSON.stringify(data),
+  })
+}
+
+export function modificarCliente(id: number, data: unknown) {
+  return request<Cliente>(`/api/clientes/${id}`, {
+    method: 'PUT',
+    headers: jsonHeaders,
+    body: JSON.stringify(data),
+  })
+}
+
+export function bajaVehiculo(id: number) {
+  return request<void>(`/api/vehiculos/${id}`, {method: 'DELETE'})
+}
+
+export function bajaCliente(id: number) {
+  return request<void>(`/api/clientes/${id}`, {method: 'DELETE'})
+}
+
+export function reactivarVehiculo(id: number) {
+  return request<void>(`/api/vehiculos/${id}/reactivar`, {method: 'PATCH'})
+}
+
+export function reactivarCliente(id: number) {
+  return request<void>(`/api/clientes/${id}/reactivar`,{method: 'PATCH'})
 }

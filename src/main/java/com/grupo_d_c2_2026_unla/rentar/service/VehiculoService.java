@@ -15,6 +15,8 @@ public interface VehiculoService {
 
     public void bajaLogica(Integer id);
 
+    public void reactivar(Integer id);
+
     public VehiculoResponseDTO buscarPorId(Integer id);
 
     public List<VehiculoResponseDTO> listarTodos();

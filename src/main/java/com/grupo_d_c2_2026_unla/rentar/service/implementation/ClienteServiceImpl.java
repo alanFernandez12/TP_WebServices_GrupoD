@@ -118,6 +118,21 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
+    public void reactivar(Long id) {
+
+        Cliente cliente = clienteRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
+
+        cliente.setActivo(true);
+
+        Usuario usuario = cliente.getUsuario();
+        usuario.setActivo(false);
+        
+        usuarioRepository.save(usuario);
+        clienteRepository.save(cliente);
+    }
+
+    @Override
     public ClienteResponseDTO buscarPorId(Long id) {
 
         Cliente cliente = clienteRepository.findById(id)

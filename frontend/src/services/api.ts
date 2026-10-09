@@ -85,13 +85,17 @@ export function modificarCliente(id: number, data: unknown) {
 }
 
 export function bajaVehiculo(id: number) {
-  return request<void>(`/api/vehiculos/${id}`, {
-    method: 'DELETE',
-  })
+  return request<void>(`/api/vehiculos/${id}`, {method: 'DELETE'})
 }
 
 export function bajaCliente(id: number) {
-  return request<void>(`/api/clientes/${id}`, {
-    method: 'DELETE',
-  })
+  return request<void>(`/api/clientes/${id}`, {method: 'DELETE'})
+}
+
+export function reactivarVehiculo(id: number) {
+  return request<void>(`/api/vehiculos/${id}/reactivar`, {method: 'PATCH'})
+}
+
+export function reactivarCliente(id: number) {
+  return request<void>(`/api/clientes/${id}/reactivar`,{method: 'PATCH'})
 }

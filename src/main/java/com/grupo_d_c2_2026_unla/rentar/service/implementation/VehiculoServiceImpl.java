@@ -73,6 +73,15 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
 
     @Override
+    public void reactivar(Integer id) {
+        Vehiculo vehiculo = vehiculoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehículo no encontrado"));
+       
+        vehiculo.setActivo(true);
+        vehiculoRepository.save(vehiculo);
+    }
+
+    @Override
     public VehiculoResponseDTO buscarPorId(Integer id) {
         Vehiculo vehiculo = vehiculoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehículo no encontrado"));

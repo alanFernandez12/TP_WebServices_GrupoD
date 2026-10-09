@@ -5,9 +5,10 @@ interface Props {
   loading: boolean
   onEdit: (vehicle: Vehiculo) => void
   onDeactivate: (vehicle: Vehiculo) => void
+  onReactivate: (vehicle: Vehiculo) => void
 }
 
-export function VehicleGrid({ vehicles, loading, onEdit, onDeactivate}: Props) {
+export function VehicleGrid({ vehicles, loading, onEdit, onDeactivate, onReactivate}: Props) {
   
   if (loading) 
     return <div className="empty-state">Cargando vehículos...</div>
@@ -30,8 +31,10 @@ export function VehicleGrid({ vehicles, loading, onEdit, onDeactivate}: Props) {
           <td><span className={`status ${vehicle.activo ? 'status-confirmada' : 'status-cancelada'}`}>{vehicle.activo ? 'ACTIVO' : 'INACTIVO'}</span></td>
           <td> <div className="table-actions">
             <button type="button" className="secondary-button" onClick={() => onEdit(vehicle)}>Editar</button>
-            <button type="button" className="secondary-button danger-button" onClick={() => onDeactivate(vehicle)} disabled={!vehicle.activo}
-                  >Dar de baja</button></div></td>
+            {vehicle.activo ? (<button type="button" className="secondary-button danger-button"
+             onClick={() => onDeactivate(vehicle)}>Dar de baja</button>) : (
+            <button type="button" className="secondary-button" onClick={() => onReactivate(vehicle)}>Reactivar</button>)}
+          </div></td>
          </tr>)}</tbody></table>
         </div>
 }

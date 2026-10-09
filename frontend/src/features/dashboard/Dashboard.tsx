@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { bajaCliente, bajaVehiculo, cancelarReserva, obtenerClientes, obtenerReservas, obtenerVehiculos} from '../../services/api'
+import { bajaCliente, bajaVehiculo, cancelarReserva, obtenerClientes, obtenerReservas, obtenerVehiculos, reactivarCliente, reactivarVehiculo} from '../../services/api'
 import type { Cliente, Reserva, Vehiculo } from '../../types/domain'
 import { ActionCard } from './components/ActionCard'
 import { ClientGrid } from './components/ClientGrid'
@@ -139,6 +139,18 @@ export function Dashboard() {
     }
   }
 
+  const handleReactivateClient = async (client: Cliente) => {
+    try {await reactivarCliente(client.id)
+         await loadClients()} 
+	  catch (error) {setErrorClients(mensajeError(error, 'No se pudo reactivar el cliente.'))}
+  }
+
+  const handleReactivateVehicle = async (vehicle: Vehiculo) => {
+    try {await reactivarVehiculo(vehicle.id)
+         await loadVehicles()
+    } catch (error) {setErrorVehicles(mensajeError(error, 'No se pudo reactivar el vehículo.'))}
+  }
+
   const handleCancelReservation = async (id: number) => {
     if (!window.confirm('¿Desea cancelar esta reserva?')) return
     setSuccessMessage('')
@@ -235,6 +247,7 @@ export function Dashboard() {
                 loading={loadingClients}
                 onEdit={(client) => openEdition('cliente', client)}
                 onDeactivate={solicitarBajaCliente}
+                onReactivate={(client) => void handleReactivateClient(client)}
               />
             </section>
           )}
@@ -261,6 +274,7 @@ export function Dashboard() {
                 loading={loadingVehicles}
                 onEdit={(vehicle) => openEdition('vehiculo', vehicle)}
                 onDeactivate={solicitarBajaVehiculo}
+                onReactivate={(vehicle) => void handleReactivateVehicle(vehicle)}
               />
             </section>
           )}

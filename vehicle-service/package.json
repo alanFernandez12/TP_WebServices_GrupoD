@@ -10,7 +10,8 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.13.4",
     "@grpc/proto-loader": "^0.7.13",
-    "dotenv": "^17.2.1"
+    "dotenv": "^17.2.1",
+    "mysql2": "^3.14.3"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

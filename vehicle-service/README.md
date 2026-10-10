@@ -8,23 +8,27 @@ El servicio implementa el contrato compartido:
 ../proto/vehicle.proto
 ```
 
-Actualmente utiliza una lista en memoria para simplificar las pruebas. Los
-datos se reinician cada vez que se detiene el proceso; no reemplaza todavía a
-una base de datos.
+Utiliza la misma base de datos MySQL `Rentar` que utiliza el servidor Java.
+Lee y actualiza la tabla `lk_vehiculos`, y consulta `ft_reservas` para calcular
+la disponibilidad.
 
 ## Estructura
 
 ```text
 vehicle-service/
 ├── src/
-│   └── server.ts
+│   ├── database.ts
+│   ├── server.ts
+│   └── vehicleRepository.ts
 ├── .env
 ├── package.json
 └── tsconfig.json
 ```
 
+- `src/database.ts`: crea el pool y verifica la conexión a MySQL.
 - `src/server.ts`: carga el contrato, implementa `VehicleService` y levanta el servidor gRPC.
-- `.env`: configura el puerto del servicio.
+- `src/vehicleRepository.ts`: contiene las consultas a `lk_vehiculos` y `ft_reservas`.
+- `.env`: configura el puerto gRPC y la conexión a la base.
 - `package.json`: contiene los comandos y dependencias del proyecto.
 
 ## Operaciones gRPC
@@ -33,14 +37,13 @@ El servidor implementa las cuatro operaciones de `vehicle.proto`:
 
 | Operación | Descripción |
 |---|---|
-| `GetVehicles` | Devuelve todos los vehículos en memoria. |
-| `GetVehicle` | Devuelve un vehículo por ID. |
-| `GetAvailableVehicles` | Devuelve los vehículos cuyo estado es `DISPONIBLE`. |
-| `UpdateVehicleStatus` | Actualiza el estado de un vehículo por ID. |
+| `GetVehicles` | Devuelve todos los vehículos activos de `lk_vehiculos`. |
+| `GetVehicle` | Devuelve un vehículo activo por ID. |
+| `GetAvailableVehicles` | Devuelve vehículos disponibles sin reservas superpuestas. |
+| `UpdateVehicleStatus` | Actualiza `desc_estado_vehiculo`. |
 
-`GetAvailableVehicles` valida que `fechaInicio` y `fechaFin` estén presentes,
-pero en esta versión simple no calcula reservas por fecha. Solamente filtra
-por estado.
+Una reserva se considera ocupante cuando su estado es distinto de
+`CANCELADA` y sus horarios se superponen con el rango solicitado.
 
 ## Configuración
 
@@ -48,6 +51,11 @@ El archivo `.env` contiene:
 
 ```env
 VEHICLE_GRPC_PORT=9091
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=Rentar
+DB_USER=root
+DB_PASSWORD=tu contraseña de MySQL
 ```
 
 El API Gateway ya apunta por defecto a:
@@ -58,6 +66,16 @@ VEHICLE_SERVICE_URL=localhost:9091
 
 Si se cambia el puerto del servidor, también hay que actualizar
 `VEHICLE_SERVICE_URL` en `api-gateway/.env`.
+
+`DB_PASSWORD` debe tener el mismo valor que `spring.datasource.password` del
+servidor Java. No se debe guardar una contraseña real en el repositorio.
+
+La base debe existir y tener las tablas creadas. Los scripts se encuentran en:
+
+```text
+Proyecto/BD/RentarBD.sql
+Proyecto/BD/DatosPrueba.sql
+```
 
 ## Instalación
 
@@ -117,7 +135,8 @@ Invoke-RestMethod http://localhost:8085/api/vehiculos
 Invoke-RestMethod http://localhost:8085/api/vehiculos/1
 ```
 
-La respuesta debería contener los vehículos definidos en `src/server.ts`.
+La respuesta debería contener los vehículos que existan actualmente en
+`lk_vehiculos`.
 
 Para consultar disponibilidad:
 
@@ -125,15 +144,14 @@ Para consultar disponibilidad:
 Invoke-RestMethod "http://localhost:8085/api/vehiculos/disponibles?fechaInicio=2026-10-05&fechaFin=2026-10-10"
 ```
 
-El contrato usa los nombres `fechaInicio` y `fechaFin`. El cliente actual del
-Gateway envía esos campos como `fecha_inicio` y `fecha_fin`, por lo que esa
-parte debe alinearse antes de probar el endpoint de disponibilidad a través
-del Gateway. Las consultas `GetVehicles` y `GetVehicle` no tienen esa
-inconsistencia.
+El contrato usa los nombres `fechaInicio` y `fechaFin`, y el cliente del
+Gateway ya los envía con esos nombres. Las consultas `GetVehicles` y
+`GetVehicle` no requieren parámetros adicionales.
 
 ## Errores gRPC implementados
 
-- `NOT_FOUND`: el ID solicitado no existe.
-- `INVALID_ARGUMENT`: faltan fechas para disponibilidad o falta el estado.
+- `NOT_FOUND`: el ID solicitado no existe entre los vehículos activos.
+- `INVALID_ARGUMENT`: el rango de fechas no es válido o el estado no es válido.
+- `INTERNAL`: error de consulta o de conexión con MySQL.
 
 El API Gateway convierte esos estados gRPC en respuestas HTTP.

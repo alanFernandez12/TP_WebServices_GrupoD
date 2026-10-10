@@ -50,6 +50,5 @@ frontend/.vite
 ### Gateway ###
 api-gateway/node_modules/
 api-gateway/dist/
-vehicle-service/.env
-vehicle-service/dist/server.js
-vehicle-service/node_modules
+vehicle-service/node_modules/
+vehicle-service/dist/

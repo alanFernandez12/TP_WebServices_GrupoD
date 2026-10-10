@@ -31,8 +31,8 @@ message VehicleListResponse {
 }
 
 message AvailabilityRequest {
-  string fechaInicio = 1;
-  string fechaFin = 2;
+  string fecha_inicio  = 1;
+  string fecha_fin = 2;
 }
 
 message UpdateVehicleStatusRequest {

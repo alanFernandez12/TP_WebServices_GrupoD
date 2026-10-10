@@ -1,9 +1,9 @@
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
-import dotenv from "dotenv";
+import "dotenv/config";
 import path from "path";
-
-dotenv.config();
+import { checkDatabaseConnection, database } from "./database";
+import { VehicleRepository } from "./vehicleRepository";
 
 const PROTO_PATH = path.resolve(
   __dirname,
@@ -22,133 +22,170 @@ const proto = grpc.loadPackageDefinition(
   packageDefinition
 ) as any;
 
-type Vehicle = {
-  id: string;
-  patente: string;
-  marca: string;
-  modelo: string;
-  estado: string;
+const vehicleRepository = new VehicleRepository();
+
+/**
+ * Crea un error gRPC con el código que el API Gateway puede traducir a HTTP.
+ */
+const grpcError = (
+  code: grpc.status,
+  message: string
+): grpc.ServiceError => {
+  const error = new Error(message) as grpc.ServiceError;
+  error.code = code;
+  return error;
 };
 
 /**
- * Datos temporales del servicio. Se almacenan en memoria para que
- * el servidor sea fácil de probar sin configurar una base de datos.
+ * Comprueba que un texto tenga el formato de fecha aceptado por MySQL.
  */
-const vehicles: Vehicle[] = [
-  {
-    id: "1",
-    patente: "ABC123",
-    marca: "Toyota",
-    modelo: "Corolla",
-    estado: "DISPONIBLE",
-  },
-  {
-    id: "2",
-    patente: "DEF456",
-    marca: "Ford",
-    modelo: "Focus",
-    estado: "NO_DISPONIBLE",
-  },
-  {
-    id: "3",
-    patente: "GHI789",
-    marca: "Volkswagen",
-    modelo: "Golf",
-    estado: "DISPONIBLE",
-  },
-];
-
-/**
- * Busca un vehículo por su identificador y devuelve un error gRPC
- * cuando el vehículo no existe.
- */
-const findVehicle = (id: string): Vehicle => {
-  const vehicle = vehicles.find((item) => item.id === id);
-
-  if (!vehicle) {
-    const error = new Error("Vehículo no encontrado") as grpc.ServiceError;
-    error.code = grpc.status.NOT_FOUND;
-    throw error;
-  }
-
-  return vehicle;
+const isValidDate = (value: string): boolean => {
+  return !Number.isNaN(Date.parse(value));
 };
 
 /**
- * Implementa las operaciones definidas por VehicleService en
- * proto/vehicle.proto.
+ * Implementa las operaciones definidas por VehicleService en vehicle.proto.
  */
 const vehicleService = {
-  GetVehicles: (
+  /**
+   * Devuelve todos los vehículos activos de la base de datos.
+   */
+  GetVehicles: async (
     _call: grpc.ServerUnaryCall<any, any>,
     callback: grpc.sendUnaryData<any>
   ) => {
-    callback(null, { vehicles });
+    try {
+      const vehicles = await vehicleRepository.findAll();
+      callback(null, { vehicles });
+    } catch (error) {
+      callback(
+        grpcError(grpc.status.INTERNAL, "No se pudieron consultar los vehículos"),
+        null
+      );
+    }
   },
 
-  GetVehicle: (
+  /**
+   * Devuelve un vehículo activo usando su identificador.
+   */
+  GetVehicle: async (
     call: grpc.ServerUnaryCall<any, any>,
     callback: grpc.sendUnaryData<any>
   ) => {
     try {
-      const vehicle = findVehicle(String(call.request.id));
+      const vehicle = await vehicleRepository.findById(
+        String(call.request.id)
+      );
+
+      if (!vehicle) {
+        callback(
+          grpcError(grpc.status.NOT_FOUND, "Vehículo no encontrado"),
+          null
+        );
+        return;
+      }
+
       callback(null, { vehicle });
     } catch (error) {
-      callback(error as grpc.ServiceError, null);
+      callback(
+        grpcError(grpc.status.INTERNAL, "No se pudo consultar el vehículo"),
+        null
+      );
     }
   },
 
-  GetAvailableVehicles: (
+  /**
+   * Devuelve vehículos disponibles sin reservas que se superpongan
+   * con el período solicitado.
+   */
+  GetAvailableVehicles: async (
     call: grpc.ServerUnaryCall<any, any>,
     callback: grpc.sendUnaryData<any>
   ) => {
     const { fechaInicio, fechaFin } = call.request;
 
-    if (!fechaInicio || !fechaFin) {
-      const error = new Error(
-        "fechaInicio y fechaFin son obligatorias"
-      ) as grpc.ServiceError;
-      error.code = grpc.status.INVALID_ARGUMENT;
-      callback(error, null);
-      return;
-    }
-
-    callback(null, {
-      vehicles: vehicles.filter(
-        (vehicle) => vehicle.estado === "DISPONIBLE"
-      ),
-    });
-  },
-
-  UpdateVehicleStatus: (
-    call: grpc.ServerUnaryCall<any, any>,
-    callback: grpc.sendUnaryData<any>
-  ) => {
-    const id = String(call.request.id);
-    const estado = String(call.request.estado || "").trim();
-
-    if (!estado) {
-      const error = new Error(
-        "El estado es obligatorio"
-      ) as grpc.ServiceError;
-      error.code = grpc.status.INVALID_ARGUMENT;
-      callback(error, null);
+    if (
+      !fechaInicio ||
+      !fechaFin ||
+      !isValidDate(fechaInicio) ||
+      !isValidDate(fechaFin) ||
+      new Date(fechaInicio) >= new Date(fechaFin)
+    ) {
+      callback(
+        grpcError(
+          grpc.status.INVALID_ARGUMENT,
+          "El rango de fechas no es válido"
+        ),
+        null
+      );
       return;
     }
 
     try {
-      const vehicle = findVehicle(id);
-      vehicle.estado = estado;
+      const vehicles = await vehicleRepository.findAvailable(
+        fechaInicio,
+        fechaFin
+      );
+      callback(null, { vehicles });
+    } catch (error) {
+      callback(
+        grpcError(
+          grpc.status.INTERNAL,
+          "No se pudieron consultar los vehículos disponibles"
+        ),
+        null
+      );
+    }
+  },
+
+  /**
+   * Actualiza en la base el estado de un vehículo activo.
+   */
+  UpdateVehicleStatus: async (
+    call: grpc.ServerUnaryCall<any, any>,
+    callback: grpc.sendUnaryData<any>
+  ) => {
+    const id = String(call.request.id);
+    const estado = String(call.request.estado || "").trim().toUpperCase();
+    const allowedStatuses = ["DISPONIBLE", "RESERVADO", "EN_ALQUILER"];
+
+    if (!allowedStatuses.includes(estado)) {
+      callback(
+        grpcError(
+          grpc.status.INVALID_ARGUMENT,
+          "El estado debe ser DISPONIBLE, RESERVADO o EN_ALQUILER"
+        ),
+        null
+      );
+      return;
+    }
+
+    try {
+      const vehicle = await vehicleRepository.updateStatus(id, estado);
+
+      if (!vehicle) {
+        callback(
+          grpcError(grpc.status.NOT_FOUND, "Vehículo no encontrado"),
+          null
+        );
+        return;
+      }
+
       callback(null, { vehicle });
     } catch (error) {
-      callback(error as grpc.ServiceError, null);
+      callback(
+        grpcError(
+          grpc.status.INTERNAL,
+          "No se pudo actualizar el estado del vehículo"
+        ),
+        null
+      );
     }
   },
 };
 
 /**
- * Crea el servidor gRPC, registra VehicleService y comienza a
- * escuchar conexiones en el puerto configurado.
+ * Crea el servidor gRPC y registra las operaciones de vehículos.
  */
 const server = new grpc.Server();
 
@@ -160,31 +197,49 @@ server.addService(
 const port = process.env.VEHICLE_GRPC_PORT || "9091";
 const address = `0.0.0.0:${port}`;
 
-server.bindAsync(
-  address,
-  grpc.ServerCredentials.createInsecure(),
-  (error, boundPort) => {
-    if (error) {
-      console.error("No se pudo iniciar el servidor gRPC:", error);
-      process.exitCode = 1;
-      return;
-    }
-
-    console.log(
-      `Vehicle gRPC Service escuchando en ${address} (puerto ${boundPort})`
-    );
-  }
-);
-
 /**
- * Detiene el servidor de forma ordenada cuando el proceso recibe
- * una señal de cierre.
+ * Detiene el servidor y libera el pool de conexiones a MySQL.
  */
 const shutdown = () => {
-  server.tryShutdown(() => {
+  server.tryShutdown(async () => {
+    await database.end();
     console.log("Vehicle gRPC Service detenido");
   });
 };
 
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
+
+/**
+ * Comprueba MySQL y luego inicia el servidor gRPC.
+ */
+const start = async () => {
+  try {
+    await checkDatabaseConnection();
+
+    server.bindAsync(
+      address,
+      grpc.ServerCredentials.createInsecure(),
+      (error, boundPort) => {
+        if (error) {
+          console.error("No se pudo iniciar el servidor gRPC:", error);
+          process.exitCode = 1;
+          return;
+        }
+
+        console.log(
+          `Vehicle gRPC Service escuchando en ${address} (puerto ${boundPort})`
+        );
+      }
+    );
+  } catch (error) {
+    console.error(
+      "No se pudo conectar a la base de datos. Revise DB_HOST, DB_PORT, DB_NAME, DB_USER y DB_PASSWORD.",
+      error
+    );
+    await database.end();
+    process.exitCode = 1;
+  }
+};
+
+void start();

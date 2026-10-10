@@ -8,7 +8,7 @@ import {
 const router = Router();
 
 router.get("/", getVehicles);
-router.get("/:id", getVehicle);
 router.get("/disponibles", getAvailableVehicles);
+router.get("/:id", getVehicle);
 
 export default router;

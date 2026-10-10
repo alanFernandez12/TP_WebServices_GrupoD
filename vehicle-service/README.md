@@ -1,53 +1,51 @@
 # Vehicle Service
 
-Servicio gRPC de vehículos para Rentar, desarrollado con Node.js y TypeScript.
+Servicio gRPC de vehículos para Rentar, desarrollado con Python.
 
-El servicio implementa el contrato compartido:
+Implementa el contrato compartido:
 
 ```text
 ../proto/vehicle.proto
 ```
 
-Utiliza la misma base de datos MySQL `Rentar` que utiliza el servidor Java.
-Lee y actualiza la tabla `lk_vehiculos`, y consulta `ft_reservas` para calcular
-la disponibilidad.
+Utiliza la misma base MySQL `Rentar` que el servidor Java:
+
+- `lk_vehiculos` para consultar y actualizar vehículos.
+- `ft_reservas` para calcular disponibilidad.
 
 ## Estructura
 
 ```text
 vehicle-service/
-├── src/
-│   ├── database.ts
-│   ├── server.ts
-│   └── vehicleRepository.ts
+├── app/
+│   ├── __init__.py
+│   ├── database.py
+│   ├── server.py
+│   └── vehicle_repository.py
 ├── .env
-├── package.json
-└── tsconfig.json
+└── requirements.txt
 ```
 
-- `src/database.ts`: crea el pool y verifica la conexión a MySQL.
-- `src/server.ts`: carga el contrato, implementa `VehicleService` y levanta el servidor gRPC.
-- `src/vehicleRepository.ts`: contiene las consultas a `lk_vehiculos` y `ft_reservas`.
-- `.env`: configura el puerto gRPC y la conexión a la base.
-- `package.json`: contiene los comandos y dependencias del proyecto.
+- `app/server.py`: implementa `VehicleService` y levanta el servidor gRPC.
+- `app/database.py`: administra el pool de conexiones MySQL.
+- `app/vehicle_repository.py`: contiene las consultas a la base.
+- `app/vehicle_pb2*.py`: archivos generados desde `vehicle.proto`.
+- `.env`: configura el puerto y la conexión a MySQL.
 
 ## Operaciones gRPC
 
-El servidor implementa las cuatro operaciones de `vehicle.proto`:
-
 | Operación | Descripción |
 |---|---|
-| `GetVehicles` | Devuelve todos los vehículos activos de `lk_vehiculos`. |
+| `GetVehicles` | Devuelve vehículos activos de `lk_vehiculos`. |
 | `GetVehicle` | Devuelve un vehículo activo por ID. |
-| `GetAvailableVehicles` | Devuelve vehículos disponibles sin reservas superpuestas. |
+| `GetAvailableVehicles` | Excluye reservas no canceladas que se superpongan. |
 | `UpdateVehicleStatus` | Actualiza `desc_estado_vehiculo`. |
 
-Una reserva se considera ocupante cuando su estado es distinto de
-`CANCELADA` y sus horarios se superponen con el rango solicitado.
+Los estados permitidos son `DISPONIBLE`, `RESERVADO` y `EN_ALQUILER`.
 
 ## Configuración
 
-El archivo `.env` contiene:
+Editar `vehicle-service/.env`:
 
 ```env
 VEHICLE_GRPC_PORT=9091
@@ -58,19 +56,10 @@ DB_USER=root
 DB_PASSWORD=tu contraseña de MySQL
 ```
 
-El API Gateway ya apunta por defecto a:
+La contraseña debe coincidir con `spring.datasource.password` del servidor
+Java. No se debe guardar una contraseña real en el repositorio.
 
-```env
-VEHICLE_SERVICE_URL=localhost:9091
-```
-
-Si se cambia el puerto del servidor, también hay que actualizar
-`VEHICLE_SERVICE_URL` en `api-gateway/.env`.
-
-`DB_PASSWORD` debe tener el mismo valor que `spring.datasource.password` del
-servidor Java. No se debe guardar una contraseña real en el repositorio.
-
-La base debe existir y tener las tablas creadas. Los scripts se encuentran en:
+La base y las tablas deben existir. Los scripts están en:
 
 ```text
 Proyecto/BD/RentarBD.sql
@@ -83,34 +72,42 @@ Desde la raíz del repositorio:
 
 ```powershell
 cd vehicle-service
-npm install
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
 ```
 
-## Ejecución en desarrollo
+Si PowerShell bloquea la activación, se puede instalar sin activar el entorno:
 
 ```powershell
-npm run dev
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-El servidor quedará escuchando en:
+## Generar las clases gRPC
+
+Después de instalar las dependencias, ejecutar desde la raíz:
+
+```powershell
+python -m grpc_tools.protoc -I=proto --python_out=vehicle-service/app --grpc_python_out=vehicle-service/app proto/vehicle.proto
+```
+
+Esto crea `vehicle_pb2.py` y `vehicle_pb2_grpc.py` dentro de `app`.
+
+## Ejecutar
+
+Desde `vehicle-service`:
+
+```powershell
+python app/server.py
+```
+
+El servicio queda escuchando en:
 
 ```text
 localhost:9091
 ```
 
-Para compilar:
-
-```powershell
-npm run build
-```
-
-Para ejecutar la versión compilada:
-
-```powershell
-npm start
-```
-
-## Probarlo junto con el API Gateway
+## Probar con el API Gateway
 
 Abrir dos terminales.
 
@@ -118,40 +115,30 @@ En la primera:
 
 ```powershell
 cd vehicle-service
-npm run dev
+python app/server.py
 ```
 
 En la segunda:
 
 ```powershell
 cd api-gateway
-npm run dev
+npm.cmd run dev
 ```
 
-Después consultar el Gateway:
+No iniciar `npm.cmd run mock:vehicle`, porque el servicio Python ya utiliza el
+puerto `9091`.
+
+Probar desde PowerShell, Postman o Thunder Client:
 
 ```powershell
 Invoke-RestMethod http://localhost:8085/api/vehiculos
 Invoke-RestMethod http://localhost:8085/api/vehiculos/1
-```
-
-La respuesta debería contener los vehículos que existan actualmente en
-`lk_vehiculos`.
-
-Para consultar disponibilidad:
-
-```powershell
 Invoke-RestMethod "http://localhost:8085/api/vehiculos/disponibles?fechaInicio=2026-10-05&fechaFin=2026-10-10"
 ```
 
-El contrato usa los nombres `fechaInicio` y `fechaFin`, y el cliente del
-Gateway ya los envía con esos nombres. Las consultas `GetVehicles` y
-`GetVehicle` no requieren parámetros adicionales.
+El cliente del Gateway traduce esos parámetros HTTP a los campos gRPC
+`fecha_inicio` y `fecha_fin`, que son los nombres utilizados por el código
+Python generado desde el contrato.
 
-## Errores gRPC implementados
-
-- `NOT_FOUND`: el ID solicitado no existe entre los vehículos activos.
-- `INVALID_ARGUMENT`: el rango de fechas no es válido o el estado no es válido.
-- `INTERNAL`: error de consulta o de conexión con MySQL.
-
-El API Gateway convierte esos estados gRPC en respuestas HTTP.
+El API Gateway sigue funcionando como cliente gRPC y no necesita saber que el
+servidor está implementado en Python.

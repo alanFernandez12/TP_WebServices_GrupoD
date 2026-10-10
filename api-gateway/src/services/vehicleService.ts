@@ -41,8 +41,8 @@ export const getAvailableVehicles = (
   return new Promise((resolve, reject) => {
     vehicleClient.GetAvailableVehicles(
       {
-        fechaInicio,
-        fechaFin,
+        fecha_inicio: fechaInicio,
+        fecha_fin: fechaFin,
       },
       (error: any, response: any) => {
         if (error) {

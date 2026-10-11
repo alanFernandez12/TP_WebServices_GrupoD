@@ -60,8 +60,8 @@ vehicle-service/app/__pycache__/
 services/customer-service/src/test/
 .DS_Store
 
-rental-service/.venv/
-rental-service/app/*_pb2.py
-rental-service/app/*_pb2_grpc.py
-rental-service/app/__pycache__/
-rental-service/.env
+services/rental-service/.venv/
+services/rental-service/app/*_pb2.py
+services/rental-service/app/*_pb2_grpc.py
+services/rental-service/app/__pycache__/
+services/rental-service/.env

@@ -46,4 +46,7 @@ message Rental {
   string fecha_inicio = 4;
   string fecha_fin = 5;
   string estado = 6;
+  int32 duracion_dias = 7;
+  string precio_diario_historico = 8;
+  string importe_total = 9;
 }

@@ -16,6 +16,7 @@ RENTAL_SERVICE_URL=localhost:9093
 Instalar las dependencias:
 
 ```bash
+cd api-gateway
 npm install
 ```
 

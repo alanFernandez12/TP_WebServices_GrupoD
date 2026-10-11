@@ -2,23 +2,29 @@ import { Request, Response, NextFunction } from "express";
 import * as rentalService from "../services/rentalService";
 
 export const createRental = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
+    req: Request,
+    res: Response,
+    next: NextFunction
 ) => {
   try {
-    const {
-      clienteId,
-      vehiculoId,
-      fechaInicio,
-      fechaFin,
-    } = req.body;
+    const body = req.body ?? {};
+    const clienteId = Number(body.clienteId ?? body.idCliente);
+    const vehiculoId = Number(body.vehiculoId ?? body.idVehiculo);
+    const fechaInicio = body.fechaInicio ?? body.horaInicio;
+    const fechaFin = body.fechaFin ?? body.horaFin;
+
+    await rentalService.validateRental(
+        clienteId,
+        vehiculoId,
+        fechaInicio,
+        fechaFin
+    );
 
     const response = await rentalService.createRental(
-      Number(clienteId),
-      Number(vehiculoId),
-      fechaInicio,
-      fechaFin
+        clienteId,
+        vehiculoId,
+        fechaInicio,
+        fechaFin
     );
 
     res.status(201).json(response);
@@ -28,13 +34,12 @@ export const createRental = async (
 };
 
 export const getRentals = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
+    _req: Request,
+    res: Response,
+    next: NextFunction
 ) => {
   try {
     const response = await rentalService.getRentals();
-
     res.status(200).json(response);
   } catch (error) {
     next(error);
@@ -42,15 +47,12 @@ export const getRentals = async (
 };
 
 export const getRental = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
+    req: Request,
+    res: Response,
+    next: NextFunction
 ) => {
   try {
-    const id = Number(req.params.id);
-
-    const response = await rentalService.getRental(id);
-
+    const response = await rentalService.getRental(Number(req.params.id));
     res.status(200).json(response);
   } catch (error) {
     next(error);
@@ -58,15 +60,12 @@ export const getRental = async (
 };
 
 export const cancelRental = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
+    req: Request,
+    res: Response,
+    next: NextFunction
 ) => {
   try {
-    const id = Number(req.params.id);
-
-    const response = await rentalService.cancelRental(id);
-
+    const response = await rentalService.cancelRental(Number(req.params.id));
     res.status(200).json(response);
   } catch (error) {
     next(error);
@@ -74,17 +73,14 @@ export const cancelRental = async (
 };
 
 export const getRentalHistory = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
+    req: Request,
+    res: Response,
+    next: NextFunction
 ) => {
   try {
-    const clienteId = Number(req.params.clienteId);
-
     const response = await rentalService.getRentalHistory(
-      clienteId
+        Number(req.params.clienteId)
     );
-
     res.status(200).json(response);
   } catch (error) {
     next(error);

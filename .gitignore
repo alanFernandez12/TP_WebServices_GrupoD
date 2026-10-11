@@ -59,3 +59,9 @@ vehicle-service/app/__pycache__/
 ### Customer Service (tests locales, no se suben) ###
 services/customer-service/src/test/
 .DS_Store
+
+services/rental-service/.venv/
+services/rental-service/app/*_pb2.py
+services/rental-service/app/*_pb2_grpc.py
+services/rental-service/app/__pycache__/
+services/rental-service/.env

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { bajaCliente, bajaVehiculo, cancelarReserva, obtenerClientes, obtenerReservas, obtenerVehiculos, reactivarCliente, reactivarVehiculo} from '../../services/api'
-import type { Cliente, Reserva, Vehiculo } from '../../types/domain'
+import type { Cliente, Reserva, ReservaFiltro, EstadoReserva, Vehiculo } from '../../types/domain'
 import { ActionCard } from './components/ActionCard'
 import { ClientGrid } from './components/ClientGrid'
 import { ReservationGrid } from './components/ReservationGrid'
@@ -35,55 +35,49 @@ export function Dashboard() {
   const [activeView, setActiveView] = useState<View>('clientes')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('TODAS')
+  const [clienteFiltro, setClienteFiltro] = useState('')
+  const [vehiculoFiltro, setVehiculoFiltro] = useState('')
+  const [tipoFiltro, setTipoFiltro] = useState('')
+  const [fechaDesde, setFechaDesde] = useState('')
+  const [fechaHasta, setFechaHasta] = useState('')
+  const [filtroAplicado, setFiltroAplicado] = useState<ReservaFiltro>({})
   const [modal, setModal] = useState<RegistrationType | null>(null)
   const [registroEdicion, setRegistroEdicion] = useState<Cliente | Vehiculo | undefined>(undefined)
   const [registroBaja, setRegistroBaja] = useState<RegistroBaja | null>(null)
   const [procesandoBaja, setProcesandoBaja] = useState(false)
   const [errorBaja, setErrorBaja] = useState('')
 
-  const loadClients = useCallback(async () => {
+    const loadClients = useCallback(async () => {
     setLoadingClients(true)
     setErrorClients('')
-    try {
-      setClientes(await obtenerClientes())
-    } catch (error) {
-      setErrorClients(mensajeError(error, 'No se pudieron cargar los clientes.'))
-    } finally {
-      setLoadingClients(false)
-    }
+    try {setClientes(await obtenerClientes())
+      } catch (error) {
+        setErrorClients(mensajeError(error, 'No se pudieron cargar los clientes.'))
+      } finally {setLoadingClients(false)}
   }, [])
 
   const loadVehicles = useCallback(async () => {
     setLoadingVehicles(true)
     setErrorVehicles('')
-    try {
-      setVehiculos(await obtenerVehiculos())
-    } catch (error) {
-      setErrorVehicles(mensajeError(error, 'No se pudieron cargar los vehículos.'))
-    } finally {
-      setLoadingVehicles(false)
-    }
+    try {setVehiculos(await obtenerVehiculos())
+      } catch (error) {
+        setErrorVehicles(mensajeError(error, 'No se pudieron cargar los vehículos.'))
+    } finally {setLoadingVehicles(false)}
   }, [])
 
   const loadReservations = useCallback(async () => {
     setLoadingReservations(true)
     setErrorReservations('')
-    try {
-      const all = await obtenerReservas()
-      setReservas(all.filter(({ estadoReserva }) =>
-        estadoReserva === 'PENDIENTE' || estadoReserva === 'CONFIRMADA'
-      ))
+    try {setReservas(await obtenerReservas(filtroAplicado))
     } catch (error) {
       setErrorReservations(mensajeError(error, 'No se pudieron cargar las reservas.'))
-    } finally {
-      setLoadingReservations(false)
-    }
-  }, [])
+    } finally {setLoadingReservations(false)}
+  }, [filtroAplicado])
 
   useEffect(() => {
     if (activeView === 'clientes') void loadClients()
     if (activeView === 'vehiculos') void loadVehicles()
-    if (activeView === 'reservas') void loadReservations()
+    if (activeView === 'reservas') { void loadReservations(), void loadClients(), void loadVehicles()}
   }, [activeView, loadClients, loadVehicles, loadReservations])
 
   const openRegistration = (type: RegistrationType) => {
@@ -134,9 +128,7 @@ export function Dashboard() {
       setRegistroBaja(null)
     } catch (error) {
       setErrorBaja(mensajeError(error, 'No se pudo realizar la baja.'))
-    } finally {
-      setProcesandoBaja(false)
-    }
+    } finally {setProcesandoBaja(false)}
   }
 
   const handleReactivateClient = async (client: Cliente) => {
@@ -164,12 +156,33 @@ export function Dashboard() {
   }
 
   const filteredReservations = reservas.filter((reservation) => {
-    const matchesStatus = statusFilter === 'TODAS' || reservation.estadoReserva === statusFilter
     const normalizedSearch = search.trim().toLowerCase()
     const matchesSearch = !normalizedSearch ||
-      `${reservation.id} ${reservation.idCliente} ${reservation.idVehiculo}`.includes(normalizedSearch)
-    return matchesStatus && matchesSearch
+      `${reservation.cliente.nombre} ${reservation.cliente.apellido} ${reservation.cliente.documento} ${reservation.vehiculo.marca} ${reservation.vehiculo.modelo} ${reservation.patente}`.toLowerCase().includes(normalizedSearch)
+    return matchesSearch
   })
+
+  const aplicarFiltros = () => {
+    if (fechaDesde && fechaHasta && fechaHasta < fechaDesde) {
+      setErrorReservations('La fecha hasta no puede ser anterior a la fecha desde.')
+      return
+    }
+    setErrorReservations('')
+    setFiltroAplicado({
+      clienteId: clienteFiltro ? Number(clienteFiltro) : undefined,
+      vehiculoId: vehiculoFiltro ? Number(vehiculoFiltro) : undefined,
+      tipoVehiculo: tipoFiltro || undefined,
+      estadoReserva: statusFilter === 'TODAS' ? undefined : statusFilter as EstadoReserva,
+      fechaDesde: fechaDesde || undefined,
+      fechaHasta: fechaHasta || undefined,
+    })
+  }
+
+  const limpiarFiltros = () => {
+    setClienteFiltro(''); setVehiculoFiltro(''); setTipoFiltro('')
+    setFechaDesde(''); setFechaHasta(''); setStatusFilter('TODAS'); setSearch('')
+    setErrorReservations(''); setFiltroAplicado({})
+  }
 
   const titulo = activeView === 'clientes'
     ? 'Gestión de clientes'
@@ -197,28 +210,19 @@ export function Dashboard() {
           <p className="sidebar-label">Administración</p>
           <nav className="main-nav" aria-label="Secciones principales">
             {sections.map(({ id, label }) => (
-              <button
-                type="button"
-                key={id}
-                className={activeView === id ? 'nav-item active' : 'nav-item'}
-                onClick={() => { setActiveView(id); setSuccessMessage('') }}
-              >
+              <button type="button" key={id} className={activeView === id ? 'nav-item active' : 'nav-item'}
+                onClick={() => { setActiveView(id); setSuccessMessage('') }}>
                 <span className={`nav-icon nav-icon-${id}`} />{label}
               </button>
-            ))}
-          </nav>
+            ))}</nav>
         </aside>
 
         <main className="dashboard">
           <section className="welcome">
-            <div>
-              <p className="eyebrow">Reservas</p>
-              <h1>{titulo}</h1>
-              <p className="subtitle">
-                {activeView === 'reservas'
+            <div><p className="eyebrow">Reservas</p><h1>{titulo}</h1>
+              <p className="subtitle">{activeView === 'reservas'
                   ? 'Supervisá el estado de tu operación diaria.'
-                  : `Consultá y administrá la información de ${activeView}.`}
-              </p>
+                  : `Consultá y administrá la información de ${activeView}.`}</p>
             </div>
             <span className="date-label">
               {new Intl.DateTimeFormat('es-AR', { dateStyle: 'long' }).format(new Date())}
@@ -227,28 +231,24 @@ export function Dashboard() {
 
           {activeView === 'clientes' && (
             <section className="reservations-section">
-              <div className="section-heading">
-                <h2>Clientes registrados</h2>
+              <div className="section-heading"><h2>Clientes registrados</h2>
                 <span className="count-badge">{clientes.length} clientes</span>
               </div>
-              {errorClients && (
-                <div className="alert error" role="alert">
+              {errorClients && (<div className="alert error" role="alert">
                   {errorClients} <button type="button" onClick={() => void loadClients()}>Reintentar</button>
                 </div>
               )}
               <div className="module-toolbar">
                 <p>Registrá, editá o da de baja a los clientes.</p>
                 <button type="button" className="primary-button" onClick={() => openRegistration('cliente')}>
-                  + Nuevo cliente
-                </button>
+                  + Nuevo cliente</button>
               </div>
               <ClientGrid
                 clients={clientes}
                 loading={loadingClients}
                 onEdit={(client) => openEdition('cliente', client)}
                 onDeactivate={solicitarBajaCliente}
-                onReactivate={(client) => void handleReactivateClient(client)}
-              />
+                onReactivate={(client) => void handleReactivateClient(client)}/>
             </section>
           )}
 
@@ -284,7 +284,7 @@ export function Dashboard() {
               <section className="metric-grid" aria-label="Resumen de operación">
                 <div className="metric-card">
                   <span className="metric-label">Reservas activas</span>
-                  <strong>{reservas.length}</strong><small>Confirmadas o pendientes</small>
+                  <strong>{reservas.filter(r => r.estadoReserva === 'CONFIRMADA' || r.estadoReserva === 'PENDIENTE').length}</strong><small>Dentro de la consulta actual</small>
                 </div>
                 <div className="metric-card">
                   <span className="metric-label">Confirmadas</span>
@@ -302,19 +302,44 @@ export function Dashboard() {
               </section>
               <section className="reservations-section">
                 <div className="section-heading">
-                  <div><p className="eyebrow">Agenda</p><h2>Reservas activas</h2></div>
+                  <div><p className="eyebrow">Agenda</p><h2>Consulta de reservas</h2></div>
                   <span className="count-badge">{filteredReservations.length} de {reservas.length}</span>
                 </div>
                 <div className="table-toolbar">
                   <label className="search-box">
                     <span>⌕</span>
-                    <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por reserva, cliente o vehículo" />
+                    <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nombre, documento, patente o vehículo" />
                   </label>
                   <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filtrar por estado">
                     <option value="TODAS">Todos los estados</option>
                     <option value="PENDIENTE">Pendientes</option>
                     <option value="CONFIRMADA">Confirmadas</option>
+                    <option value="CANCELADA">Canceladas</option>
+                    <option value="TERMINADA">Terminadas</option>
                   </select>
+                </div>
+                <div className="form-grid">
+                  <label><span>Cliente</span><select value={clienteFiltro} onChange={e => setClienteFiltro(e.target.value)} disabled={loadingClients}>
+                    <option value="">Todos los clientes</option>
+                    {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre} {c.apellido} — {c.documento}</option>)}
+                  </select></label>
+                  <label><span>Vehículo</span><select value={vehiculoFiltro} onChange={e => setVehiculoFiltro(e.target.value)} disabled={loadingVehicles}>
+                    <option value="">Todos los vehículos</option>
+                    {vehiculos.map(v => <option key={v.id} value={v.id}>{v.marca} {v.modelo} — {v.patente}</option>)}
+                  </select></label>
+                  <label><span>Tipo de vehículo</span><select value={tipoFiltro} onChange={e => setTipoFiltro(e.target.value)}>
+                    <option value="">Todos los tipos</option>
+                    {['SEDAN', 'SUV', 'PICKUP', 'COUPE', 'HATCHBACK'].map(t => <option key={t} value={t}>{t}</option>)}
+                  </select></label>
+                  <label><span>Desde</span><input type="datetime-local" value={fechaDesde} onChange={e => setFechaDesde(e.target.value)} /></label>
+                  <label><span>Hasta</span><input type="datetime-local" value={fechaHasta} onChange={e => setFechaHasta(e.target.value)} /></label>
+                </div>
+                <p>El rango incluye reservas cuyo inicio y fin estén dentro de las fechas elegidas.</p>
+                {errorClients && <p className="form-error">No se pudieron cargar los clientes para el filtro. <button type="button" onClick={() => void loadClients()}>Reintentar</button></p>}
+                {errorVehicles && <p className="form-error">No se pudieron cargar los vehículos para el filtro. <button type="button" onClick={() => void loadVehicles()}>Reintentar</button></p>}
+                <div className="modal-actions" style={{ justifyContent: 'flex-start', flexWrap: 'wrap',}}>
+                  <button type="button" className="secondary-button" onClick={limpiarFiltros}>Limpiar filtros</button>
+                  <button type="button" className="primary-button" onClick={aplicarFiltros} disabled={loadingReservations}>Aplicar filtros</button>
                 </div>
                 {errorReservations && (
                   <div className="alert error" role="alert">

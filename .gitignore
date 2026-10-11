@@ -50,7 +50,12 @@ frontend/.vite
 ### Gateway ###
 api-gateway/node_modules/
 api-gateway/dist/
+
 vehicle-service/.venv/
 vehicle-service/app/*_pb2.py
 vehicle-service/app/*_pb2_grpc.py
 vehicle-service/app/__pycache__/
+
+### Customer Service (tests locales, no se suben) ###
+services/customer-service/src/test/
+.DS_Store

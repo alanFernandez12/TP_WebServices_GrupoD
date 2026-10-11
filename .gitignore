@@ -54,3 +54,8 @@ vehicle-service/.venv/
 vehicle-service/app/*_pb2.py
 vehicle-service/app/*_pb2_grpc.py
 vehicle-service/app/__pycache__/
+rental-service/.venv/
+rental-service/app/*_pb2.py
+rental-service/app/*_pb2_grpc.py
+rental-service/app/__pycache__/
+rental-service/.env

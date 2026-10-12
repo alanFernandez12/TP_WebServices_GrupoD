@@ -104,6 +104,30 @@ export function obtenerClientes() {
   return request<Cliente[]>('/gateway/clientes')
 }
 
+export function obtenerVehiculo(id: number) {
+  return request<Vehiculo>(`/gateway/vehiculos/${id}`)
+}
+
+export function obtenerCliente(id: number) {
+  return request<Cliente>(`/gateway/clientes/${id}`)
+}
+
+export interface ReservaConsulta {
+  id: number
+  idCliente: number
+  idVehiculo: number
+  horaInicio: string
+  horaFin: string
+  duracionDias: number
+  precioDiarioHistorico: number
+  importeTotal: number
+  estadoReserva: Reserva['estadoReserva']
+}
+
+export function obtenerReserva(id: number) {
+  return request<ReservaConsulta>(`/gateway/reservas/${id}`)
+}
+
 export async function obtenerReservas(filtro: ReservaFiltro = {}): Promise<Reserva[]> {
   const [reservas, clientes, vehiculos] = await Promise.all([
     request<Array<{

@@ -3,12 +3,13 @@ import type { Vehiculo } from '../../../types/domain'
 interface Props {
   vehicles: Vehiculo[]
   loading: boolean
+  onView: (vehicle: Vehiculo) => void
   onEdit: (vehicle: Vehiculo) => void
   onDeactivate: (vehicle: Vehiculo) => void
   onReactivate: (vehicle: Vehiculo) => void
 }
 
-export function VehicleGrid({ vehicles, loading, onEdit, onDeactivate, onReactivate}: Props) {
+export function VehicleGrid({ vehicles, loading, onView, onEdit, onDeactivate, onReactivate}: Props) {
   
   if (loading) 
     return <div className="empty-state">Cargando vehículos...</div>
@@ -30,6 +31,7 @@ export function VehicleGrid({ vehicles, loading, onEdit, onDeactivate, onReactiv
           <td>{vehicle.estado}</td>
           <td><span className={`status ${vehicle.activo ? 'status-confirmada' : 'status-cancelada'}`}>{vehicle.activo ? 'ACTIVO' : 'INACTIVO'}</span></td>
           <td> <div className="table-actions">
+            <button type="button" className="secondary-button" onClick={() => onView(vehicle)}>Ver</button>
             <button type="button" className="secondary-button" onClick={() => onEdit(vehicle)}>Editar</button>
             {vehicle.activo ? (<button type="button" className="secondary-button danger-button"
              onClick={() => onDeactivate(vehicle)}>Dar de baja</button>) : (

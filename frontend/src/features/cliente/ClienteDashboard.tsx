@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { cancelarReserva, obtenerReservas, type Sesion } from '../../services/api'
+import { cancelarReserva, obtenerReserva, obtenerReservas, type Sesion } from '../../services/api'
 import type { EstadoReserva, Reserva, ReservaFiltro } from '../../types/domain'
 import { ReservationGrid } from '../dashboard/components/ReservationGrid'
+import { DetailModal, type DetailRegistro } from '../dashboard/components/DetailModal'
 
 export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogout: () => void }) {
   const [reservas, setReservas] = useState<Reserva[]>([])
@@ -15,6 +16,9 @@ export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogou
   const [hasta, setHasta] = useState('')
   const [filtro, setFiltro] = useState<ReservaFiltro>({})
   const [cancelando, setCancelando] = useState(false)
+  const [detalle, setDetalle] = useState<DetailRegistro | null>(null)
+  const [cargandoDetalle, setCargandoDetalle] = useState(false)
+  const [errorDetalle, setErrorDetalle] = useState('')
 
   const cargar = useCallback(async () => {
     setLoading(true); setError('')
@@ -23,6 +27,20 @@ export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogou
     finally { setLoading(false) }
   }, [filtro])
   useEffect(() => { void cargar() }, [cargar])
+
+  const verReserva = async (registro: Reserva) => {
+    setDetalle({ type: 'reserva', registro })
+    setErrorDetalle('')
+    setCargandoDetalle(true)
+    try {
+      const actualizada = await obtenerReserva(registro.id)
+      setDetalle({ type: 'reserva', registro: { ...registro, ...actualizada } })
+    } catch (e) {
+      setErrorDetalle(e instanceof Error ? e.message : 'No se pudo consultar la reserva.')
+    } finally {
+      setCargandoDetalle(false)
+    }
+  }
 
   const resultados = reservas.filter(r =>
     `${r.vehiculo.marca} ${r.vehiculo.modelo} ${r.patente}`.toLowerCase().includes(search.trim().toLowerCase()))
@@ -76,7 +94,7 @@ export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogou
           {error && <div className="alert error" role="alert">{error} <button type="button" onClick={() => void cargar()}>Reintentar</button></div>}
           {success && <div className="alert success" role="status">{success}</div>}
           <div aria-busy={cancelando} style={cancelando ? { pointerEvents: 'none', opacity: 0.65 } : undefined}>
-            <ReservationGrid reservations={resultados} loading={loading} onCancelReservation={async id => {
+            <ReservationGrid reservations={resultados} loading={loading} onView={registro => void verReserva(registro)} onCancelReservation={async id => {
               if (cancelando || !window.confirm('¿Querés cancelar esta reserva?')) return
               setCancelando(true); setError(''); setSuccess('')
               try { await cancelarReserva(id); setSuccess('Reserva cancelada correctamente.'); await cargar() }
@@ -87,5 +105,8 @@ export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogou
         </section>
       </main>
     </div>
+    {detalle && <DetailModal detail={detalle} loading={cargandoDetalle} error={errorDetalle} onClose={() => {
+      if (!cargandoDetalle) { setDetalle(null); setErrorDetalle('') }
+    }} />}
   </div>
 }

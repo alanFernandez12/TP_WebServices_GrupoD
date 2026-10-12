@@ -27,3 +27,4 @@
 .danger-button {color: #b42318;}
 .table-actions button:disabled {opacity: 0.5;cursor: not-allowed;}
 input[readonly] {background-color: #f2f4f7; color: #667085;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.detail-field{padding:12px 14px;background:#f7fbfa;border:1px solid #e5eeeb;border-radius:8px}.detail-field span{display:block;color:#78908e;font-size:11px;font-weight:600;margin-bottom:5px}.detail-field strong{display:block;color:#285b57;font-size:13px;white-space:normal}.detail-loading{color:#78908e;font-size:13px;margin:8px 0 20px}@media(max-width:520px){.detail-grid{grid-template-columns:1fr}}

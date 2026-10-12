@@ -46,4 +46,9 @@ message Vehicle {
   string marca = 3;
   string modelo = 4;
   string estado = 5;
+  int32 anio = 6;
+  string tipoVehiculo = 7;
+  string color = 8;
+  string precio_diario = 9;
+  bool activo = 10;
 }

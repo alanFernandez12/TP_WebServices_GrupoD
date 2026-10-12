@@ -42,30 +42,44 @@ export function crearCliente(data: unknown) {
 }
 
 export function crearReserva(data: unknown) {
-  return request<Reserva>('/api/reservas', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
+  return request<Reserva>('/gateway/reservas', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
 }
 
 export function obtenerVehiculos() {
-  return request<Vehiculo[]>('/api/vehiculos')
+  return request<Vehiculo[]>('/gateway/vehiculos')
 }
 
 export function obtenerClientes() {
-  return request<Cliente[]>('/api/clientes')
+  return request<Cliente[]>('/gateway/clientes')
 }
 
-export async function obtenerReservas(): Promise<Reserva[]> {
-  const response = await request<{ data?: { reservas: Reserva[] }; errors?: { message: string }[] }>('/graphql', {
+export function obtenerReservas() {
+  return request<Reserva[]>('/gateway/reservas')
+}
+
+// Alternativa anterior: consulta las reservas mediante GraphQL en Spring Boot.
+// Se conserva para poder comparar ambos contratos o volver a utilizarlo.
+export async function obtenerReservasGraphQL(): Promise<Reserva[]> {
+  const response = await request<{
+    data?: { reservas: Reserva[] }
+    errors?: { message: string }[]
+  }>('/graphql', {
     method: 'POST',
     headers: jsonHeaders,
     body: JSON.stringify({
       query: `query Reservas { reservas(filtro: {}) { id idCliente idVehiculo horaInicio horaFin importeTotal estadoReserva } }`,
     }),
   })
-  if (response.errors?.length) throw new Error(response.errors[0].message)
+
+  if (response.errors?.length) {
+    throw new Error(response.errors[0].message)
+  }
+
   return response.data?.reservas ?? []
 }
+
 export function cancelarReserva(id: number) {
-  return request<Reserva>(`/api/reservas/${id}/cancelar`, { method: 'PATCH' })
+  return request<Reserva>(`/gateway/reservas/${id}/cancelar`, { method: 'PATCH' })
 }
 
 export function modificarVehiculo(id: number, data: unknown) {

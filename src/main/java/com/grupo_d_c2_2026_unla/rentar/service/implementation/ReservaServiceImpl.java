@@ -15,6 +15,7 @@ import com.grupo_d_c2_2026_unla.rentar.exception.BusinessException;
 import com.grupo_d_c2_2026_unla.rentar.exception.ResourceNotFoundException;
 import com.grupo_d_c2_2026_unla.rentar.repository.*;
 import com.grupo_d_c2_2026_unla.rentar.service.ReservaService;
+import com.grupo_d_c2_2026_unla.rentar.security.UsuarioActual;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -34,20 +35,28 @@ public class ReservaServiceImpl implements ReservaService {
     private final ClienteRepository clienteRepository;
     private final VehiculoRepository vehiculoRepository;
     private final TiempoRepository tiempoRepository;
+     private final UsuarioActual usuarioActual;
 
     public ReservaServiceImpl(
             ReservaRepository reservaRepository,
             ClienteRepository clienteRepository,
             VehiculoRepository vehiculoRepository,
-            TiempoRepository tiempoRepository) {
+            TiempoRepository tiempoRepository,
+            UsuarioActual usuarioActual) {
         this.reservaRepository = reservaRepository;
         this.clienteRepository = clienteRepository;
         this.vehiculoRepository = vehiculoRepository;
         this.tiempoRepository = tiempoRepository;
+        this.usuarioActual = usuarioActual;
     }
     @Override
     @Transactional
     public ReservaResponseDTO crear(ReservaRequestDTO dto) {
+
+        Long clienteId = usuarioActual.clientePermitido(dto.getIdCliente());
+
+        if (clienteId == null) 
+            throw new BusinessException("Debe seleccionar un cliente.");
         // Validaciones:
         // Validar que la fecha y hora de inicio y fin no sean nulas
         if (dto.getHoraInicio() == null || dto.getHoraFin() == null) {
@@ -115,9 +124,12 @@ public class ReservaServiceImpl implements ReservaService {
      @Override
     @Transactional(readOnly = true)
     public List<HistorialAlquilerDTO> consultarHistorial(Long clienteId) {
+        
+        clienteId = usuarioActual.clientePermitido(clienteId);
         if (clienteId == null) {
             throw new BusinessException("El identificador del cliente es obligatorio.");
         }
+
         if (!clienteRepository.existsById(clienteId)) {
             throw new ResourceNotFoundException("Cliente no encontrado.");
         }
@@ -134,6 +146,7 @@ public class ReservaServiceImpl implements ReservaService {
     @Transactional (readOnly = true)
     public List<ReservaResponseDTO> buscarReservas(ReservaFilterInput filtro) {
         ReservaFilterInput criterios = filtro != null ? filtro : new ReservaFilterInput();
+        Long clienteId = usuarioActual.clientePermitido(criterios.getClienteId());
         LocalDateTime desde = parsearFechaFiltro(criterios.getFechaDesde());
         LocalDateTime hasta = parsearFechaFiltro(criterios.getFechaHasta());
         
@@ -142,7 +155,7 @@ public class ReservaServiceImpl implements ReservaService {
         }
 
         return reservaRepository.findAll(Sort.by(Sort.Direction.DESC, "horaInicio")).stream()
-                .filter(r -> criterios.getClienteId() == null || r.getCliente().getIdCliente().equals(criterios.getClienteId()))
+                .filter(r -> clienteId == null || r.getCliente().getIdCliente().equals(clienteId))
                 .filter(r -> criterios.getVehiculoId() == null || r.getVehiculo().getId().equals(criterios.getVehiculoId()))
                 .filter(r -> criterios.getTipoVehiculo() == null || r.getVehiculo().getTipoVehiculo() == criterios.getTipoVehiculo())
                 .filter(r -> criterios.getEstadoReserva() == null || r.getEstadoReserva() == criterios.getEstadoReserva())
@@ -235,6 +248,9 @@ public class ReservaServiceImpl implements ReservaService {
         //Busca si existe la reserva y la trae
         Reserva reserva = reservaRepository.findById(reservaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada."));
+        //comprueba que pertenezca al usuario actual
+        usuarioActual.clientePermitido(reserva.getCliente().getIdCliente());
+
         //revisa si ya esta cancelada
         if (reserva.getEstadoReserva() == EstadoReserva.CANCELADA) {
             throw new BusinessException("La reserva ya se encuentra cancelada.");

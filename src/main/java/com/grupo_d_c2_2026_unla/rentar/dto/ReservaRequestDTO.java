@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Setter
 public class ReservaRequestDTO {
 
-    @NotNull
+    //se sacó el not null porque se obtiene del auth ahora
     private Long idCliente;
 
     @NotNull

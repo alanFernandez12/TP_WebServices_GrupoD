@@ -38,8 +38,6 @@ export interface Reserva {
   patente: string
   precioDiarioHistorico: number
   id: number
-  idCliente: number
-  idVehiculo: number
   horaInicio: string
   horaFin: string
   importeTotal: number

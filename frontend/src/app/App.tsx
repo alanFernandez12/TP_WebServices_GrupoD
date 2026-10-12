@@ -1,17 +1,30 @@
-import { useState } from 'react'
-import { cerrarSesion, Login, type Rol } from '../features/auth/Login'
+import { useEffect, useState } from 'react'
+import { Login } from '../features/auth/Login'
+import { cerrarSesion, configurarPerdidaSesion, type Sesion } from '../services/api'
 import { ClienteDashboard } from '../features/cliente/ClienteDashboard'
 import { Dashboard } from '../features/dashboard/Dashboard'
 
 export default function App() {
-  const [rol, setRol] = useState<Rol | null>(null)
+  const [sesion, setSesion] = useState<Sesion | null>(null)
+  const [aviso, setAviso] = useState('')
+
+  useEffect(() => {
+    configurarPerdidaSesion(() => {
+      setSesion(null)
+      setAviso('Tu sesión ya no es válida. Volvé a ingresar.')
+    })
+    return () => configurarPerdidaSesion(undefined)
+  }, [])
 
   function logout() {
     cerrarSesion()
-    setRol(null)
+    setSesion(null)
+    setAviso('')
   }
 
-  if (rol === 'ADMIN') return <Dashboard onLogout={logout} />
-  if (rol === 'CLIENTE') return <ClienteDashboard onLogout={logout} />
-  return <Login onLogin={setRol} />
+  // Sin sesión validada no se monta ningún panel.
+  if (!sesion) return <Login aviso={aviso} onLogin={usuario => { setSesion(usuario); setAviso('') }} />
+  if (sesion.rol === 'ADMIN') return <Dashboard nombre={sesion.nombre} onLogout={logout} />
+  return <ClienteDashboard sesion={sesion} onLogout={logout} />
 }
+

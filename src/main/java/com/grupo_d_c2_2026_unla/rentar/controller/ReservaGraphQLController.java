@@ -13,6 +13,7 @@ import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandler;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.execution.ErrorType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 
 import java.util.List;
@@ -33,6 +34,14 @@ public class ReservaGraphQLController {
                 .errorType(ErrorType.BAD_REQUEST)
                 .message(ex.getMessage())
                 .build();
+    }
+
+    @GraphQlExceptionHandler(AccessDeniedException.class)
+    public GraphQLError accesoDenegado(AccessDeniedException ex, DataFetchingEnvironment environment) {
+        return GraphqlErrorBuilder.newError(environment)
+                                  .errorType(ErrorType.FORBIDDEN)
+                                  .message(ex.getMessage())
+                                  .build();
     }
     
     @QueryMapping

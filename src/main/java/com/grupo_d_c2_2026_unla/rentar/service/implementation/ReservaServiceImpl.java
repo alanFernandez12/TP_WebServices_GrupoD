@@ -1,9 +1,11 @@
 package com.grupo_d_c2_2026_unla.rentar.service.implementation;
 
+import com.grupo_d_c2_2026_unla.rentar.dto.ClienteResponseDTO;
 import com.grupo_d_c2_2026_unla.rentar.dto.HistorialAlquilerDTO;
 import com.grupo_d_c2_2026_unla.rentar.dto.ReservaFilterInput;
 import com.grupo_d_c2_2026_unla.rentar.dto.ReservaRequestDTO;
 import com.grupo_d_c2_2026_unla.rentar.dto.ReservaResponseDTO;
+import com.grupo_d_c2_2026_unla.rentar.dto.VehiculoResponseDTO;
 import com.grupo_d_c2_2026_unla.rentar.entity.Cliente;
 import com.grupo_d_c2_2026_unla.rentar.entity.Reserva;
 import com.grupo_d_c2_2026_unla.rentar.entity.Tiempo;
@@ -13,6 +15,8 @@ import com.grupo_d_c2_2026_unla.rentar.exception.BusinessException;
 import com.grupo_d_c2_2026_unla.rentar.exception.ResourceNotFoundException;
 import com.grupo_d_c2_2026_unla.rentar.repository.*;
 import com.grupo_d_c2_2026_unla.rentar.service.ReservaService;
+import com.grupo_d_c2_2026_unla.rentar.security.UsuarioActual;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +25,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @Service("reservaService")
@@ -30,20 +35,28 @@ public class ReservaServiceImpl implements ReservaService {
     private final ClienteRepository clienteRepository;
     private final VehiculoRepository vehiculoRepository;
     private final TiempoRepository tiempoRepository;
+     private final UsuarioActual usuarioActual;
 
     public ReservaServiceImpl(
             ReservaRepository reservaRepository,
             ClienteRepository clienteRepository,
             VehiculoRepository vehiculoRepository,
-            TiempoRepository tiempoRepository) {
+            TiempoRepository tiempoRepository,
+            UsuarioActual usuarioActual) {
         this.reservaRepository = reservaRepository;
         this.clienteRepository = clienteRepository;
         this.vehiculoRepository = vehiculoRepository;
         this.tiempoRepository = tiempoRepository;
+        this.usuarioActual = usuarioActual;
     }
     @Override
     @Transactional
     public ReservaResponseDTO crear(ReservaRequestDTO dto) {
+
+        Long clienteId = usuarioActual.clientePermitido(dto.getIdCliente());
+
+        if (clienteId == null) 
+            throw new BusinessException("Debe seleccionar un cliente.");
         // Validaciones:
         // Validar que la fecha y hora de inicio y fin no sean nulas
         if (dto.getHoraInicio() == null || dto.getHoraFin() == null) {
@@ -111,9 +124,12 @@ public class ReservaServiceImpl implements ReservaService {
      @Override
     @Transactional(readOnly = true)
     public List<HistorialAlquilerDTO> consultarHistorial(Long clienteId) {
+        
+        clienteId = usuarioActual.clientePermitido(clienteId);
         if (clienteId == null) {
             throw new BusinessException("El identificador del cliente es obligatorio.");
         }
+
         if (!clienteRepository.existsById(clienteId)) {
             throw new ResourceNotFoundException("Cliente no encontrado.");
         }
@@ -127,18 +143,36 @@ public class ReservaServiceImpl implements ReservaService {
     }
 
     @Override
+    @Transactional (readOnly = true)
     public List<ReservaResponseDTO> buscarReservas(ReservaFilterInput filtro) {
-        List<Reserva> todas = reservaRepository.findAll();
+        ReservaFilterInput criterios = filtro != null ? filtro : new ReservaFilterInput();
+        Long clienteId = usuarioActual.clientePermitido(criterios.getClienteId());
+        LocalDateTime desde = parsearFechaFiltro(criterios.getFechaDesde());
+        LocalDateTime hasta = parsearFechaFiltro(criterios.getFechaHasta());
+        
+        if (desde != null && hasta != null && hasta.isBefore(desde)) {
+            throw new BusinessException("La fecha hasta no puede ser anterior a la fecha desde.");
+        }
 
-        return todas.stream()
-                .filter(r -> filtro.getClienteId() == null || r.getCliente().getIdCliente().equals(filtro.getClienteId()))
-                .filter(r -> filtro.getVehiculoId() == null || r.getVehiculo().getId().equals(filtro.getVehiculoId()))
-                .filter(r -> filtro.getTipoVehiculo() == null || r.getVehiculo().getTipoVehiculo().equals(filtro.getTipoVehiculo()))
-                .filter(r -> filtro.getEstado() == null || r.getEstadoReserva().equals(filtro.getEstado()))
-                .filter(r -> filtro.getFechaDesde() == null || !r.getHoraInicio().isBefore(LocalDateTime.parse(filtro.getFechaDesde())))
-                .filter(r -> filtro.getFechaHasta() == null || !r.getHoraFin().isAfter(LocalDateTime.parse(filtro.getFechaHasta())))
+        return reservaRepository.findAll(Sort.by(Sort.Direction.DESC, "horaInicio")).stream()
+                .filter(r -> clienteId == null || r.getCliente().getIdCliente().equals(clienteId))
+                .filter(r -> criterios.getVehiculoId() == null || r.getVehiculo().getId().equals(criterios.getVehiculoId()))
+                .filter(r -> criterios.getTipoVehiculo() == null || r.getVehiculo().getTipoVehiculo() == criterios.getTipoVehiculo())
+                .filter(r -> criterios.getEstadoReserva() == null || r.getEstadoReserva() == criterios.getEstadoReserva())
+                // Rango inclusivo: reservas contenidas dentro del período indicado.
+                .filter(r -> desde == null || !r.getHoraInicio().isBefore(desde))
+                .filter(r -> hasta == null || !r.getHoraFin().isAfter(hasta))
                 .map(this::toResponseDTO)
                 .toList();
+    }
+
+    private LocalDateTime parsearFechaFiltro(String fecha) {
+        if (fecha == null || fecha.isBlank()) return null;
+        try {
+            return LocalDateTime.parse(fecha.trim());
+        } catch (DateTimeParseException ex) {
+            throw new BusinessException("Las fechas deben tener formato ISO-8601, por ejemplo 2026-11-01T10:00:00.");
+        }
     }
 
     private int calcularDuracionDias(LocalDateTime inicio, LocalDateTime fin) {
@@ -167,9 +201,34 @@ public class ReservaServiceImpl implements ReservaService {
 
     private ReservaResponseDTO toResponseDTO(Reserva reserva) {
         ReservaResponseDTO dto = new ReservaResponseDTO();
+        Cliente cliente = reserva.getCliente();
+        ClienteResponseDTO clienteDTO = new ClienteResponseDTO();
+        clienteDTO.setId(cliente.getIdCliente());
+        clienteDTO.setNombre(cliente.getNombre());
+        clienteDTO.setApellido(cliente.getApellido());
+        clienteDTO.setDocumento(cliente.getDocumento());
+        clienteDTO.setEmail(cliente.getUsuario().getEmail());
+        clienteDTO.setTelefono(cliente.getTelefono());
+        clienteDTO.setFechaNacimiento(cliente.getFechaNacimiento());
+        clienteDTO.setActivo(Boolean.TRUE.equals(cliente.getActivo()));
+        dto.setCliente(clienteDTO);
+
+        Vehiculo vehiculo = reserva.getVehiculo();
+        VehiculoResponseDTO vehiculoDTO = new VehiculoResponseDTO();
+        vehiculoDTO.setId(vehiculo.getId());
+        vehiculoDTO.setPatente(vehiculo.getPatente());
+        vehiculoDTO.setMarca(vehiculo.getMarca());
+        vehiculoDTO.setModelo(vehiculo.getModelo());
+        vehiculoDTO.setTipoVehiculo(vehiculo.getTipoVehiculo());
+        vehiculoDTO.setAnio(vehiculo.getAnio());
+        vehiculoDTO.setColor(vehiculo.getColor());
+        vehiculoDTO.setPrecio_diario(vehiculo.getPrecio_diario());
+        vehiculoDTO.setEstado(vehiculo.getEstado());
+        vehiculoDTO.setActivo(vehiculo.isActivo());
+        
+        dto.setVehiculo(vehiculoDTO);
+        dto.setPatente(vehiculo.getPatente());
         dto.setId(reserva.getId());
-        dto.setIdCliente(reserva.getCliente().getIdCliente());
-        dto.setIdVehiculo(reserva.getVehiculo().getId());
         dto.setIdTiempo(reserva.getTiempo() != null ? reserva.getTiempo().getId() : null);
         dto.setHoraInicio(reserva.getHoraInicio());
         dto.setHoraFin(reserva.getHoraFin());
@@ -189,6 +248,9 @@ public class ReservaServiceImpl implements ReservaService {
         //Busca si existe la reserva y la trae
         Reserva reserva = reservaRepository.findById(reservaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada."));
+        //comprueba que pertenezca al usuario actual
+        usuarioActual.clientePermitido(reserva.getCliente().getIdCliente());
+
         //revisa si ya esta cancelada
         if (reserva.getEstadoReserva() == EstadoReserva.CANCELADA) {
             throw new BusinessException("La reserva ya se encuentra cancelada.");

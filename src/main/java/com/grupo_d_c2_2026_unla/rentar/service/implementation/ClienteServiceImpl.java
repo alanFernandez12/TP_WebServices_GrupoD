@@ -4,15 +4,18 @@ import com.grupo_d_c2_2026_unla.rentar.dto.ClienteRequestDTO;
 import com.grupo_d_c2_2026_unla.rentar.dto.ClienteResponseDTO;
 import com.grupo_d_c2_2026_unla.rentar.entity.Cliente;
 import com.grupo_d_c2_2026_unla.rentar.entity.Usuario;
+import com.grupo_d_c2_2026_unla.rentar.enums.EstadoReserva;
 import com.grupo_d_c2_2026_unla.rentar.exception.BusinessException;
 import com.grupo_d_c2_2026_unla.rentar.exception.ResourceNotFoundException;
 import com.grupo_d_c2_2026_unla.rentar.repository.ClienteRepository;
 import com.grupo_d_c2_2026_unla.rentar.repository.UsuarioRepository;
 import com.grupo_d_c2_2026_unla.rentar.service.ClienteService;
+import com.grupo_d_c2_2026_unla.rentar.repository.ReservaRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,15 +25,18 @@ public class ClienteServiceImpl implements ClienteService {
     private final ClienteRepository clienteRepository;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ReservaRepository reservaRepository;
 
     public ClienteServiceImpl(
             ClienteRepository clienteRepository,
             UsuarioRepository usuarioRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            ReservaRepository reservaRepository) {
 
         this.clienteRepository = clienteRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.reservaRepository = reservaRepository;
     }
 
     @Override
@@ -103,10 +109,16 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
+    @Transactional
     public void bajaLogica(Long id) {
 
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
+
+        if (reservaRepository.tieneReservasActivasCliente(
+                id, List.of(EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA), LocalDateTime.now())) {
+            throw new BusinessException("No se puede dar de baja al cliente porque tiene reservas activas. Deben cancelarse o finalizar primero.");
+        }
 
         cliente.setActivo(false);
 
@@ -126,7 +138,7 @@ public class ClienteServiceImpl implements ClienteService {
         cliente.setActivo(true);
 
         Usuario usuario = cliente.getUsuario();
-        usuario.setActivo(false);
+        usuario.setActivo(true);
         
         usuarioRepository.save(usuario);
         clienteRepository.save(cliente);

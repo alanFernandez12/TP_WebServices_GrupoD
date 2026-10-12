@@ -8,12 +8,14 @@ import com.grupo_d_c2_2026_unla.rentar.enums.EstadoVehiculo;
 import com.grupo_d_c2_2026_unla.rentar.exception.BusinessException;
 import com.grupo_d_c2_2026_unla.rentar.exception.ResourceNotFoundException;
 import com.grupo_d_c2_2026_unla.rentar.repository.VehiculoRepository;
+import com.grupo_d_c2_2026_unla.rentar.repository.ReservaRepository;
 import com.grupo_d_c2_2026_unla.rentar.service.VehiculoService;
 import com.grupo_d_c2_2026_unla.rentar.dto.DisponibilidadFiltroInput;
 import com.grupo_d_c2_2026_unla.rentar.dto.VehiculoDisponibleDTO;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,9 +23,14 @@ import java.util.stream.Collectors;
 public class VehiculoServiceImpl implements VehiculoService {
 
     private final VehiculoRepository vehiculoRepository;
+    private final ReservaRepository reservaRepository;
 
-    public VehiculoServiceImpl(VehiculoRepository vehiculoRepository) {
+    public VehiculoServiceImpl(
+        VehiculoRepository vehiculoRepository,
+        ReservaRepository reservaRepository) {
+
         this.vehiculoRepository = vehiculoRepository;
+        this.reservaRepository = reservaRepository;
     }
 
     @Override
@@ -65,9 +72,14 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
 
     @Override
+    @Transactional
     public void bajaLogica(Integer id) {
         Vehiculo vehiculo = vehiculoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehículo no encontrado"));
+        if (reservaRepository.tieneReservasActivasVehiculo(
+                id, List.of(EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA), LocalDateTime.now())) {
+            throw new BusinessException("No se puede dar de baja al vehículo porque tiene reservas activas. Deben cancelarse o finalizar primero.");
+        }
         vehiculo.setActivo(false);
         vehiculoRepository.save(vehiculo);
     }

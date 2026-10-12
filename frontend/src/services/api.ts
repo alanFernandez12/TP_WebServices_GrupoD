@@ -1,9 +1,60 @@
-import type { Cliente, Reserva, Vehiculo } from '../types/domain'
+import type { Cliente, Reserva, ReservaFiltro, Vehiculo } from '../types/domain'
 
 const jsonHeaders = { 'Content-Type': 'application/json' }
 
+export type Rol = 'ADMIN' | 'CLIENTE'
+
+export interface Sesion {
+  email: string
+  nombre: string
+  rol: Rol
+  clienteId: number | null
+}
+
+let authorization = ''
+let sesionValidada = false
+let alPerderSesion: (() => void) | undefined
+
+export function configurarPerdidaSesion(callback?: () => void) {
+  alPerderSesion = callback
+}
+
+export function cerrarSesion() {
+  authorization = ''
+  sesionValidada = false
+}
+
+export async function iniciarSesion(email: string, password: string): Promise<Sesion> {
+  const bytes = new TextEncoder().encode(`${email.trim()}:${password}`)
+  authorization = `Basic ${btoa(Array.from(bytes, b => String.fromCharCode(b)).join(''))}`
+  sesionValidada = false
+  try {
+    const sesion = await request<Sesion>('/api/auth/me')
+    if (sesion.rol !== 'ADMIN' && sesion.rol !== 'CLIENTE') {
+      throw new Error('La cuenta no tiene un rol habilitado.')
+    }
+    if (sesion.rol === 'CLIENTE' && sesion.clienteId == null) {
+      throw new Error('La cuenta no tiene un cliente asociado.')
+    }
+    sesionValidada = true
+    return sesion
+  } catch (error) {
+    cerrarSesion()
+    throw error
+  }
+}
+
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, options)
+  const headers = new Headers(options?.headers)
+  const credencialSolicitud = authorization
+  if (credencialSolicitud) headers.set('Authorization', credencialSolicitud)
+  headers.set('X-Requested-With', 'XMLHttpRequest')
+  const response = await fetch(url, { ...options, headers, credentials: 'omit' })
+  if (response.status === 401 && sesionValidada && authorization === credencialSolicitud) {
+    cerrarSesion()
+    alPerderSesion?.()
+  }
   if (!response.ok) {
     let message: string
 
@@ -42,44 +93,39 @@ export function crearCliente(data: unknown) {
 }
 
 export function crearReserva(data: unknown) {
-  return request<Reserva>('/gateway/reservas', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
+  return request<Reserva>('/api/reservas', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
 }
 
 export function obtenerVehiculos() {
-  return request<Vehiculo[]>('/gateway/vehiculos')
+  return request<Vehiculo[]>('/api/vehiculos')
 }
 
 export function obtenerClientes() {
-  return request<Cliente[]>('/gateway/clientes')
+  return request<Cliente[]>('/api/clientes')
 }
 
-export function obtenerReservas() {
-  return request<Reserva[]>('/gateway/reservas')
-}
-
-// Alternativa anterior: consulta las reservas mediante GraphQL en Spring Boot.
-// Se conserva para poder comparar ambos contratos o volver a utilizarlo.
-export async function obtenerReservasGraphQL(): Promise<Reserva[]> {
-  const response = await request<{
-    data?: { reservas: Reserva[] }
-    errors?: { message: string }[]
-  }>('/graphql', {
+export async function obtenerReservas(filtro: ReservaFiltro = {}): Promise<Reserva[]> {
+   const response = await request<{ data?: { reservas: Reserva[] }; errors?: { message: string }[] }>('/graphql', {
     method: 'POST',
     headers: jsonHeaders,
     body: JSON.stringify({
-      query: `query Reservas { reservas(filtro: {}) { id idCliente idVehiculo horaInicio horaFin importeTotal estadoReserva } }`,
+      query: `query Reservas($filtro: ReservaFilterInput) {
+        reservas(filtro: $filtro) { id horaInicio horaFin precioDiarioHistorico importeTotal estadoReserva patente
+          cliente { id nombre apellido documento }
+          vehiculo { id marca modelo patente tipoVehiculo }
+        }
+      }`,
+      variables: { filtro },
     }),
   })
-
   if (response.errors?.length) {
-    throw new Error(response.errors[0].message)
+    const message = response.errors[0].message
+    throw new Error(message.startsWith('INTERNAL_ERROR') ? 'No se pudieron consultar las reservas. Intentá nuevamente.' : message)
   }
-
   return response.data?.reservas ?? []
 }
-
 export function cancelarReserva(id: number) {
-  return request<Reserva>(`/gateway/reservas/${id}/cancelar`, { method: 'PATCH' })
+  return request<Reserva>(`/api/reservas/${id}/cancelar`, { method: 'PATCH' })
 }
 
 export function modificarVehiculo(id: number, data: unknown) {

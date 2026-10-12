@@ -12,8 +12,9 @@ import java.time.LocalDateTime;
 public class ReservaResponseDTO {
 
     private Long id;
-    private Long idCliente;
-    private Integer idVehiculo;
+    private ClienteResponseDTO cliente;
+    private VehiculoResponseDTO vehiculo;
+    private String patente;
     private Long idTiempo;
     private LocalDateTime horaInicio;
     private LocalDateTime horaFin;
@@ -27,8 +28,9 @@ public class ReservaResponseDTO {
 
     public ReservaResponseDTO(
             Long id,
-            Long idCliente,
-            Integer idVehiculo,
+            ClienteResponseDTO cliente,
+            VehiculoResponseDTO vehiculo,
+            String patente,
             Long idTiempo,
             LocalDateTime horaInicio,
             LocalDateTime horaFin,
@@ -37,9 +39,10 @@ public class ReservaResponseDTO {
             BigDecimal importeTotal,
             EstadoReserva estadoReserva) {
         this.id = id;
-        this.idCliente = idCliente;
-        this.idVehiculo = idVehiculo;
         this.idTiempo = idTiempo;
+        this.cliente = cliente;
+        this.vehiculo = vehiculo;
+        this.patente = patente;
         this.horaInicio = horaInicio;
         this.horaFin = horaFin;
         this.duracionDias = duracionDias;
@@ -51,9 +54,9 @@ public class ReservaResponseDTO {
     @Override
     public String toString() {
         return "ReservaResponseDTO{" +
-                "id=" + id +
-                ", idCliente=" + idCliente +
-                ", idVehiculo=" + idVehiculo +
+                "Reserva a nombre de " + (cliente != null ? cliente.getNombre() + " " + cliente.getApellido():"sin cliente") +
+                ", tipoVehiculo=" + (vehiculo != null ? vehiculo.getTipoVehiculo() : "sin vehículo") +
+                ", patente='" + patente + '\'' +
                 ", idTiempo=" + idTiempo +
                 ", horaInicio=" + horaInicio +
                 ", horaFin=" + horaFin +

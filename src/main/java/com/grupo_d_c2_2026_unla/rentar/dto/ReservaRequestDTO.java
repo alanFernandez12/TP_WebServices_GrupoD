@@ -1,18 +1,16 @@
 package com.grupo_d_c2_2026_unla.rentar.dto;
 
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
 public class ReservaRequestDTO {
 
-    @NotNull
+    //se sacó el not null porque se obtiene del auth ahora
     private Long idCliente;
 
     @NotNull

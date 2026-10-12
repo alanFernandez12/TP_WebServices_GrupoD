@@ -93,39 +93,69 @@ export function crearCliente(data: unknown) {
 }
 
 export function crearReserva(data: unknown) {
-  return request<Reserva>('/api/reservas', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
+  return request<Reserva>('/gateway/reservas', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
 }
 
 export function obtenerVehiculos() {
-  return request<Vehiculo[]>('/api/vehiculos')
+  return request<Vehiculo[]>('/gateway/vehiculos')
 }
 
 export function obtenerClientes() {
-  return request<Cliente[]>('/api/clientes')
+  return request<Cliente[]>('/gateway/clientes')
 }
 
 export async function obtenerReservas(filtro: ReservaFiltro = {}): Promise<Reserva[]> {
-   const response = await request<{ data?: { reservas: Reserva[] }; errors?: { message: string }[] }>('/graphql', {
-    method: 'POST',
-    headers: jsonHeaders,
-    body: JSON.stringify({
-      query: `query Reservas($filtro: ReservaFilterInput) {
-        reservas(filtro: $filtro) { id horaInicio horaFin precioDiarioHistorico importeTotal estadoReserva patente
-          cliente { id nombre apellido documento }
-          vehiculo { id marca modelo patente tipoVehiculo }
-        }
-      }`,
-      variables: { filtro },
-    }),
+  const [reservas, clientes, vehiculos] = await Promise.all([
+    request<Array<{
+      id: number
+      idCliente: number
+      idVehiculo: number
+      horaInicio: string
+      horaFin: string
+      duracionDias: number
+      precioDiarioHistorico: number
+      importeTotal: number
+      estadoReserva: Reserva['estadoReserva']
+    }>>('/gateway/reservas'),
+    obtenerClientes(),
+    obtenerVehiculos(),
+  ])
+
+  const completas = reservas.map((reserva) => {
+    const cliente = clientes.find((item) => item.id === reserva.idCliente)
+    const vehiculo = vehiculos.find((item) => item.id === reserva.idVehiculo)
+
+    return {
+      ...reserva,
+      cliente: cliente ?? {
+        id: reserva.idCliente,
+        nombre: 'Cliente',
+        apellido: `#${reserva.idCliente}`,
+        documento: '',
+      },
+      vehiculo: vehiculo ?? {
+        id: reserva.idVehiculo,
+        marca: 'Vehículo',
+        modelo: `#${reserva.idVehiculo}`,
+        patente: '',
+        tipoVehiculo: '',
+      },
+      patente: vehiculo?.patente ?? '',
+    }
   })
-  if (response.errors?.length) {
-    const message = response.errors[0].message
-    throw new Error(message.startsWith('INTERNAL_ERROR') ? 'No se pudieron consultar las reservas. Intentá nuevamente.' : message)
-  }
-  return response.data?.reservas ?? []
+
+  return completas.filter((reserva) =>
+    (!filtro.clienteId || reserva.idCliente === filtro.clienteId) &&
+    (!filtro.vehiculoId || reserva.idVehiculo === filtro.vehiculoId) &&
+    (!filtro.tipoVehiculo || reserva.vehiculo.tipoVehiculo === filtro.tipoVehiculo) &&
+    (!filtro.estadoReserva || reserva.estadoReserva === filtro.estadoReserva) &&
+    (!filtro.fechaDesde || reserva.horaInicio >= filtro.fechaDesde) &&
+    (!filtro.fechaHasta || reserva.horaFin <= filtro.fechaHasta)
+  )
 }
+
 export function cancelarReserva(id: number) {
-  return request<Reserva>(`/api/reservas/${id}/cancelar`, { method: 'PATCH' })
+  return request<Reserva>(`/gateway/reservas/${id}/cancelar`, { method: 'PATCH' })
 }
 
 export function modificarVehiculo(id: number, data: unknown) {

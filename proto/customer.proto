@@ -7,6 +7,36 @@ service CustomerService {
   rpc GetCustomer(GetCustomerRequest) returns (CustomerResponse);
   rpc CustomerExists(CustomerExistsRequest) returns (CustomerExistsResponse);
   rpc IsCustomerActive(IsCustomerActiveRequest) returns (CustomerActiveResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc CreateCustomer(SaveCustomerRequest) returns (CustomerResponse);
+  rpc UpdateCustomer(SaveCustomerRequest) returns (CustomerResponse);
+  rpc DeleteCustomer(GetCustomerRequest) returns (CustomerResponse);
+  rpc ReactivateCustomer(GetCustomerRequest) returns (CustomerResponse);
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  bool valido = 1;
+  string rol = 2;
+  int64 cliente_id = 3;  // 0 si es ADMIN
+  string nombre = 4;
+}
+
+// Se usa para crear y modificar
+message SaveCustomerRequest {
+  int64 id = 1;                 // solo al modificar
+  string documento = 2;
+  string nombre = 3;
+  string apellido = 4;
+  string email = 5;
+  string telefono = 6;
+  string fecha_nacimiento = 7;  // formato YYYY-MM-DD
+  string password = 8;          // solo al crear
+  string rol = 9;               // solo al crear
 }
 
 message GetCustomersRequest {}
@@ -47,4 +77,5 @@ message Customer {
   string documento = 5;
   string telefono = 6;
   bool activo = 7;
+  string fecha_nacimiento = 8;
 }

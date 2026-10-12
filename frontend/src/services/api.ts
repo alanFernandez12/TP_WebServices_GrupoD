@@ -29,7 +29,7 @@ export async function iniciarSesion(email: string, password: string): Promise<Se
   authorization = `Basic ${btoa(Array.from(bytes, b => String.fromCharCode(b)).join(''))}`
   sesionValidada = false
   try {
-    const sesion = await request<Sesion>('/api/auth/me')
+    const sesion = await request<Sesion>('/gateway/auth/me')
     if (sesion.rol !== 'ADMIN' && sesion.rol !== 'CLIENTE') {
       throw new Error('La cuenta no tiene un rol habilitado.')
     }

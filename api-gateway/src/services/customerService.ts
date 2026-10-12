@@ -59,3 +59,78 @@ export const isCustomerActive = (id: number): Promise<any> =>
       }
     );
   });
+
+export const login = (email: string, password: string): Promise<any> =>
+  new Promise((resolve, reject) => {
+    customerClient.Login(
+      { email, password },
+      (error: any, response: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(response);
+      }
+    );
+  });
+
+export const createCustomer = (data: any): Promise<any> =>
+  new Promise((resolve, reject) => {
+    customerClient.CreateCustomer(
+      data,
+      (error: any, response: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(response);
+      }
+    );
+  });
+
+export const updateCustomer = (id: number, data: any): Promise<any> =>
+  new Promise((resolve, reject) => {
+    customerClient.UpdateCustomer(
+      { ...data, id: String(id) },
+      (error: any, response: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(response);
+      }
+    );
+  });
+
+export const deleteCustomer = (id: number): Promise<any> =>
+  new Promise((resolve, reject) => {
+    customerClient.DeleteCustomer(
+      { id: String(id) },
+      (error: any, response: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(response);
+      }
+    );
+  });
+
+export const reactivateCustomer = (id: number): Promise<any> =>
+  new Promise((resolve, reject) => {
+    customerClient.ReactivateCustomer(
+      { id: String(id) },
+      (error: any, response: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(response);
+      }
+    );
+  });

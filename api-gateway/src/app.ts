@@ -7,6 +7,7 @@ import vehicleRoutes from "./routes/vehicleRoutes";
 import customerRoutes from "./routes/customerRoutes";
 import rentalRoutes from "./routes/rentalRoutes";
 import { errorHandler } from "./middleware/errorHandler";
+import { auth } from "./middleware/auth";
 
 dotenv.config();
 
@@ -14,8 +15,13 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(auth);
 
 //app.use("/api/auth", authRoutes);
+// Datos del usuario logueado (los arma el middleware auth)
+app.get("/api/auth/me", (_req, res) => {
+  res.json(res.locals.sesion);
+});
 app.use("/api/vehiculos", vehicleRoutes);
 app.use("/api/clientes", customerRoutes);
 app.use("/api/reservas", rentalRoutes);

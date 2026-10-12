@@ -21,7 +21,7 @@ function mensajeError(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback
 }
 
-export function Dashboard() {
+export function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [reservas, setReservas] = useState<Reserva[]>([])
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([])
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -202,6 +202,7 @@ export function Dashboard() {
           <span className="connection-dot" />
           <span className="user-label">Panel de administración</span>
           <span className="avatar">AD</span>
+          <button className="secondary-button" onClick={onLogout}>Cerrar sesión</button>
         </div>
       </header>
 

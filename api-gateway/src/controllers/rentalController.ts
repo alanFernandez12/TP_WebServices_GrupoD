@@ -1,6 +1,24 @@
 import { Request, Response, NextFunction } from "express";
 import * as rentalService from "../services/rentalService";
 
+const normalizeRental = (rental: any) => ({
+  id: Number(rental.id),
+  idCliente: Number(rental.cliente_id),
+  idVehiculo: Number(rental.vehiculo_id),
+  horaInicio: rental.fecha_inicio,
+  horaFin: rental.fecha_fin,
+  duracionDias: Number(rental.duracion_dias),
+  precioDiarioHistorico: Number(rental.precio_diario_historico),
+  importeTotal: Number(rental.importe_total),
+  estadoReserva: rental.estado,
+});
+
+const normalizeRentalResponse = (response: any) =>
+  normalizeRental(response.rental);
+
+const normalizeRentalListResponse = (response: any) =>
+  response.rentals.map(normalizeRental);
+
 export const createRental = async (
     req: Request,
     res: Response,
@@ -27,7 +45,7 @@ export const createRental = async (
         fechaFin
     );
 
-    res.status(201).json(response);
+    res.status(201).json(normalizeRentalResponse(response));
   } catch (error) {
     next(error);
   }
@@ -40,7 +58,7 @@ export const getRentals = async (
 ) => {
   try {
     const response = await rentalService.getRentals();
-    res.status(200).json(response);
+    res.status(200).json(normalizeRentalListResponse(response));
   } catch (error) {
     next(error);
   }
@@ -53,7 +71,7 @@ export const getRental = async (
 ) => {
   try {
     const response = await rentalService.getRental(Number(req.params.id));
-    res.status(200).json(response);
+    res.status(200).json(normalizeRentalResponse(response));
   } catch (error) {
     next(error);
   }
@@ -66,7 +84,7 @@ export const cancelRental = async (
 ) => {
   try {
     const response = await rentalService.cancelRental(Number(req.params.id));
-    res.status(200).json(response);
+    res.status(200).json(normalizeRentalResponse(response));
   } catch (error) {
     next(error);
   }
@@ -81,7 +99,7 @@ export const getRentalHistory = async (
     const response = await rentalService.getRentalHistory(
         Number(req.params.clienteId)
     );
-    res.status(200).json(response);
+    res.status(200).json(normalizeRentalListResponse(response));
   } catch (error) {
     next(error);
   }

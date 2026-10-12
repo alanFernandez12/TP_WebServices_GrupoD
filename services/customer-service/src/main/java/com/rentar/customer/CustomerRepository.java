@@ -14,7 +14,8 @@ public class CustomerRepository {
 
     // El email vive en lk_usuarios; ambas tablas son de este servicio.
     private static final String SELECT_CLIENTES = """
-            SELECT c.id_cliente, c.nom_nombre, c.desc_apellido, u.desc_email
+            SELECT c.id_cliente, c.cod_documento, c.nom_nombre, c.desc_apellido,
+                   c.desc_telefono, c.flag_activo, u.desc_email
             FROM lk_clientes c
             JOIN lk_usuarios u ON u.id_usuario = c.id_usuario
             """;
@@ -51,6 +52,9 @@ public class CustomerRepository {
                 .setNombre(rs.getString("nom_nombre"))
                 .setApellido(rs.getString("desc_apellido"))
                 .setEmail(rs.getString("desc_email"))
+                .setDocumento(rs.getString("cod_documento"))
+                .setTelefono(rs.getString("desc_telefono") == null ? "" : rs.getString("desc_telefono"))
+                .setActivo(rs.getBoolean("flag_activo"))
                 .build();
     }
 }

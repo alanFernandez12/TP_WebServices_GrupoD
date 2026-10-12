@@ -18,13 +18,19 @@ class VehicleRepository:
             "marca": row[2],
             "modelo": row[3],
             "estado": row[4],
+            "anio": int(row[5]),
+            "tipoVehiculo": row[6],
+            "color": row[7] or "",
+            "precio_diario": str(row[8]),
+            "activo": bool(row[9]),
         }
 
     def find_all(self) -> list[dict]:
         """Devuelve todos los vehículos activos."""
         query = """
             SELECT id_vehiculo, cod_patente, desc_marca, desc_modelo,
-                   desc_estado_vehiculo
+                   desc_estado_vehiculo, num_anio, desc_tipo_vehiculo,
+                   desc_color, f_val_precio_diario, flag_activo
             FROM lk_vehiculos
             WHERE flag_activo = 1
             ORDER BY id_vehiculo
@@ -40,7 +46,8 @@ class VehicleRepository:
         """Devuelve un vehículo activo por su identificador."""
         query = """
             SELECT id_vehiculo, cod_patente, desc_marca, desc_modelo,
-                   desc_estado_vehiculo
+                   desc_estado_vehiculo, num_anio, desc_tipo_vehiculo,
+                   desc_color, f_val_precio_diario, flag_activo
             FROM lk_vehiculos
             WHERE id_vehiculo = %s AND flag_activo = 1
         """
@@ -55,7 +62,9 @@ class VehicleRepository:
         """Devuelve vehículos disponibles sin reservas superpuestas."""
         query = """
             SELECT v.id_vehiculo, v.cod_patente, v.desc_marca,
-                   v.desc_modelo, v.desc_estado_vehiculo
+                   v.desc_modelo, v.desc_estado_vehiculo, v.num_anio,
+                   v.desc_tipo_vehiculo, v.desc_color, v.f_val_precio_diario,
+                   v.flag_activo
             FROM lk_vehiculos v
             WHERE v.flag_activo = 1
               AND v.desc_estado_vehiculo = 'DISPONIBLE'

@@ -44,4 +44,7 @@ message Customer {
   string nombre = 2;
   string apellido = 3;
   string email = 4;
+  string documento = 5;
+  string telefono = 6;
+  bool activo = 7;
 }

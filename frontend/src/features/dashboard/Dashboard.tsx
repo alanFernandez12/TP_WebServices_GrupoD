@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { bajaCliente, bajaVehiculo, cancelarReserva, obtenerClientes, obtenerReservas, obtenerVehiculos, reactivarCliente, reactivarVehiculo} from '../../services/api'
+import { bajaCliente, bajaVehiculo, cancelarReserva, obtenerCliente, obtenerClientes, obtenerReserva, obtenerReservas, obtenerVehiculo, obtenerVehiculos, reactivarCliente, reactivarVehiculo} from '../../services/api'
 import type { Cliente, Reserva, ReservaFiltro, EstadoReserva, Vehiculo } from '../../types/domain'
 import { ActionCard } from './components/ActionCard'
 import { ClientGrid } from './components/ClientGrid'
+import { DetailModal, type DetailRegistro } from './components/DetailModal'
 import { ReservationGrid } from './components/ReservationGrid'
 import { RegistrationModal, type RegistrationType } from './components/RegistrationModal'
 import { VehicleGrid } from './components/VehicleGrid'
@@ -46,6 +47,9 @@ export function Dashboard({ nombre, onLogout }: { nombre: string; onLogout: () =
   const [registroBaja, setRegistroBaja] = useState<RegistroBaja | null>(null)
   const [procesandoBaja, setProcesandoBaja] = useState(false)
   const [errorBaja, setErrorBaja] = useState('')
+  const [detalle, setDetalle] = useState<DetailRegistro | null>(null)
+  const [cargandoDetalle, setCargandoDetalle] = useState(false)
+  const [errorDetalle, setErrorDetalle] = useState('')
 
     const loadClients = useCallback(async () => {
     setLoadingClients(true)
@@ -93,6 +97,33 @@ export function Dashboard({ nombre, onLogout }: { nombre: string; onLogout: () =
   const closeRegistration = () => {
     setModal(null)
     setRegistroEdicion(undefined)
+  }
+
+  const closeDetail = () => {
+    if (cargandoDetalle) return
+    setDetalle(null)
+    setErrorDetalle('')
+  }
+
+  const openDetail = async (detail: DetailRegistro) => {
+    const { type, registro } = detail
+    setErrorDetalle('')
+    setCargandoDetalle(true)
+    setDetalle(detail)
+    try {
+      if (type === 'cliente') {
+        setDetalle({ type, registro: await obtenerCliente(registro.id) })
+      } else if (type === 'vehiculo') {
+        setDetalle({ type, registro: await obtenerVehiculo(registro.id) })
+      } else {
+        const reserva = await obtenerReserva(registro.id)
+        setDetalle({ type, registro: { ...registro, ...reserva } })
+      }
+    } catch (error) {
+      setErrorDetalle(mensajeError(error, 'No se pudo consultar el registro.'))
+    } finally {
+      setCargandoDetalle(false)
+    }
   }
 
   const handleSaved = () => {
@@ -247,6 +278,7 @@ export function Dashboard({ nombre, onLogout }: { nombre: string; onLogout: () =
               <ClientGrid
                 clients={clientes}
                 loading={loadingClients}
+                onView={(client) => void openDetail({ type: 'cliente', registro: client })}
                 onEdit={(client) => openEdition('cliente', client)}
                 onDeactivate={solicitarBajaCliente}
                 onReactivate={(client) => void handleReactivateClient(client)}/>
@@ -273,6 +305,7 @@ export function Dashboard({ nombre, onLogout }: { nombre: string; onLogout: () =
               <VehicleGrid
                 vehicles={vehiculos}
                 loading={loadingVehicles}
+                onView={(vehicle) => void openDetail({ type: 'vehiculo', registro: vehicle })}
                 onEdit={(vehicle) => openEdition('vehiculo', vehicle)}
                 onDeactivate={solicitarBajaVehiculo}
                 onReactivate={(vehicle) => void handleReactivateVehicle(vehicle)}
@@ -348,7 +381,12 @@ export function Dashboard({ nombre, onLogout }: { nombre: string; onLogout: () =
                   </div>
                 )}
                 {successMessage && <div className="alert success" role="status">{successMessage}</div>}
-                <ReservationGrid reservations={filteredReservations} loading={loadingReservations} onCancelReservation={handleCancelReservation} />
+                <ReservationGrid
+                  reservations={filteredReservations}
+                  loading={loadingReservations}
+                  onView={(reservation) => void openDetail({ type: 'reserva', registro: reservation })}
+                  onCancelReservation={handleCancelReservation}
+                />
               </section>
             </>
           )}
@@ -362,6 +400,15 @@ export function Dashboard({ nombre, onLogout }: { nombre: string; onLogout: () =
           registro={registroEdicion}
           onClose={closeRegistration}
           onSaved={handleSaved}
+        />
+      )}
+
+      {detalle && (
+        <DetailModal
+          detail={detalle}
+          loading={cargandoDetalle}
+          error={errorDetalle}
+          onClose={closeDetail}
         />
       )}
 

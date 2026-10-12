@@ -1,8 +1,9 @@
 import type { Reserva } from '../../../types/domain'
 
-export function ReservationGrid({ reservations, loading, onCancelReservation }: {
+export function ReservationGrid({ reservations, loading, onView, onCancelReservation }: {
   reservations: Reserva[]
   loading: boolean
+  onView: (reservation: Reserva) => void
   onCancelReservation: (id: number) => void | Promise<void>
 }) {
   if (loading) return <div className="empty-state">Cargando reservas...</div>
@@ -21,9 +22,12 @@ export function ReservationGrid({ reservations, loading, onCancelReservation }: 
             <td>{formatDate(reserva.horaInicio)}</td><td>{formatDate(reserva.horaFin)}</td>
             <td>{money(reserva.precioDiarioHistorico)}</td><td>{money(reserva.importeTotal)}</td>
             <td><span className={`status status-${reserva.estadoReserva.toLowerCase()}`}>{reserva.estadoReserva}</span></td>
-            <td>{reserva.estadoReserva === 'CONFIRMADA' && new Date(reserva.horaInicio).getTime() > Date.now() && (
-              <button type="button" className="cancel-action-button" onClick={() => void onCancelReservation(reserva.id)}>Cancelar reserva</button>
-            )}</td></tr>
+            <td><div className="table-actions">
+              <button type="button" className="secondary-button" onClick={() => onView(reserva)}>Ver</button>
+              {reserva.estadoReserva === 'CONFIRMADA' && new Date(reserva.horaInicio).getTime() > Date.now() && (
+                <button type="button" className="cancel-action-button" onClick={() => void onCancelReservation(reserva.id)}>Cancelar reserva</button>
+              )}
+            </div></td></tr>
         ))}</tbody></table>
     </div>
   )

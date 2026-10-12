@@ -138,7 +138,7 @@ public class ClienteServiceImpl implements ClienteService {
         cliente.setActivo(true);
 
         Usuario usuario = cliente.getUsuario();
-        usuario.setActivo(false);
+        usuario.setActivo(true);
         
         usuarioRepository.save(usuario);
         clienteRepository.save(cliente);

@@ -2,8 +2,59 @@ import type { Cliente, Reserva, ReservaFiltro, Vehiculo } from '../types/domain'
 
 const jsonHeaders = { 'Content-Type': 'application/json' }
 
+export type Rol = 'ADMIN' | 'CLIENTE'
+
+export interface Sesion {
+  email: string
+  nombre: string
+  rol: Rol
+  clienteId: number | null
+}
+
+let authorization = ''
+let sesionValidada = false
+let alPerderSesion: (() => void) | undefined
+
+export function configurarPerdidaSesion(callback?: () => void) {
+  alPerderSesion = callback
+}
+
+export function cerrarSesion() {
+  authorization = ''
+  sesionValidada = false
+}
+
+export async function iniciarSesion(email: string, password: string): Promise<Sesion> {
+  const bytes = new TextEncoder().encode(`${email.trim()}:${password}`)
+  authorization = `Basic ${btoa(Array.from(bytes, b => String.fromCharCode(b)).join(''))}`
+  sesionValidada = false
+  try {
+    const sesion = await request<Sesion>('/api/auth/me')
+    if (sesion.rol !== 'ADMIN' && sesion.rol !== 'CLIENTE') {
+      throw new Error('La cuenta no tiene un rol habilitado.')
+    }
+    if (sesion.rol === 'CLIENTE' && sesion.clienteId == null) {
+      throw new Error('La cuenta no tiene un cliente asociado.')
+    }
+    sesionValidada = true
+    return sesion
+  } catch (error) {
+    cerrarSesion()
+    throw error
+  }
+}
+
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, options)
+  const headers = new Headers(options?.headers)
+  const credencialSolicitud = authorization
+  if (credencialSolicitud) headers.set('Authorization', credencialSolicitud)
+  headers.set('X-Requested-With', 'XMLHttpRequest')
+  const response = await fetch(url, { ...options, headers, credentials: 'omit' })
+  if (response.status === 401 && sesionValidada && authorization === credencialSolicitud) {
+    cerrarSesion()
+    alPerderSesion?.()
+  }
   if (!response.ok) {
     let message: string
 

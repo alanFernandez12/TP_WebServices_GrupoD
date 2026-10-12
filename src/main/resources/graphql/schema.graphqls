@@ -6,10 +6,10 @@ type Query {
     """
     vehiculosDisponibles(filtro: DisponibilidadFiltroInput!): [VehiculoDisponible!]!
 
-    """Consulta los alquileres finalizados y las reservas canceladas de un cliente."""
-    historialAlquileres(clienteId: ID!): [HistorialAlquiler!]!
+     """Consulta el historial propio. El administrador debe indicar clienteId; un cliente puede omitirlo."""
+    historialAlquileres(clienteId: ID): [HistorialAlquiler!]!
 
-    """Consulta reservas con filtros opcionales. Las fechas delimitan reservas contenidas en el rango."""
+    """Consulta reservas con filtros opcionales. El cliente solo accede a sus reservas; el administrador puede consultar todas. Las fechas delimitan reservas contenidas en el rango."""
     reservas(filtro: ReservaFilterInput): [Reserva!]!
 }
 

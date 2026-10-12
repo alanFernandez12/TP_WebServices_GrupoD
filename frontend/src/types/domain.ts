@@ -23,7 +23,20 @@ export interface Cliente {
   activo: boolean
 }
 
+export interface ReservaFiltro {
+  clienteId?: number
+  vehiculoId?: number
+  tipoVehiculo?: string
+  estadoReserva?: EstadoReserva
+  fechaDesde?: string
+  fechaHasta?: string
+}
+
 export interface Reserva {
+  cliente: Pick<Cliente, 'id' | 'nombre' | 'apellido' | 'documento'>
+  vehiculo: Pick<Vehiculo, 'id' | 'marca' | 'modelo' | 'patente' | 'tipoVehiculo'>
+  patente: string
+  precioDiarioHistorico: number
   id: number
   idCliente: number
   idVehiculo: number

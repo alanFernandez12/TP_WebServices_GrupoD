@@ -37,4 +37,31 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
             @Param("horaInicio") LocalDateTime horaInicio,
             @Param("estadoCancelada") EstadoReserva estadoCancelada
     );
+
+     // Querys para buscar si un cliente/vehiculo tienen reservas activas 
+     // utilizadas para no darle de baja en caso positivo
+    @Query("""
+            SELECT CASE WHEN COUNT(r) > 0 THEN TRUE ELSE FALSE END
+            FROM Reserva r
+            WHERE r.cliente.idCliente = :clienteId
+              AND r.estadoReserva IN :estados
+              AND r.horaFin > :ahora
+            """)
+    boolean tieneReservasActivasCliente(
+            @Param("clienteId") Long clienteId,
+            @Param("estados") List<EstadoReserva> estados,
+            @Param("ahora") LocalDateTime ahora);
+
+    @Query("""
+            SELECT CASE WHEN COUNT(r) > 0 THEN TRUE ELSE FALSE END
+            FROM Reserva r
+            WHERE r.vehiculo.id = :vehiculoId
+              AND r.estadoReserva IN :estados
+              AND r.horaFin > :ahora
+            """)
+    boolean tieneReservasActivasVehiculo(
+            @Param("vehiculoId") Integer vehiculoId,
+            @Param("estados") List<EstadoReserva> estados,
+            @Param("ahora") LocalDateTime ahora);
+
 }

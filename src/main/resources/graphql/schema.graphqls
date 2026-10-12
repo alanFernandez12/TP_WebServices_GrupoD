@@ -9,6 +9,7 @@ type Query {
     """Consulta los alquileres finalizados y las reservas canceladas de un cliente."""
     historialAlquileres(clienteId: ID!): [HistorialAlquiler!]!
 
+    """Consulta reservas con filtros opcionales. Las fechas delimitan reservas contenidas en el rango."""
     reservas(filtro: ReservaFilterInput): [Reserva!]!
 }
 
@@ -68,19 +69,22 @@ enum EstadoReserva {
     TERMINADA
 }
 
+"""Filtros opcionales combinados con AND. Fechas ISO-8601 sin zona horaria."""
 input ReservaFilterInput {
     clienteId: ID
     vehiculoId: ID
-    tipoVehiculo: String
-    estadoReserva: String
+    tipoVehiculo: TipoVehiculo
+    estadoReserva: EstadoReserva
     fechaDesde: String
     fechaHasta: String
 }
 
+"""Reserva con datos del cliente, vehículo y precio diario guardado al reservar."""
 type Reserva {
     id: ID!
-    idCliente: ID!
-    idVehiculo: ID!
+    cliente: Cliente!
+    vehiculo: Vehiculo!
+    patente: String!
     horaInicio: String!
     horaFin: String!
     duracionDias: Int!
@@ -101,6 +105,6 @@ type Vehiculo {
     patente: String!
     marca: String!
     modelo: String!
-    tipoVehiculo: String!
+    tipoVehiculo: TipoVehiculo!
 }
 

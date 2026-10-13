@@ -14,6 +14,12 @@ service VehicleService {
 
   rpc UpdateVehicleStatus (UpdateVehicleStatusRequest)
       returns (VehicleResponse);
+
+  rpc CreateVehicle(CreateVehicleRequest)
+      returns (VehicleResponse);
+      
+  rpc UpdateVehicle(UpdateVehicleRequest)
+      returns (VehicleResponse);
 }
 
 message GetVehiclesRequest {}
@@ -51,4 +57,18 @@ message Vehicle {
   string color = 8;
   string precio_diario = 9;
   bool activo = 10;
+}
+
+message CreateVehicleRequest {
+  string patente = 1;
+  string marca = 2;
+  string modelo = 3;
+  string estado = 4;
+}
+
+message UpdateVehicleRequest {
+  int64 id = 1;
+  string marca = 2;
+  string modelo = 3;
+  string estado = 4;
 }

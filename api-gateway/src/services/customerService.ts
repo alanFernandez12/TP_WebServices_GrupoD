@@ -59,3 +59,43 @@ export const isCustomerActive = (id: number): Promise<any> =>
       }
     );
   });
+
+export const createCustomer = (data: {
+  nombre: string;
+  apellido: string;
+  email: string;
+}): Promise<any> =>
+  new Promise((resolve, reject) => {
+    customerClient.CreateCustomer(data, (error: any, response: any) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve(response);
+    });
+  });
+
+export const updateCustomer = (
+  id: number,
+  data: {
+    nombre: string;
+    apellido: string;
+    email: string;
+  }
+): Promise<any> =>
+  new Promise((resolve, reject) => {
+    customerClient.UpdateCustomer(
+      { id: String(id), ...data },
+      (error: any, response: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(response);
+      }
+    );
+  });
+
+  

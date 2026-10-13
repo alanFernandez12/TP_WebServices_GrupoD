@@ -63,3 +63,39 @@ export const getAvailableVehicles = async (
     next(error);
   }
 };
+
+export const createVehicle = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const response = await vehicleService.createVehicle(req.body);
+    res.status(201).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateVehicle = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      res.status(400).json({
+        status: 400,
+        message: "El ID del vehículo no es válido",
+      });
+      return;
+    }
+
+    const response = await vehicleService.updateVehicle(id, req.body);
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};

@@ -72,3 +72,69 @@ export const isCustomerActive = async (
     next(error);
   }
 };
+
+export const createCustomer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { nombre, apellido, email } = req.body;
+
+    if (!nombre || !apellido || !email) {
+      res.status(400).json({
+        status: 400,
+        message: "Nombre, apellido y email son obligatorios",
+      });
+      return;
+    }
+
+    const response = await customerService.createCustomer({
+      nombre,
+      apellido,
+      email,
+    });
+
+    res.status(201).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateCustomer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      res.status(400).json({
+        status: 400,
+        message: "El ID del cliente no es válido",
+      });
+      return;
+    }
+
+    const { nombre, apellido, email } = req.body;
+
+    if (!nombre || !apellido || !email) {
+      res.status(400).json({
+        status: 400,
+        message: "Nombre, apellido y email son obligatorios",
+      });
+      return;
+    }
+
+    const response = await customerService.updateCustomer(id, {
+      nombre,
+      apellido,
+      email,
+    });
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};

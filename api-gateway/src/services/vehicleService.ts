@@ -55,3 +55,42 @@ export const getAvailableVehicles = (
     );
   });
 };
+
+export const createVehicle = (data: {
+  patente: string;
+  marca: string;
+  modelo: string;
+  estado: string;
+}): Promise<any> =>
+  new Promise((resolve, reject) => {
+    vehicleClient.CreateVehicle(data, (error: any, response: any) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve(response);
+    });
+  });
+
+  export const updateVehicle = (
+  id: number,
+  data: {
+    marca: string;
+    modelo: string;
+    estado: string;
+  }
+): Promise<any> =>
+  new Promise((resolve, reject) => {
+    vehicleClient.UpdateVehicle(
+      { id: String(id), ...data },
+      (error: any, response: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(response);
+      }
+    );
+  });

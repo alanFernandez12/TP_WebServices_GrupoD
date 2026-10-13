@@ -7,6 +7,8 @@ service CustomerService {
   rpc GetCustomer(GetCustomerRequest) returns (CustomerResponse);
   rpc CustomerExists(CustomerExistsRequest) returns (CustomerExistsResponse);
   rpc IsCustomerActive(IsCustomerActiveRequest) returns (CustomerActiveResponse);
+  rpc CreateCustomer(CreateCustomerRequest) returns (CustomerResponse);
+  rpc UpdateCustomer(UpdateCustomerRequest) returns (CustomerResponse);
 }
 
 message GetCustomersRequest {}
@@ -47,4 +49,17 @@ message Customer {
   string documento = 5;
   string telefono = 6;
   bool activo = 7;
+}
+
+message CreateCustomerRequest {
+  string nombre = 1;
+  string apellido = 2;
+  string email = 3;
+}
+
+message UpdateCustomerRequest {
+  int64 id = 1;
+  string nombre = 2;
+  string apellido = 3;
+  string email = 4;
 }

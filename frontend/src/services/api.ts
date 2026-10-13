@@ -85,11 +85,11 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 export function crearVehiculo(data: unknown) {
-  return request<Vehiculo>('/api/vehiculos', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
+  return request<Vehiculo>('/gateway/vehiculos', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
 }
 
 export function crearCliente(data: unknown) {
-  return request<Cliente>('/api/clientes', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
+  return request<Cliente>('/gateway/clientes', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
 }
 
 export function crearReserva(data: unknown) {
@@ -183,7 +183,7 @@ export function cancelarReserva(id: number) {
 }
 
 export function modificarVehiculo(id: number, data: unknown) {
-  return request<Vehiculo>(`/api/vehiculos/${id}`, {
+  return request<Vehiculo>(`/gateway/vehiculos/${id}`, {
     method: 'PUT',
     headers: jsonHeaders,
     body: JSON.stringify(data),
@@ -191,7 +191,7 @@ export function modificarVehiculo(id: number, data: unknown) {
 }
 
 export function modificarCliente(id: number, data: unknown) {
-  return request<Cliente>(`/api/clientes/${id}`, {
+  return request<Cliente>(`/gateway/clientes/${id}`, {
     method: 'PUT',
     headers: jsonHeaders,
     body: JSON.stringify(data),

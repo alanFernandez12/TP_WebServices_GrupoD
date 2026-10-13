@@ -89,7 +89,7 @@ export function crearVehiculo(data: unknown) {
 }
 
 export function crearCliente(data: unknown) {
-  return request<Cliente>('/api/clientes', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
+  return request<Cliente>('/gateway/clientes', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
 }
 
 export function crearReserva(data: unknown) {
@@ -191,7 +191,7 @@ export function modificarVehiculo(id: number, data: unknown) {
 }
 
 export function modificarCliente(id: number, data: unknown) {
-  return request<Cliente>(`/api/clientes/${id}`, {
+  return request<Cliente>(`/gateway/clientes/${id}`, {
     method: 'PUT',
     headers: jsonHeaders,
     body: JSON.stringify(data),
@@ -203,7 +203,7 @@ export function bajaVehiculo(id: number) {
 }
 
 export function bajaCliente(id: number) {
-  return request<void>(`/api/clientes/${id}`, {method: 'DELETE'})
+  return request<void>(`/gateway/clientes/${id}`, {method: 'DELETE'})
 }
 
 export function reactivarVehiculo(id: number) {
@@ -211,5 +211,5 @@ export function reactivarVehiculo(id: number) {
 }
 
 export function reactivarCliente(id: number) {
-  return request<void>(`/api/clientes/${id}/reactivar`,{method: 'PATCH'})
+  return request<void>(`/gateway/clientes/${id}/reactivar`,{method: 'PATCH'})
 }

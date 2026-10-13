@@ -183,54 +183,13 @@ Una vez cumplidos los requisitos previos:
 
 ## Hito 2: Customer Service (gRPC)
 
-Servicio independiente en Java que expone por gRPC las consultas de clientes que usa el API Gateway. El código está en `services/customer-service/` 
+En el Hito 2 se amplió la arquitectura de **Rentar** mediante la incorporación de servicios gRPC, manteniendo el acceso a través del API Gateway y las funcionalidades existentes de la aplicación.
 
-### Requisitos
+La implementación y el uso de cada módulo se documentan en los siguientes archivos:
 
-- MySQL ejecutándose en el puerto 3306, con la base `rentar` creada (pasos 2 y 3 de la sección anterior).
-- El puerto `9092` libre
-
-### Ejecución
-
-Todos los comandos se ejecutan desde la **raíz del repositorio**.
-
-1. **Levantar el servicio**, pasando la contraseña de MySQL por variable de entorno:
-
-   ```bash
-   DB_PASSWORD=tu_password ./mvnw -f services/customer-service/pom.xml spring-boot:run
-   ```
-
-   El servicio está listo cuando el log muestra:
-
-   ```text
-   gRPC Server started, listening on address: ... port: 9092
-   ```
-
-2. **(Opcional) Cambiar la configuración** con estas variables de entorno:
-
-   | Variable | Valor por defecto |
-   |---|---|
-   | `CUSTOMER_GRPC_PORT` | `9092` |
-   | `DB_URL` | `jdbc:mysql://localhost:3306/rentar` |
-   | `DB_USER` | `root` |
-   | `DB_PASSWORD` | *(vacío)* |
-
-3. **Probar los RPC con `grpcurl`** (`brew install grpcurl`). El servicio tiene *reflection* activada, así que no hace falta indicar el `.proto`:
-
-   ```bash
-   grpcurl -plaintext localhost:9092 customer.CustomerService/GetCustomers
-   grpcurl -plaintext -d '{"id": 1}' localhost:9092 customer.CustomerService/GetCustomer
-   grpcurl -plaintext -d '{"id": 1}' localhost:9092 customer.CustomerService/CustomerExists
-   grpcurl -plaintext -d '{"id": 1}' localhost:9092 customer.CustomerService/IsCustomerActive
-   ```
-
-4. **Usarlo desde el API Gateway.** Con el servicio levantado, el gateway se conecta solo a `localhost:9092`, que es el valor por defecto de `CUSTOMER_SERVICE_URL`:
-
-   ```bash
-   cd api-gateway
-   npm install
-   npm run dev
-   ```
+- **[Gestión de vehículos](./HIBRIDA_VEHICULOS.md):** documentación de la implementación y el uso de los servicios relacionados con vehículos.
+- **[Gestión de clientes](./HIBRIDA_CLIENTES.md):** documentación de la implementación y el uso de los servicios relacionados con clientes.
+- **[Gestión de reservas](./HIBRIDA_RESERVAS.md):** documentación de la implementación y el uso de los servicios relacionados con reservas.
 
 ## Equipo
 

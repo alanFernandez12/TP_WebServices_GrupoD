@@ -1,5 +1,5 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react'
-import {crearCliente, crearReserva, crearVehiculo, modificarCliente, modificarVehiculo} from '../../../services/api'
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
+import {crearCliente, crearReserva, crearVehiculo, modificarCliente, modificarVehiculo, obtenerClientes, obtenerVehiculosDisponibles} from '../../../services/api'
 import type { Cliente, Vehiculo } from '../../../types/domain'
 
 export type RegistrationType = 'vehiculo' | 'cliente' | 'reserva'
@@ -26,6 +26,88 @@ export function RegistrationModal({ type, registro, onClose, onSaved }: Props) {
     () => obtenerValoresIniciales(registro))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [vehiculosDisponibles, setVehiculosDisponibles] = useState<Vehiculo[]>([])
+  const [loadingClientes, setLoadingClientes] = useState(false)
+  const [loadingVehiculos, setLoadingVehiculos] = useState(false)
+  const [errorClientes, setErrorClientes] = useState('')
+  const [errorVehiculos, setErrorVehiculos] = useState('')
+
+  useEffect(() => {
+    if (type !== 'reserva') return
+
+    let cancelled = false
+    setLoadingClientes(true)
+    setErrorClientes('')
+
+    obtenerClientes()
+      .then((result) => {
+        if (!cancelled) setClientes(result.filter((cliente) => cliente.activo))
+      })
+      .catch((requestError: unknown) => {
+        if (!cancelled) {
+          setErrorClientes(
+            requestError instanceof Error
+              ? requestError.message
+              : 'No se pudieron cargar los clientes.'
+          )
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingClientes(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [type])
+
+  useEffect(() => {
+    if (type !== 'reserva') return
+
+    const { horaInicio, horaFin } = values
+    if (!horaInicio || !horaFin || horaInicio >= horaFin) {
+      setVehiculosDisponibles([])
+      setValues((previous) => ({ ...previous, idVehiculo: '' }))
+      setErrorVehiculos('')
+      setLoadingVehiculos(false)
+      return
+    }
+
+    let cancelled = false
+    setLoadingVehiculos(true)
+    setErrorVehiculos('')
+
+    obtenerVehiculosDisponibles(horaInicio, horaFin)
+      .then((result) => {
+        if (cancelled) return
+        const disponibles = result.filter((vehiculo) => vehiculo.activo)
+        setVehiculosDisponibles(disponibles)
+        setValues((previous) => ({
+          ...previous,
+          idVehiculo: disponibles.some((vehiculo) => String(vehiculo.id) === previous.idVehiculo)
+            ? previous.idVehiculo
+            : '',
+        }))
+      })
+      .catch((requestError: unknown) => {
+        if (!cancelled) {
+          setVehiculosDisponibles([])
+          setErrorVehiculos(
+            requestError instanceof Error
+              ? requestError.message
+              : 'No se pudieron cargar los vehículos disponibles.'
+          )
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingVehiculos(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [type, values.horaInicio, values.horaFin])
 
   const update = (key: string) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const value = event.target.value
@@ -83,9 +165,19 @@ export function RegistrationModal({ type, registro, onClose, onSaved }: Props) {
       }
 
       if (type === 'reserva') {
+        const idCliente = Number(values.idCliente)
+        const idVehiculo = Number(values.idVehiculo)
+        if (!Number.isSafeInteger(idCliente) || idCliente <= 0 || !clientes.some((cliente) => cliente.id === idCliente)) {
+          setError('Seleccioná un cliente activo.')
+          return
+        }
+        if (!Number.isSafeInteger(idVehiculo) || idVehiculo <= 0 || !vehiculosDisponibles.some((vehiculo) => vehiculo.id === idVehiculo)) {
+          setError('Seleccioná un vehículo disponible para las fechas indicadas.')
+          return
+        }
         await crearReserva({
-          idCliente: Number(values.idCliente),
-          idVehiculo: Number(values.idVehiculo),
+          idCliente,
+          idVehiculo,
           horaInicio: values.horaInicio,
           horaFin: values.horaFin,
         })
@@ -164,10 +256,58 @@ export function RegistrationModal({ type, registro, onClose, onSaved }: Props) {
 
           {type === 'reserva' && (
             <div className="form-grid">
-              {field('idCliente', 'ID del cliente', 'number')}
-              {field('idVehiculo', 'ID del vehículo', 'number')}
               {field('horaInicio', 'Inicio', 'datetime-local')}
               {field('horaFin', 'Fin', 'datetime-local')}
+              <label>
+                <span>Cliente</span>
+                <select
+                  value={values.idCliente ?? ''}
+                  onChange={update('idCliente')}
+                  required
+                  disabled={loadingClientes || Boolean(errorClientes)}
+                >
+                  <option value="">
+                    {loadingClientes ? 'Cargando clientes...' : 'Seleccionar cliente'}
+                  </option>
+                  {clientes.map((cliente) => (
+                    <option key={cliente.id} value={cliente.id}>
+                      {cliente.nombre} {cliente.apellido} · {cliente.documento}
+                    </option>
+                  ))}
+                </select>
+                {errorClientes && <small className="form-error">{errorClientes}</small>}
+                {!loadingClientes && !errorClientes && clientes.length === 0 && (
+                  <small className="form-error">No hay clientes activos para reservar.</small>
+                )}
+              </label>
+              <label>
+                <span>Vehículo</span>
+                <select
+                  value={values.idVehiculo ?? ''}
+                  onChange={update('idVehiculo')}
+                  required
+                  disabled={!values.horaInicio || !values.horaFin || values.horaInicio >= values.horaFin || loadingVehiculos || Boolean(errorVehiculos)}
+                >
+                  <option value="">
+                    {loadingVehiculos
+                      ? 'Buscando disponibilidad...'
+                      : !values.horaInicio || !values.horaFin
+                        ? 'Ingresar inicio y fin'
+                        : values.horaInicio >= values.horaFin
+                          ? 'Rango de fechas inválido'
+                          : 'Seleccionar vehículo'}
+                  </option>
+                  {vehiculosDisponibles.map((vehiculo) => (
+                    <option key={vehiculo.id} value={vehiculo.id}>
+                      {vehiculo.patente} · {vehiculo.marca} {vehiculo.modelo}
+                    </option>
+                  ))}
+                </select>
+                {errorVehiculos && <small className="form-error">{errorVehiculos}</small>}
+                {!loadingVehiculos && !errorVehiculos && values.horaInicio && values.horaFin && values.horaInicio < values.horaFin && vehiculosDisponibles.length === 0 && (
+                  <small className="form-error">No hay vehículos disponibles para esas fechas.</small>
+                )}
+              </label>
             </div>
           )}
 

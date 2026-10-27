@@ -2,53 +2,94 @@ syntax = "proto3";
 
 package vehicle;
 
+// Servicio gRPC para administrar los vehículos del sistema.
 service VehicleService {
-  rpc GetVehicles (GetVehiclesRequest)
-      returns (VehicleListResponse);
 
-  rpc GetVehicle (GetVehicleRequest)
-      returns (VehicleResponse);
+  // Registra un nuevo vehículo.
+  rpc CreateVehicle(CreateVehicleRequest) returns (VehicleResponse);
 
-  rpc GetAvailableVehicles (AvailabilityRequest)
-      returns (VehicleListResponse);
+  // Obtiene la lista de todos los vehículos.
+  rpc GetVehicles(GetVehiclesRequest) returns (VehicleListResponse);
 
-  rpc UpdateVehicleStatus (UpdateVehicleStatusRequest)
-      returns (VehicleResponse);
+  // Obtiene un vehículo por su identificador.
+  rpc GetVehicle(GetVehicleRequest) returns (VehicleResponse);
+
+  // Modifica los datos de un vehículo existente.
+  rpc UpdateVehicle(UpdateVehicleRequest) returns (VehicleResponse);
+
+  // Realiza la baja lógica de un vehículo.
+  rpc DeleteVehicle(GetVehicleRequest) returns (VehicleResponse);
+
+  // Consulta los vehículos disponibles durante un período.
+  rpc GetAvailableVehicles(AvailabilityRequest) returns (VehicleListResponse);
+
+  // Actualiza el estado operativo de un vehículo.
+  rpc UpdateVehicleStatus(UpdateVehicleStatusRequest) returns (VehicleResponse);
 }
 
+// Datos necesarios para registrar un vehículo.
+message CreateVehicleRequest {
+  string patente = 1;       // Patente única del vehículo.
+  string marca = 2;         // Marca del vehículo.
+  string modelo = 3;        // Modelo del vehículo.
+  int32 anio = 4;           // Año de fabricación.
+  string tipoVehiculo = 5;  // Tipo o categoría del vehículo.
+  string color = 6;         // Color del vehículo.
+  string precio_diario = 7; // Precio diario del alquiler.
+}
+
+// Solicitud para obtener todos los vehículos.
+// No requiere parámetros.
 message GetVehiclesRequest {}
 
+// Solicitud para consultar un vehículo específico.
 message GetVehicleRequest {
-  int64 id = 1;
+  int64 id = 1; // Identificador del vehículo.
 }
 
-message VehicleResponse {
-  Vehicle vehicle = 1;
+// Datos necesarios para modificar un vehículo existente.
+message UpdateVehicleRequest {
+  int64 id = 1;           // Identificador del vehículo que se modifica.
+  string marca = 2;       // Nueva marca del vehículo.
+  string modelo = 3;      // Nuevo modelo del vehículo.
+  int32 anio = 4;         // Nuevo año de fabricación.
+  string tipoVehiculo = 5; // Nuevo tipo o categoría.
+  string color = 6;       // Nuevo color del vehículo.
+  string precio_diario = 7; // Nuevo precio diario del alquiler.
 }
 
-message VehicleListResponse {
-  repeated Vehicle vehicles = 1;
-}
-
+// Solicitud para consultar la disponibilidad de vehículos.
 message AvailabilityRequest {
-  string fecha_inicio  = 1;
-  string fecha_fin = 2;
+  string fecha_inicio = 1; // Fecha de inicio del período, formato YYYY-MM-DD.
+  string fecha_fin = 2;    // Fecha de fin del período, formato YYYY-MM-DD.
 }
 
+// Solicitud para actualizar el estado operativo de un vehículo.
 message UpdateVehicleStatusRequest {
-  int64 id = 1;
-  string estado = 2;
+  int64 id = 1;      // Identificador del vehículo.
+  string estado = 2; // Nuevo estado operativo del vehículo.
 }
 
+// Respuesta que contiene los datos de un vehículo.
+message VehicleResponse {
+  Vehicle vehicle = 1; // Vehículo consultado o modificado.
+}
+
+// Respuesta que contiene una lista de vehículos.
+message VehicleListResponse {
+  repeated Vehicle vehicles = 1; // Lista de vehículos encontrados.
+}
+
+// Representación de un vehículo en el sistema.
 message Vehicle {
-  int64 id = 1;
-  string patente = 2;
-  string marca = 3;
-  string modelo = 4;
-  string estado = 5;
-  int32 anio = 6;
-  string tipoVehiculo = 7;
-  string color = 8;
-  string precio_diario = 9;
-  bool activo = 10;
+  int64 id = 1;             // Identificador único del vehículo.
+  string patente = 2;       // Patente del vehículo.
+  string marca = 3;         // Marca del vehículo.
+  string modelo = 4;        // Modelo del vehículo.
+  string estado = 5;        // Estado operativo del vehículo.
+  int32 anio = 6;           // Año de fabricación.
+  string tipoVehiculo = 7;  // Tipo o categoría del vehículo.
+  string color = 8;         // Color del vehículo.
+  string precio_diario = 9; // Precio diario del alquiler.
+  bool activo = 10;         // Indica si el vehículo sigue activo en el sistema.
 }

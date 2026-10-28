@@ -2,80 +2,121 @@ syntax = "proto3";
 
 package customer;
 
+// Servicio gRPC para gestionar los clientes del sistema.
 service CustomerService {
+
+  // Obtiene la lista de todos los clientes.
   rpc GetCustomers(GetCustomersRequest) returns (CustomerListResponse);
+
+  // Obtiene un cliente por su identificador.
   rpc GetCustomer(GetCustomerRequest) returns (CustomerResponse);
+
+  // Verifica si existe un cliente con el identificador indicado.
   rpc CustomerExists(CustomerExistsRequest) returns (CustomerExistsResponse);
+
+  // Verifica si un cliente se encuentra activo.
   rpc IsCustomerActive(IsCustomerActiveRequest) returns (CustomerActiveResponse);
+
+  // Valida las credenciales de acceso de un usuario.
   rpc Login(LoginRequest) returns (LoginResponse);
-  rpc CreateCustomer(SaveCustomerRequest) returns (CustomerResponse);
-  rpc UpdateCustomer(SaveCustomerRequest) returns (CustomerResponse);
+
+  // Registra un nuevo cliente.
+  rpc CreateCustomer(CreateCustomerRequest) returns (CustomerResponse);
+
+  // Modifica los datos de un cliente existente.
+  rpc UpdateCustomer(UpdateCustomerRequest) returns (CustomerResponse);
+
+  // Desactiva un cliente.
   rpc DeleteCustomer(GetCustomerRequest) returns (CustomerResponse);
+
+  // Reactiva un cliente previamente desactivado.
   rpc ReactivateCustomer(GetCustomerRequest) returns (CustomerResponse);
 }
 
+// Solicitud para iniciar sesión.
 message LoginRequest {
-  string email = 1;
-  string password = 2;
+  string email = 1;    // Correo electrónico del usuario.
+  string password = 2; // Contraseña del usuario.
 }
 
+// Resultado de la autenticación.
 message LoginResponse {
-  bool valido = 1;
-  string rol = 2;
-  int64 cliente_id = 3;  // 0 si es ADMIN
-  string nombre = 4;
+  bool valido = 1;      // Indica si las credenciales son válidas.
+  string rol = 2;       // Rol del usuario autenticado.
+  int64 cliente_id = 3; // Identificador del cliente; 0 si el usuario es ADMIN.
+  string nombre = 4;    // Nombre del usuario autenticado.
 }
 
-// Se usa para crear y modificar
-message SaveCustomerRequest {
-  int64 id = 1;                 // solo al modificar
-  string documento = 2;
-  string nombre = 3;
-  string apellido = 4;
-  string email = 5;
-  string telefono = 6;
-  string fecha_nacimiento = 7;  // formato YYYY-MM-DD
-  string password = 8;          // solo al crear
-  string rol = 9;               // solo al crear
+// Datos necesarios para registrar un nuevo cliente.
+message CreateCustomerRequest {
+  string documento = 1;        // Número de documento del cliente.
+  string nombre = 2;           // Nombre del cliente.
+  string apellido = 3;         // Apellido del cliente.
+  string email = 4;             // Correo electrónico del cliente.
+  string telefono = 5;          // Número de teléfono del cliente.
+  string fecha_nacimiento = 6; // Fecha de nacimiento en formato YYYY-MM-DD.
+  string password = 7;          // Contraseña inicial del cliente.
+  string rol = 8;               // Rol asignado al crear el cliente.
 }
 
+// Datos necesarios para modificar un cliente existente.
+message UpdateCustomerRequest {
+  int64 id = 1;                 // Identificador del cliente que se modifica.
+  string documento = 2;         // Número de documento del cliente.
+  string nombre = 3;             // Nombre del cliente.
+  string apellido = 4;           // Apellido del cliente.
+  string email = 5;              // Correo electrónico del cliente.
+  string telefono = 6;           // Número de teléfono del cliente.
+  string fecha_nacimiento = 7;  // Fecha de nacimiento en formato YYYY-MM-DD.
+}
+
+// Solicitud para obtener todos los clientes.
+// No requiere parámetros.
 message GetCustomersRequest {}
 
+// Solicitud para consultar un cliente específico.
 message GetCustomerRequest {
-  int64 id = 1;
+  int64 id = 1; // Identificador del cliente.
 }
 
+// Solicitud para verificar la existencia de un cliente.
 message CustomerExistsRequest {
-  int64 id = 1;
+  int64 id = 1; // Identificador del cliente.
 }
 
+// Solicitud para verificar si un cliente está activo.
 message IsCustomerActiveRequest {
-  int64 id = 1;
+  int64 id = 1; // Identificador del cliente.
 }
 
+// Respuesta que contiene una lista de clientes.
 message CustomerListResponse {
-  repeated Customer customers = 1;
+  repeated Customer customers = 1; // Lista de clientes encontrados.
 }
 
+// Respuesta que contiene los datos de un cliente.
 message CustomerResponse {
-  Customer customer = 1;
+  Customer customer = 1; // Datos del cliente.
 }
 
+// Resultado de la verificación de existencia de un cliente.
 message CustomerExistsResponse {
-  bool exists = 1;
+  bool exists = 1; // Indica si el cliente existe.
 }
 
+// Resultado de la verificación del estado de un cliente.
 message CustomerActiveResponse {
-  bool active = 1;
+  bool active = 1; // Indica si el cliente está activo.
 }
 
+// Representación de un cliente en el sistema.
 message Customer {
-  int64 id = 1;
-  string nombre = 2;
-  string apellido = 3;
-  string email = 4;
-  string documento = 5;
-  string telefono = 6;
-  bool activo = 7;
-  string fecha_nacimiento = 8;
+  int64 id = 1;                // Identificador único del cliente.
+  string nombre = 2;            // Nombre del cliente.
+  string apellido = 3;          // Apellido del cliente.
+  string email = 4;             // Correo electrónico del cliente.
+  string documento = 5;         // Número de documento del cliente.
+  string telefono = 6;          // Número de teléfono del cliente.
+  bool activo = 7;              // Indica si el cliente está activo.
+  string fecha_nacimiento = 8;  // Fecha de nacimiento en formato YYYY-MM-DD.
 }

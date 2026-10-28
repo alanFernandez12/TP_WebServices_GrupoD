@@ -2,51 +2,71 @@ syntax = "proto3";
 
 package rental;
 
+// Servicio gRPC para gestionar los alquileres de vehículos.
 service RentalService {
+
+  // Crea un nuevo alquiler.
   rpc CreateRental(CreateRentalRequest) returns (RentalResponse);
+
+  // Obtiene la lista de todos los alquileres.
   rpc GetRentals(GetRentalsRequest) returns (RentalListResponse);
+
+  // Obtiene un alquiler por su identificador.
   rpc GetRental(GetRentalRequest) returns (RentalResponse);
+
+  // Cancela un alquiler existente.
   rpc CancelRental(CancelRentalRequest) returns (RentalResponse);
+
+  // Obtiene el historial de alquileres de un cliente.
   rpc GetRentalHistory(GetRentalHistoryRequest) returns (RentalListResponse);
 }
 
+// Datos necesarios para registrar un nuevo alquiler.
 message CreateRentalRequest {
-  int64 cliente_id = 1;
-  int64 vehiculo_id = 2;
-  string fecha_inicio = 3;
-  string fecha_fin = 4;
+  int64 cliente_id = 1;    // Identificador del cliente que realiza el alquiler.
+  int64 vehiculo_id = 2;   // Identificador del vehículo que se desea alquilar.
+  string fecha_inicio = 3; // Fecha de inicio del alquiler.
+  string fecha_fin = 4;    // Fecha de finalización del alquiler.
 }
 
+// Solicitud para obtener todos los alquileres.
+// No requiere parámetros.
 message GetRentalsRequest {}
 
+// Solicitud para obtener un alquiler específico.
 message GetRentalRequest {
-  int64 id = 1;
+  int64 id = 1; // Identificador del alquiler.
 }
 
+// Solicitud para cancelar un alquiler.
 message CancelRentalRequest {
-  int64 id = 1;
+  int64 id = 1; // Identificador del alquiler que se desea cancelar.
 }
 
+// Solicitud para consultar el historial de alquileres de un cliente.
 message GetRentalHistoryRequest {
-  int64 cliente_id = 1;
+  int64 cliente_id = 1; // Identificador del cliente.
 }
 
+// Respuesta que contiene una lista de alquileres.
 message RentalListResponse {
-  repeated Rental rentals = 1;
+  repeated Rental rentals = 1; // Lista de alquileres encontrados.
 }
 
+// Respuesta que contiene un alquiler.
 message RentalResponse {
-  Rental rental = 1;
+  Rental rental = 1; // Datos del alquiler.
 }
 
+// Representación de un alquiler.
 message Rental {
-  int64 id = 1;
-  int64 cliente_id = 2;
-  int64 vehiculo_id = 3;
-  string fecha_inicio = 4;
-  string fecha_fin = 5;
-  string estado = 6;
-  int32 duracion_dias = 7;
-  string precio_diario_historico = 8;
-  string importe_total = 9;
+  int64 id = 1;                      // Identificador único del alquiler.
+  int64 cliente_id = 2;               // Identificador del cliente asociado.
+  int64 vehiculo_id = 3;              // Identificador del vehículo alquilado.
+  string fecha_inicio = 4;            // Fecha de inicio del alquiler.
+  string fecha_fin = 5;               // Fecha de finalización del alquiler.
+  string estado = 6;                  // Estado actual del alquiler.
+  int32 duracion_dias = 7;             // Duración del alquiler expresada en días.
+  string precio_diario_historico = 8; // Precio diario registrado al crear el alquiler.
+  string importe_total = 9;           // Importe total del alquiler.
 }

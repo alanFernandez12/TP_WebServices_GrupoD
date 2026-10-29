@@ -100,6 +100,11 @@ export function obtenerVehiculos() {
   return request<Vehiculo[]>('/gateway/vehiculos')
 }
 
+export function obtenerVehiculosDisponibles(fechaInicio: string, fechaFin: string) {
+  const params = new URLSearchParams({ fechaInicio, fechaFin })
+  return request<Vehiculo[]>(`/gateway/vehiculos/disponibles?${params.toString()}`)
+}
+
 export function obtenerClientes() {
   return request<Cliente[]>('/gateway/clientes')
 }

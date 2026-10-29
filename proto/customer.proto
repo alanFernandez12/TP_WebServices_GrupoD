@@ -21,10 +21,10 @@ service CustomerService {
   rpc Login(LoginRequest) returns (LoginResponse);
 
   // Registra un nuevo cliente.
-  rpc CreateCustomer(CreateCustomerRequest) returns (CustomerResponse);
+  rpc CreateCustomer(SaveCustomerRequest) returns (CustomerResponse);
 
   // Modifica los datos de un cliente existente.
-  rpc UpdateCustomer(UpdateCustomerRequest) returns (CustomerResponse);
+  rpc UpdateCustomer(SaveCustomerRequest) returns (CustomerResponse);
 
   // Desactiva un cliente.
   rpc DeleteCustomer(GetCustomerRequest) returns (CustomerResponse);
@@ -47,27 +47,17 @@ message LoginResponse {
   string nombre = 4;    // Nombre del usuario autenticado.
 }
 
-// Datos necesarios para registrar un nuevo cliente.
-message CreateCustomerRequest {
-  string documento = 1;        // Número de documento del cliente.
-  string nombre = 2;           // Nombre del cliente.
-  string apellido = 3;         // Apellido del cliente.
-  string email = 4;             // Correo electrónico del cliente.
-  string telefono = 5;          // Número de teléfono del cliente.
-  string fecha_nacimiento = 6; // Fecha de nacimiento en formato YYYY-MM-DD.
-  string password = 7;          // Contraseña inicial del cliente.
-  string rol = 8;               // Rol asignado al crear el cliente.
-}
-
-// Datos necesarios para modificar un cliente existente.
-message UpdateCustomerRequest {
-  int64 id = 1;                 // Identificador del cliente que se modifica.
-  string documento = 2;         // Número de documento del cliente.
+// Se usa para crear y modificar un cliente
+message SaveCustomerRequest {
+  int64 id = 1;                 // solo al modificar
+  string documento = 2;        // Número de documento del cliente.
   string nombre = 3;             // Nombre del cliente.
   string apellido = 4;           // Apellido del cliente.
   string email = 5;              // Correo electrónico del cliente.
   string telefono = 6;           // Número de teléfono del cliente.
   string fecha_nacimiento = 7;  // Fecha de nacimiento en formato YYYY-MM-DD.
+  string password = 8;          // Contraseña inicial del cliente. Solo al crear.
+  string rol = 9;               // Rol asignado al crear el cliente. Solo al crear.
 }
 
 // Solicitud para obtener todos los clientes.

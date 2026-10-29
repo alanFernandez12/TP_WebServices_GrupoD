@@ -25,6 +25,9 @@ service VehicleService {
 
   // Actualiza el estado operativo de un vehículo.
   rpc UpdateVehicleStatus(UpdateVehicleStatusRequest) returns (VehicleResponse);
+
+  // Reactiva un vehículo previamente dado de baja.
+  rpc ReactivateVehicle(GetVehicleRequest) returns (VehicleResponse);
 }
 
 // Datos necesarios para registrar un vehículo.

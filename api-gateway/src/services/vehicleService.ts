@@ -149,3 +149,20 @@ export const updateVehicleStatus = (
     );
   });
 };
+
+// Reactiva un vehículo previamente dado de baja.
+export const reactivateVehicle = (id: number): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    vehicleClient.ReactivateVehicle(
+      { id: String(id) },
+      (error: any, response: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(response);
+      }
+    );
+  });
+};

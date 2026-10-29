@@ -85,7 +85,7 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 export function crearVehiculo(data: unknown) {
-  return request<Vehiculo>('/api/vehiculos', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
+  return request<Vehiculo>('/gateway/vehiculos', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
 }
 
 export function crearCliente(data: unknown) {
@@ -183,7 +183,7 @@ export function cancelarReserva(id: number) {
 }
 
 export function modificarVehiculo(id: number, data: unknown) {
-  return request<Vehiculo>(`/api/vehiculos/${id}`, {
+  return request<Vehiculo>(`/gateway/vehiculos/${id}`, {
     method: 'PUT',
     headers: jsonHeaders,
     body: JSON.stringify(data),
@@ -199,7 +199,7 @@ export function modificarCliente(id: number, data: unknown) {
 }
 
 export function bajaVehiculo(id: number) {
-  return request<void>(`/api/vehiculos/${id}`, {method: 'DELETE'})
+  return request<void>(`/gateway/vehiculos/${id}`, {method: 'DELETE'})
 }
 
 export function bajaCliente(id: number) {
@@ -207,7 +207,7 @@ export function bajaCliente(id: number) {
 }
 
 export function reactivarVehiculo(id: number) {
-  return request<void>(`/api/vehiculos/${id}/reactivar`, {method: 'PATCH'})
+  return request<void>(`/gateway/vehiculos/${id}/reactivar`, {method: 'PATCH'})
 }
 
 export function reactivarCliente(id: number) {

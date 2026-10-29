@@ -271,3 +271,28 @@ export const updateVehicleStatus = async (
     next(error);
   }
 };
+
+// PATCH /api/vehiculos/:id/reactivar
+export const reactivateVehicle = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      res.status(400).json({
+        status: 400,
+        message: "El identificador del vehículo no es válido.",
+      });
+      return;
+    }
+
+    const response = await vehicleService.reactivateVehicle(id);
+
+    res.status(200).json(normalizeVehicle(response.vehicle));
+  } catch (error) {
+    next(error);
+  }
+};

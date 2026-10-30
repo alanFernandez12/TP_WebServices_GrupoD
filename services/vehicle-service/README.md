@@ -29,6 +29,10 @@ vehicle-service/
 - `app/server.py`: implementa `VehicleService` y levanta el servidor gRPC.
 - `app/database.py`: administra el pool de conexiones MySQL.
 - `app/vehicle_repository.py`: contiene las consultas a la base.
+- `app/vehicle_verification_publisher.py`: publica la solicitud de
+  verificación de patente en RabbitMQ después de crear un vehículo.
+- `app/vehicle_verification_result_consumer.py`: consume el resultado de la
+  verificación y actualiza `lk_vehiculos`.
 - `app/vehicle_pb2*.py`: archivos generados desde `vehicle.proto`.
 - `.env`: configura el puerto y la conexión a MySQL.
 
@@ -36,12 +40,32 @@ vehicle-service/
 
 | Operación | Descripción |
 |---|---|
+| `CreateVehicle` | Registra un vehículo activo con estado `DISPONIBLE`. |
 | `GetVehicles` | Devuelve vehículos activos de `lk_vehiculos`. |
-| `GetVehicle` | Devuelve un vehículo activo por ID. |
+| `GetVehicle` | Devuelve un vehículo por ID. |
+| `UpdateVehicle` | Modifica los datos editables de un vehículo activo. |
+| `DeleteVehicle` | Realiza la baja lógica y valida que no tenga reservas activas. |
 | `GetAvailableVehicles` | Excluye reservas no canceladas que se superpongan. |
 | `UpdateVehicleStatus` | Actualiza `desc_estado_vehiculo`. |
+| `ReactivateVehicle` | Reactiva un vehículo dado de baja lógicamente. |
 
 Los estados permitidos son `DISPONIBLE`, `RESERVADO` y `EN_ALQUILER`.
+
+Al ejecutar `CreateVehicle`, el servicio guarda primero el vehículo y luego
+publica en RabbitMQ el evento `vehiculos.verificacion.solicitada`:
+
+```json
+{
+  "vehiculoId": 15,
+  "patente": "ABC123"
+}
+```
+
+El evento se publica en el exchange `rentar.events` y queda disponible en la
+cola durable `rentar.verificador.vehiculos`. El mismo proceso inicia un
+consumidor de `rentar.vehiculos.verificacion.resultado`, que guarda
+`VALIDADO`/`ROBADO` en `desc_verificacion` y pone `flag_activo = 0` para un
+vehículo robado.
 
 ## Configuración
 
@@ -54,6 +78,11 @@ DB_PORT=3306
 DB_NAME=Rentar
 DB_USER=root
 DB_PASSWORD=tu contraseña de MySQL
+RABBITMQ_HOST=localhost
+RABBITMQ_PORT=5672
+RABBITMQ_USERNAME=guest
+RABBITMQ_PASSWORD=guest
+RABBITMQ_VIRTUAL_HOST=/
 ```
 
 La contraseña debe coincidir con `spring.datasource.password` del servidor
@@ -64,7 +93,11 @@ La base y las tablas deben existir. Los scripts están en:
 ```text
 Proyecto/BD/RentarBD.sql
 Proyecto/BD/DatosPrueba.sql
+Proyecto/BD/Hito3_FlujoA.sql
 ```
+
+En una base existente, ejecutar `Hito3_FlujoA.sql` una sola vez antes de
+iniciar el servicio.
 
 ## Instalación
 
@@ -88,7 +121,11 @@ Si PowerShell bloquea la activación, se puede instalar sin activar el entorno:
 Después de instalar las dependencias, ejecutar desde la raíz:
 
 ```powershell
-python -m grpc_tools.protoc -I=proto --python_out=vehicle-service/app --grpc_python_out=vehicle-service/app proto/vehicle.proto
+.\services\vehicle-service\.venv\Scripts\python.exe -m grpc_tools.protoc `
+  -I=proto `
+  --python_out=services\vehicle-service\app `
+  --grpc_python_out=services\vehicle-service\app `
+  proto\vehicle.proto
 ```
 
 Esto crea `vehicle_pb2.py` y `vehicle_pb2_grpc.py` dentro de `app`.

@@ -30,7 +30,7 @@ logger = logging.getLogger("vehicle-verification-result-consumer")
 
 
 class VehicleVerificationResultConsumer:
-    """Consume resultados y actualiza `lk_vehiculos` de forma idempotente."""
+    """Consume resultados y actualiza `flag_activo` cuando corresponde."""
 
     def __init__(
         self,
@@ -65,7 +65,7 @@ class VehicleVerificationResultConsumer:
 
             channel.basic_ack(delivery_tag=method.delivery_tag)
             logger.info(
-                "Verificación aplicada: vehiculoId=%s patente=%s resultado=%s",
+                "Resultado procesado: vehiculoId=%s patente=%s resultado=%s",
                 vehicle_id,
                 patente,
                 verification,

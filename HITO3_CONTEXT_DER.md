@@ -44,8 +44,9 @@ mediante un broker de mensajes: **Apache Kafka _o_ RabbitMQ** (elegir uno).
 
 > **Regla clave:** `ROBADO` **no** es un estado operativo nuevo del vehículo. Si el resultado es `ROBADO`, el vehículo
 > queda **inhabilitado para nuevas operaciones**, manteniendo su estado operativo en `DISPONIBLE`/`EN_ALQUILER`.
-> En el modelo de datos, el resultado se guarda en `lk_vehiculos.desc_verificacion` (columna nueva, separada de `desc_estado_vehiculo`)
-> y la inhabilitación se refleja con `flag_activo = false`. Ver sección 7.
+> En el modelo de datos de esta implementación, el resultado no se persiste
+> como texto en `lk_vehiculos`; si es `ROBADO`, la inhabilitación se refleja
+> con `flag_activo = false`.
 
 ---
 
@@ -228,7 +229,7 @@ Relaciones: `lk_tiempo 1—N ft_reservas`, `lk_clientes 1—N ft_reservas`, `lk_
 **Columna nueva en `lk_vehiculos`:**
 | Columna | Descripción |
 |---|---|
-| `desc_verificacion` | Resultado de la verificación policial asíncrona (Flujo A). Valores: `VALIDADO` / `ROBADO` (y, **[Sugerencia]**, un valor inicial tipo `PENDIENTE` hasta recibir el resultado). Es independiente de `desc_estado_vehiculo` (`DISPONIBLE` / `EN_ALQUILER`). |
+| `flag_activo` | Indica si el vehículo puede operar en Rentar. Para el Flujo A se establece en `false` cuando el resultado policial es `ROBADO`. |
 
 **`ft_vehiculo_externo`** — tabla **temporal/de staging** del Flujo B. El vehículo del cliente permanece acá hasta que termina la validación.
 | Columna | Tipo / Nota |
@@ -334,7 +335,7 @@ Regla práctica: si el usuario no necesita esperar el resultado para continuar, 
 - [ ] Nombres de tópicos y estructuras JSON idénticos al enunciado.
 - [ ] Eventos y estructuras documentados.
 - [ ] Estados del vehículo en `lk_vehiculos` siguen siendo solo `DISPONIBLE` / `EN_ALQUILER`; `PENDIENTE` existe solo en `ft_vehiculo_externo`.
-- [ ] Tablas nuevas creadas según la sección 7: `ft_vehiculo_externo`, `ft_mantenimientos`, columna `lk_vehiculos.desc_verificacion`.
+- [ ] Tablas nuevas creadas según la sección 7: `ft_vehiculo_externo`, `ft_mantenimientos`.
 - [ ] Bases `rentar_policial` y `rentar_titularidad` creadas, con datos de prueba, y consultadas solo por los verificadores/validadores.
 - [ ] Vehículo externo validado se inserta en `lk_vehiculos` como `DISPONIBLE` y recién ahí se completa `ft_vehiculo_externo.id_vehiculo`.
 
@@ -361,6 +362,6 @@ El incumplimiento de **cualquiera** implica desaprobación del TP.
 2. Reutilizar convenciones, lenguaje y frameworks ya usados en el proyecto.
 3. Implementar flujo por flujo (A → B → C), verificando cada uno de punta a punta.
 4. No renombrar tópicos ni campos definidos en este documento.
-5. No introducir `ROBADO` como estado operativo del vehículo (usar `desc_verificacion` + `flag_activo`).
+5. No introducir `ROBADO` como estado operativo del vehículo (usar el resultado del evento para actualizar `flag_activo`).
 6. Respetar el modelo de datos de la sección 7: los vehículos externos esperan en `ft_vehiculo_externo` y solo se insertan en `lk_vehiculos` al validarse; los registros simulados están en las bases `rentar_policial` y `rentar_titularidad`.
 7. Ante ambigüedad, preguntar al usuario en lugar de asumir.

@@ -230,22 +230,12 @@ class VehicleRepository:
         patente: str,
         verification: str,
     ) -> bool:
-        """Guarda el resultado y desactiva el vehículo si fue denunciado.
+        """Aplica el resultado y desactiva el vehículo si fue denunciado.
 
         La patente se incluye en el filtro para evitar aplicar por error un
         resultado a otro vehículo si un mensaje llega con datos inconsistentes.
-        La operación es idempotente: repetir el mismo resultado no cambia el
-        efecto final.
-        """
-        query = """
-            UPDATE lk_vehiculos
-            SET desc_verificacion = %s,
-                flag_activo = CASE
-                    WHEN %s = 'ROBADO' THEN 0
-                    ELSE flag_activo
-                END
-            WHERE id_vehiculo = %s
-              AND cod_patente = %s
+        Los resultados `VALIDADO` no cambian la base. La operación es
+        idempotente para resultados `ROBADO` repetidos.
         """
         with self.database.connection() as connection:
             cursor = connection.cursor()
@@ -265,10 +255,16 @@ class VehicleRepository:
                 connection.rollback()
                 return False
 
-            cursor.execute(
-                query,
-                (verification, verification, vehicle_id, patente),
-            )
-            connection.commit()
+            if verification == "ROBADO":
+                cursor.execute(
+                    """
+                    UPDATE lk_vehiculos
+                    SET flag_activo = 0
+                    WHERE id_vehiculo = %s
+                      AND cod_patente = %s
+                    """,
+                    (vehicle_id, patente),
+                )
+                connection.commit()
             cursor.close()
         return True

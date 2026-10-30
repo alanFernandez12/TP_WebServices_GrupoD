@@ -23,10 +23,18 @@ const isValidDate = (date: unknown): date is string =>
   !Number.isNaN(Date.parse(`${date}T00:00:00Z`)) &&
   new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) === date;
 
-const isValidPrice = (price: unknown) =>
-  typeof price === "string" &&
-  /^\d{1,10}(\.\d{1,2})?$/.test(price) &&
-  Number(price) >= 0;
+const isValidPrice = (price: unknown) => {
+  if (typeof price !== "string" && typeof price !== "number") {
+    return false;
+  }
+
+  const normalizedPrice = String(price);
+
+  return (
+    /^\d{1,10}(\.\d{1,2})?$/.test(normalizedPrice) &&
+    Number(normalizedPrice) >= 0
+  );
+};
 
 const validateVehicleData = (body: any) => {
   if (
@@ -154,7 +162,7 @@ export const createVehicle = async (
       anio: Number(req.body.anio),
       tipoVehiculo: req.body.tipoVehiculo.trim(),
       color: req.body.color.trim(),
-      precio_diario: req.body.precio_diario,
+      precio_diario: String(req.body.precio_diario),
     });
 
     res.status(201).json(normalizeVehicle(response.vehicle));
@@ -201,7 +209,7 @@ export const updateVehicle = async (
       anio: Number(req.body.anio),
       tipoVehiculo: req.body.tipoVehiculo.trim(),
       color: req.body.color.trim(),
-      precio_diario: req.body.precio_diario,
+      precio_diario: String(req.body.precio_diario),
     });
 
     res.status(200).json(normalizeVehicle(response.vehicle));

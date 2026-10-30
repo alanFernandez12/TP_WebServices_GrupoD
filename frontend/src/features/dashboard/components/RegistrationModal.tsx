@@ -1,11 +1,12 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
-import {crearCliente, crearMiReserva, crearReserva, crearVehiculo, modificarCliente, modificarVehiculo, obtenerClientes, obtenerVehiculosDisponibles, consultarDisponibilidad} from '../../../services/api'
+import {crearCliente, crearMiReserva, crearReserva, crearVehiculo, solicitarIncorporacionVehiculo, modificarCliente, modificarVehiculo, obtenerClientes, obtenerVehiculosDisponibles, consultarDisponibilidad} from '../../../services/api'
 import type { Cliente, Vehiculo } from '../../../types/domain'
 
 export type RegistrationType = 'vehiculo' | 'cliente' | 'reserva'
 
 interface Props {type: RegistrationType, registro?: Cliente | Vehiculo
   clienteId?: number
+  vehiculoExterno?: boolean
   onClose: () => void
   onSaved: () => void
 }
@@ -21,8 +22,9 @@ function obtenerValoresIniciales(registro?: Cliente | Vehiculo): Record<string, 
   )
 }
 
-export function RegistrationModal({ type, registro, clienteId, onClose, onSaved }: Props) {
+export function RegistrationModal({ type, registro, clienteId, vehiculoExterno = false, onClose, onSaved }: Props) {
   const editando = Boolean(registro)
+  const incorporacionExterna = type === 'vehiculo' && vehiculoExterno
   const [values, setValues] = useState<Record<string, string>>(
     () => obtenerValoresIniciales(registro))
   const [saving, setSaving] = useState(false)
@@ -164,7 +166,25 @@ export function RegistrationModal({ type, registro, clienteId, onClose, onSaved 
           precio_diario: Number(values.precio_diario),
         }
 
-        if (registro) {
+        if (incorporacionExterna) {
+          if (editando) throw new Error('Una solicitud de incorporación no se puede editar desde este formulario.')
+          const anio = datosVehiculo.anio
+          const precio = datosVehiculo.precio_diario
+          if (!Number.isInteger(anio) || anio < 1900 || anio > new Date().getFullYear() + 1) {
+            setError('Ingresá un año válido.')
+            return
+          }
+          if (!Number.isFinite(precio) || precio <= 0) {
+            setError('El precio diario debe ser mayor a cero.')
+            return
+          }
+          await solicitarIncorporacionVehiculo({
+            ...datosVehiculo,
+            patente: datosVehiculo.patente.trim().toUpperCase(),
+            marca: datosVehiculo.marca.trim(),
+            modelo: datosVehiculo.modelo.trim(),
+          })
+        } else if (registro) {
           await modificarVehiculo(registro.id, datosVehiculo)
         } else {
           await crearVehiculo(datosVehiculo)
@@ -214,15 +234,18 @@ export function RegistrationModal({ type, registro, clienteId, onClose, onSaved 
         if (event.target === event.currentTarget && !saving && !error) onClose()}}>
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="registration-title">
         <div className="modal-heading">
-          <div> <p className="eyebrow">{editando ? 'Edición' : 'Alta'}</p>
+          <div> <p className="eyebrow">{incorporacionExterna ? 'Hito 3' : editando ? 'Edición' : 'Alta'}</p>
             <h2 id="registration-title">
               {editando
                 ? type === 'cliente' ? 'Editar cliente' : 'Editar vehículo'
-                : labels[type]}</h2>
+                : incorporacionExterna ? 'Incorporar mi vehículo' : labels[type]}</h2>
           </div>
           <button type="button" className="close-button" onClick={onClose} disabled={saving} aria-label="Cerrar">×</button>
         </div>
 
+        {incorporacionExterna && (
+          <p className="subtitle">La patente y la titularidad se verificarán de manera asíncrona. Se utilizará el titular asociado a tu sesión.</p>
+        )}
         <form onSubmit={submit}>
           {type === 'cliente' && (
             <div className="form-grid">
@@ -323,7 +346,7 @@ export function RegistrationModal({ type, registro, clienteId, onClose, onSaved 
               Cancelar
             </button>
             <button type="submit" className="primary-button" disabled={saving}>
-              {saving ? 'Guardando...' : editando ? 'Guardar cambios' : 'Guardar alta'}
+              {saving ? 'Guardando...' : incorporacionExterna ? 'Solicitar incorporación' : editando ? 'Guardar cambios' : 'Guardar alta'}
             </button>
           </div>
         </form>

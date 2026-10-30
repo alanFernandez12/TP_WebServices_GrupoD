@@ -303,3 +303,36 @@ export async function consultarHistorial(): Promise<AlquilerHistorico[]> {
     }`)
   return response.historialAlquileres
 }
+
+/*Funciones para incorporar vehiculo externo*/
+export interface SolicitudVehiculoExterno {
+  id: number
+  patente: string
+  marca: string
+  modelo: string
+  estado: 'PENDIENTE' | 'RECHAZADO' | 'DISPONIBLE'
+  validacionPatente?: 'PENDIENTE' | 'VALIDADO' | 'RECHAZADO' | null
+  validacionTitularidad?: 'PENDIENTE' | 'VALIDADO' | 'RECHAZADO' | null
+}
+
+export interface IncorporacionVehiculoInput {
+  patente: string
+  marca: string
+  modelo: string
+  anio: number
+  color: string | null
+  tipoVehiculo: string
+  precio_diario: number
+}
+
+export function solicitarIncorporacionVehiculo(datos: IncorporacionVehiculoInput) {
+  return request<SolicitudVehiculoExterno>('/gateway/vehiculos/externos', {
+    method: 'POST', headers: jsonHeaders, body: JSON.stringify(datos),
+  })
+}
+
+export function consultarMisSolicitudesVehiculosExternos() {
+  return request<SolicitudVehiculoExterno[]>('/gateway/vehiculos/externos/mis-solicitudes')
+}
+
+

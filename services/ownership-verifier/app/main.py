@@ -13,7 +13,12 @@ load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Validador de titularidad")
+app = FastAPI(title="Ownership Verifier")
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 class SolicitudValidacion(BaseModel):

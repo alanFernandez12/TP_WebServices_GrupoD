@@ -1,10 +1,12 @@
-# Ownership Validator — Validador de titularidad
+docker run -d --name ownership-verifier `
+  --env-file services\ownership-verifier\.env `
+-p 8094:8094 ownership-verifier:local# Ownership Verifier — Validador de titularidad
 
 ## Propósito
 
-`ownership-validator` es un servicio REST que verifica si el número de documento informado corresponde al titular registrado para una patente.
+`ownership-verifier` es un servicio REST que verifica si el número de documento informado corresponde al titular registrado para una patente.
 
-Para realizar la comprobación, consulta directamente la tabla `lk_registro_titularidad` de la base configurada para el registro automotor. No consulta Customer Service, Vehicle Service ni otros servicios, ni utiliza RabbitMQ.
+Para realizar la comprobación, consulta directamente la tabla `lk_registro_titularidad` de la base configurada para el registro automotor. No consulta Customer Service, Vehicle Service ni otros servicios, ni utiliza RabbitMQ actualmente.
 
 ## Funcionamiento
 
@@ -113,11 +115,11 @@ ON DUPLICATE KEY UPDATE
     cod_documento_titular = '30111222';
 ```
 
-La tabla debe existir en la base indicada por `DB_NAME`. El servicio no crea bases ni tablas automáticamente. El script `Proyecto\BD\RentarBD.sql` debe actualizarse si también se espera que cree este esquema y esta tabla.
+La tabla debe existir en la base indicada por `DB_NAME`. El servicio no crea bases ni tablas automáticamente. `sql\schema.sql` contiene el esquema y un registro de ejemplo para preparar el registro local.
 
 ## Configuración local
 
-Crear `services\ownership-validator\.env` con los datos de conexión del entorno local:
+Crear `services\ownership-verifier\.env` con los datos de conexión del entorno local. Para valores de ejemplo, consultar `.env.example`:
 
 ```env
 DB_HOST=localhost
@@ -139,19 +141,36 @@ $env:DB_PORT = "3306"
 $env:DB_NAME = "Rentar_RegistroAutomotor"
 $env:DB_USER = "root"
 $env:DB_PASSWORD = "Tu_password_local"
-python -m venv .\services\ownership-validator\.venv
-& .\services\ownership-validator\.venv\Scripts\python.exe -m pip install --upgrade pip
-& .\services\ownership-validator\.venv\Scripts\python.exe -m pip install -r .\services\ownership-validator\requirements.txt
+python -m venv .\services\ownership-verifier\.venv
+& .\services\ownership-verifier\.venv\Scripts\python.exe -m pip install --upgrade pip
+& .\services\ownership-verifier\.venv\Scripts\python.exe -m pip install -r .\services\ownership-verifier\requirements.txt
 ```
 
 Iniciar el servicio:
 
 ```powershell
-Set-Location .\services\ownership-validator
+Set-Location .\services\ownership-verifier
 & .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --reload --port 8094
 ```
 
 El servicio queda disponible en `http://localhost:8094`. La documentación interactiva de FastAPI está en `http://localhost:8094/docs`.
+`GET /health` devuelve el estado de la API sin consultar MySQL.
+
+## Docker
+
+Construir la imagen desde la raíz del repositorio:
+
+```powershell
+docker build -t ownership-verifier:local -f services\ownership-verifier\Dockerfile services\ownership-verifier
+```
+
+Iniciarla en la misma red Docker que MySQL:
+
+```powershell
+docker run --rm --name ownership-verifier --env-file services\ownership-verifier\.env -p 8094:8094 ownership-verifier:local
+```
+
+Si MySQL corre en el host, configurar `DB_HOST=host.docker.internal` en el archivo `.env` usado por el contenedor (en vez de `localhost`). El servicio responde en `http://localhost:8094`; `GET /health` comprueba que la API está activa y no verifica la conectividad con MySQL.
 
 > Si `python` no está disponible en el PATH, usar `py -3.11` en lugar de `python`.
 
@@ -175,5 +194,7 @@ Invoke-RestMethod `
 ## Componentes principales
 
 - `app\main.py`: define el endpoint REST, las validaciones de entrada y la consulta a MySQL.
+- `sql\schema.sql`: crea la base y la tabla del registro de titularidad, con un dato de ejemplo.
+- `Dockerfile` y `.dockerignore`: construyen la imagen de ejecución del servicio.
 - `requirements.txt`: dependencias de FastAPI, Uvicorn, MySQL Connector y python-dotenv.
-- `.env`: configuración local de conexión a la base; no debe versionarse.
+- `.env`: configuración local de conexión a la base; no debe versionarse. `.env.example` documenta las variables requeridas.

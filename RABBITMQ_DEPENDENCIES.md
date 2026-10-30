@@ -6,15 +6,61 @@
 
 ## Python
 
-- `pika==1.3.2`: cliente Python para conectarse a RabbitMQ mediante AMQP. Se declara para `rental-service` y se instala en el entorno virtual compartido usado por los scripts de arranque.
+- `pika==1.3.2`: cliente Python para conectarse a RabbitMQ mediante AMQP. La topología compartida del Flujo A se encuentra en `services/messaging`.
 
-La configuración inicial de conexión utiliza `localhost:5672` y las credenciales locales `guest`/`guest`. En esta etapa no se implementan productores, consumidores ni lógica de negocio.
+La configuración inicial de conexión utiliza `localhost:5672` y las credenciales
+locales `guest`/`guest`. `vehicle-service` publica las solicitudes y consume
+los resultados; `vehicle-verifier` consume solicitudes y publica resultados.
+
+## Topología configurada del Flujo A
+
+La topología utiliza un exchange durable de tipo `topic`:
+
+```text
+Exchange: rentar.events
+Tipo:     topic
+Durable:  true
+```
+
+Los eventos se enrutan mediante routing keys iguales a los nombres definidos
+por el Hito 3:
+
+| Routing key | Cola durable | Consumidor previsto |
+|---|---|---|
+| `vehiculos.verificacion.solicitada` | `rentar.verificador.vehiculos` | Verificador de vehículos |
+| `vehiculos.verificacion.resultado` | `rentar.vehiculos.verificacion.resultado` | Rentar |
+
+El recorrido configurado es:
+
+```text
+Rentar
+  -> rentar.events
+     -> vehiculos.verificacion.solicitada
+        -> rentar.verificador.vehiculos
+           -> Verificador
+
+Verificador
+  -> rentar.events
+     -> vehiculos.verificacion.resultado
+        -> rentar.vehiculos.verificacion.resultado
+           -> Rentar
+```
+
+Cada consumidor tiene su propia cola para evitar que el mensaje de resultado
+sea distribuido entre componentes que no corresponden. La declaración se
+realiza con:
+
+```powershell
+python -m services.messaging.topology
+```
 
 ## Requisito y puesta en marcha
 
 Es necesario tener Docker Desktop instalado y ejecutándose para levantar el contenedor de RabbitMQ.
 
-Desde PowerShell, ejecutar:
+RabbitMQ puede iniciarse directamente desde Docker Desktop creando un
+contenedor con la imagen `rabbitmq:3-management`. Como alternativa,
+desde PowerShell se puede ejecutar:
 
 ```powershell
 docker run -d --name rentar-rabbitmq `
@@ -34,6 +80,13 @@ Para comprobar que el contenedor está ejecutándose:
 docker ps
 ```
 
+Para declarar el exchange, las colas y los bindings del Flujo A:
+
+```powershell
+python -m pip install -r services\messaging\requirements.txt
+python -m services.messaging.topology
+```
+
 Para detenerlo:
 
 ```powershell
@@ -46,4 +99,145 @@ Para volver a iniciarlo después de detenerlo:
 docker start rentar-rabbitmq
 ```
 
-Si el contenedor ya existe, no se debe ejecutar nuevamente `docker run`; utilizar `docker start rentar-rabbitmq`.
+## Guía de prueba del Flujo A completo
+
+1. **Preparar MySQL.** Verificar que la base `Rentar` y la tabla
+   `lk_vehiculos` existan y que las credenciales de
+   `services\vehicle-service\.env` sean correctas.
+
+2. **Levantar RabbitMQ.** Desde la raíz del repositorio ejecutar:
+
+   Desde Docker Desktop, iniciar el contenedor `rentar-rabbitmq`. También se
+   puede ejecutar:
+
+   ```powershell
+   docker start rentar-rabbitmq
+   ```
+
+3. **Declarar la topología.** Ejecutar:
+
+   ```powershell
+   .\services\vehicle-service\.venv\Scripts\python.exe -m pip install -r services\vehicle-service\requirements.txt
+   .\services\vehicle-service\.venv\Scripts\python.exe -m services.messaging.topology
+   ```
+
+   Deben existir el exchange `rentar.events` y la cola
+   `rentar.verificador.vehiculos` en
+   <http://localhost:15672>, usando `guest`/`guest`.
+
+4. **Regenerar los stubs gRPC** si todavía no se hizo en el entorno:
+
+   ```powershell
+   .\services\vehicle-service\.venv\Scripts\python.exe -m grpc_tools.protoc `
+     -I=proto `
+     --python_out=services\vehicle-service\app `
+     --grpc_python_out=services\vehicle-service\app `
+     proto\vehicle.proto
+   ```
+
+5. **Iniciar `vehicle-service`.** Desde la raíz:
+
+   ```powershell
+   cd services\vehicle-service
+   .\.venv\Scripts\python.exe app\server.py
+   ```
+
+   El servicio debe indicar que escucha en `localhost:9091`.
+
+6. **Iniciar el API Gateway** en otra terminal:
+
+   ```powershell
+   cd api-gateway
+   npm.cmd run dev
+   ```
+
+7. **Crear un vehículo por el Gateway.** El siguiente ejemplo usa una patente
+   de prueba única:
+
+   ```powershell
+   $body = @{
+       patente = "ZZ999ZZ"
+       marca = "Toyota"
+       modelo = "Corolla"
+       anio = 2022
+       tipoVehiculo = "SEDAN"
+       color = "Blanco"
+       precio_diario = "35000.00"
+   } | ConvertTo-Json
+
+   Invoke-RestMethod `
+     -Method Post `
+     -Uri "http://localhost:8085/api/vehiculos" `
+     -ContentType "application/json" `
+     -Body $body
+   ```
+
+8. **Verificar el resultado parcial.** Confirmar que:
+   - el vehículo fue insertado en `Rentar.lk_vehiculos`;
+   - la respuesta del Gateway contiene el `id`;
+   - RabbitMQ muestra un mensaje en
+     `rentar.verificador.vehiculos`;
+   - el mensaje contiene exactamente `vehiculoId` y `patente`.
+
+   El mensaje puede inspeccionarse desde la pestaña **Queues** de la consola
+   de RabbitMQ usando **Get messages**. Si el verificador ya está ejecutándose,
+   la cola puede quedar en cero porque el mensaje fue consumido.
+
+10. **Preparar el registro policial simulado.** Ejecutar
+    `services\vehicle-verifier\sql\schema.sql` en MySQL. El seed contiene
+    `AA123BB` como patente validada y `ROBO123` como patente robada.
+
+11. **Configurar e iniciar el verificador.**
+
+    ```powershell
+    Copy-Item services\vehicle-verifier\.env.example services\vehicle-verifier\.env
+    cd services\vehicle-verifier
+    python -m pip install -r requirements.txt
+    python app\verifier.py
+    ```
+
+    El servicio debe indicar que espera mensajes en
+    `rentar.verificador.vehiculos`.
+
+12. **Crear una patente no robada.** Registrar un vehículo con `AA123BB`.
+    El verificador debe publicar en
+    `rentar.vehiculos.verificacion.resultado`:
+
+    ```json
+    {
+      "vehiculoId": 15,
+      "patente": "AA123BB",
+      "resultado": "VALIDADO"
+    }
+    ```
+
+13. **Crear una patente robada.** Registrar un vehículo con `ROBO123`.
+    El verificador debe publicar el mismo evento con:
+
+    ```json
+    {
+      "vehiculoId": 16,
+      "patente": "ROBO123",
+      "resultado": "ROBADO"
+    }
+    ```
+
+    El `vehicle-service` consume automáticamente esa cola y actualiza
+    `lk_vehiculos.desc_verificacion`. Para `ROBADO`, también establece
+    `flag_activo = 0`.
+
+14. **Verificar la actualización en MySQL.** Ejecutar:
+
+    ```sql
+    SELECT id_vehiculo, cod_patente, desc_verificacion, flag_activo
+    FROM lk_vehiculos
+    WHERE cod_patente IN ('AA123BB', 'ROBO123');
+    ```
+
+    `AA123BB` debe quedar como `VALIDADO` y conservar su activación.
+    `ROBO123` debe quedar como `ROBADO` y `flag_activo = 0`.
+
+15. **Probar errores básicos.** Repetir el alta con la misma patente y
+   verificar una respuesta `ALREADY_EXISTS` traducida por el Gateway. Probar
+   también un precio inválido o un campo obligatorio vacío y verificar una
+   respuesta `INVALID_ARGUMENT`.

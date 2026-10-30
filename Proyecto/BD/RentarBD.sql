@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS `Rentar`.`lk_vehiculos` (
   `desc_tipo_vehiculo` VARCHAR(50) NOT NULL,
   `f_val_precio_diario` DECIMAL(12,2) NOT NULL,
   `desc_estado_vehiculo` VARCHAR(50) NOT NULL DEFAULT 'DISPONIBLE',
+  `desc_verificacion` VARCHAR(20) NULL DEFAULT 'PENDIENTE',
   `flag_activo` TINYINT(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`id_vehiculo`),
   UNIQUE INDEX `cod_patente` (`cod_patente` ASC) VISIBLE)
@@ -129,4 +130,3 @@ COLLATE = utf8mb4_0900_ai_ci;
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
-

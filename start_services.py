@@ -31,6 +31,7 @@ def main() -> int:
     python_executable = ROOT / "services" / "vehicle-service" / ".venv" / "Scripts" / "python.exe"
     mvnw = ROOT / "mvnw.cmd"
     rental_directory = ROOT / "services" / "rental-service"
+    verifier_directory = ROOT / "services" / "vehicle-verifier"
 
     required_paths = {
         "Python del vehicle-service": python_executable,
@@ -39,6 +40,7 @@ def main() -> int:
         "Frontend": ROOT / "frontend",
         "Customer Service": ROOT / "services" / "customer-service",
         "Vehicle Service": ROOT / "services" / "vehicle-service",
+        "Vehicle Verifier": verifier_directory,
         "Rental Service": rental_directory,
     }
 
@@ -72,6 +74,11 @@ def main() -> int:
             ROOT / "services" / "vehicle-service",
         ))
         services.append(start_service(
+            "Vehicle Verifier",
+            [str(python_executable), "app/verifier.py"],
+            verifier_directory,
+        ))
+        services.append(start_service(
             "Rental Service gRPC",
             [str(python_executable), "app/server.py"],
             rental_directory,
@@ -100,6 +107,7 @@ def main() -> int:
     print("- Spring Boot:    http://localhost:8080")
     print("- API Gateway:    http://localhost:8085")
     print("- Vehicle gRPC:   localhost:9091")
+    print("- Vehicle Verifier: RabbitMQ")
     print("- Customer gRPC:  localhost:9092")
     print("- Rental gRPC:    localhost:9093")
     print()

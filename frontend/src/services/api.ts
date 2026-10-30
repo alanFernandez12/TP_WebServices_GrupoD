@@ -183,6 +183,26 @@ export async function obtenerReservas(filtro: ReservaFiltro = {}): Promise<Reser
   )
 }
 
+/** Solo consulta reservas del cliente autenticado, sin endpoints administrativos. */
+export async function obtenerMisReservas(filtro: ReservaFiltro = {}): Promise<Reserva[]> {
+  const data = await graphqlRequest<{ misReservas: Reserva[] }>(`
+    query MisReservas {
+      misReservas {
+        id cliente { id nombre apellido documento }
+        vehiculo { id marca modelo patente tipoVehiculo }
+        patente precioDiarioHistorico horaInicio horaFin importeTotal estadoReserva
+      }
+    }
+  `)
+  return data.misReservas.filter((reserva) =>
+    (!filtro.vehiculoId || reserva.vehiculo.id === filtro.vehiculoId) &&
+    (!filtro.tipoVehiculo || reserva.vehiculo.tipoVehiculo === filtro.tipoVehiculo) &&
+    (!filtro.estadoReserva || reserva.estadoReserva === filtro.estadoReserva) &&
+    (!filtro.fechaDesde || reserva.horaInicio >= filtro.fechaDesde) &&
+    (!filtro.fechaHasta || reserva.horaFin <= filtro.fechaHasta)
+  )
+}
+
 export function cancelarReserva(id: number) {
   return request<Reserva>(`/gateway/reservas/${id}/cancelar`, { method: 'PATCH' })
 }

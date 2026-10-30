@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { cancelarReserva, obtenerReserva, obtenerReservas, type Sesion } from '../../services/api'
+import { cancelarReserva, obtenerReserva, obtenerMisReservas, type Sesion } from '../../services/api'
 import type { EstadoReserva, Reserva, ReservaFiltro } from '../../types/domain'
 import { ReservationGrid } from '../dashboard/components/ReservationGrid'
 import { DetailModal, type DetailRegistro } from '../dashboard/components/DetailModal'
@@ -25,7 +25,7 @@ export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogou
 
   const cargar = useCallback(async () => {
     setLoading(true); setError('')
-    try { setReservas(await obtenerReservas(filtro)) }
+    try { setReservas(await obtenerMisReservas(filtro)) }
     catch (e) { setError(e instanceof Error ? e.message : 'No se pudieron consultar las reservas.') }
     finally { setLoading(false) }
   }, [filtro])

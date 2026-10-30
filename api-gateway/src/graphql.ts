@@ -35,7 +35,22 @@ const schema = buildSchema(`
     importeTotal: Float!
     estado: String!
   }
+  type ReservaCliente {
+    id: Int!
+    cliente: ClienteReserva!
+    vehiculo: VehiculoReserva!
+    patente: String!
+    precioDiarioHistorico: Float!
+    horaInicio: String!
+    horaFin: String!
+    importeTotal: Float!
+    estadoReserva: String!
+  }
+  type ClienteReserva { id: Int! nombre: String! apellido: String! documento: String! }
+  type VehiculoReserva { id: Int! marca: String! modelo: String! patente: String! tipoVehiculo: String! }
   type Query {
+    "Reservas correspondientes exclusivamente al cliente autenticado"
+    misReservas: [ReservaCliente!]!
     "Consulta disponibilidad por período y filtros opcionales; solo CLIENTE"
     disponibilidad(filtro: DisponibilidadFiltro!): [VehiculoDisponible!]!
     "Historial del cliente autenticado (TERMINADA y CANCELADA)"
@@ -65,6 +80,31 @@ router.post("/", async (req, res) => {
     variableValues: variables,
     operationName,
     rootValue: {
+      misReservas: async () => {
+        const response = await rentalService.getRentals();
+        const reservas = (response.rentals || []).filter((r: any) =>
+          Number(r.cliente_id) === Number(sesion.clienteId));
+        if (!reservas.length) return [];
+        const vehiclesResponse = await vehicleService.getVehicles();
+        const vehicles = new Map<string, any>((vehiclesResponse.vehicles || []).map((v: any) => [String(v.id), v]));
+        return reservas.map((r: any) => {
+          const v = vehicles.get(String(r.vehiculo_id));
+          const nombre = String(sesion.nombre || 'Cliente').trim();
+          return {
+            id: Number(r.id),
+            cliente: { id: Number(sesion.clienteId), nombre, apellido: '', documento: '' },
+            vehiculo: {
+              id: Number(r.vehiculo_id), marca: v?.marca || 'Vehículo',
+              modelo: v?.modelo || `#${r.vehiculo_id}`,
+              patente: v?.patente || '', tipoVehiculo: v?.tipoVehiculo || '',
+            },
+            patente: v?.patente || '',
+            precioDiarioHistorico: Number(r.precio_diario_historico),
+            horaInicio: r.fecha_inicio, horaFin: r.fecha_fin,
+            importeTotal: Number(r.importe_total), estadoReserva: r.estado,
+          };
+        });
+      },
       disponibilidad: async ({ filtro }: { filtro: {
         fechaInicio: string; fechaFin: string; tipoVehiculo?: string;
         marca?: string; modelo?: string; precioMin?: number; precioMax?: number;

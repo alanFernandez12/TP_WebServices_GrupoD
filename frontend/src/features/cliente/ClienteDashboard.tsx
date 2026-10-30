@@ -3,8 +3,11 @@ import { cancelarReserva, obtenerReserva, obtenerReservas, type Sesion } from '.
 import type { EstadoReserva, Reserva, ReservaFiltro } from '../../types/domain'
 import { ReservationGrid } from '../dashboard/components/ReservationGrid'
 import { DetailModal, type DetailRegistro } from '../dashboard/components/DetailModal'
+import { Disponibilidad } from './Disponibilidad'
+import { HistorialAlquileres } from './HistorialAlquileres'
 
 export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogout: () => void }) {
+  const [seccion, setSeccion] = useState<'reservas' | 'disponibilidad' | 'historial'>('reservas')
   const [reservas, setReservas] = useState<Reserva[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -57,10 +60,13 @@ export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogou
       <aside className="sidebar">
         <p className="sidebar-label">Mi cuenta</p>
         <nav className="main-nav" aria-label="Secciones del cliente">
-          <button type="button" className="nav-item active"><span className="nav-icon nav-icon-reservas" />Mis reservas</button>
+          <button type="button" className={`nav-item ${seccion === 'reservas' ? 'active' : ''}`} onClick={() => setSeccion('reservas')}><span className="nav-icon nav-icon-reservas" />Mis reservas</button>
+          <button type="button" className={`nav-item ${seccion === 'disponibilidad' ? 'active' : ''}`} onClick={() => setSeccion('disponibilidad')}><span className="nav-icon" />Disponibilidad</button>
+          <button type="button" className={`nav-item ${seccion === 'historial' ? 'active' : ''}`} onClick={() => setSeccion('historial')}><span className="nav-icon nav-icon-reservas" />Historial de alquileres</button>
         </nav>
       </aside>
       <main className="dashboard" style={{ minWidth: 0 }}>
+        {seccion === 'disponibilidad' ? <Disponibilidad /> : seccion === 'historial' ? <HistorialAlquileres /> : <>
         <section className="welcome"><div>
           <p className="eyebrow">Reservas</p><h1>Mis reservas</h1>
           <p className="subtitle">Consultá tus reservas y cancelá las que todavía no comenzaron.</p>
@@ -103,6 +109,7 @@ export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogou
             }} />
           </div>
         </section>
+        </>}
       </main>
     </div>
     {detalle && <DetailModal detail={detalle} loading={cargandoDetalle} error={errorDetalle} onClose={() => {

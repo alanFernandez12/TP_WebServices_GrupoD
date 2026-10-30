@@ -8,6 +8,7 @@ import customerRoutes from "./routes/customerRoutes";
 import rentalRoutes from "./routes/rentalRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 import { auth } from "./middleware/auth";
+import graphqlRoutes from "./graphql";
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.get("/api/auth/me", (_req, res) => {
 app.use("/api/vehiculos", vehicleRoutes);
 app.use("/api/clientes", customerRoutes);
 app.use("/api/reservas", rentalRoutes);
+app.use("/api/graphql", graphqlRoutes);
 
 app.use(errorHandler);
 

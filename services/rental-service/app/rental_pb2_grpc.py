@@ -26,7 +26,8 @@ if _version_not_supported:
 
 
 class RentalServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """Servicio gRPC para gestionar los alquileres de vehículos.
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -62,34 +63,40 @@ class RentalServiceStub(object):
 
 
 class RentalServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """Servicio gRPC para gestionar los alquileres de vehículos.
+    """
 
     def CreateRental(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Crea un nuevo alquiler.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetRentals(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Obtiene la lista de todos los alquileres.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetRental(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Obtiene un alquiler por su identificador.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def CancelRental(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Cancela un alquiler existente.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetRentalHistory(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Obtiene el historial de alquileres de un cliente.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -131,7 +138,8 @@ def add_RentalServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class RentalService(object):
-    """Missing associated documentation comment in .proto file."""
+    """Servicio gRPC para gestionar los alquileres de vehículos.
+    """
 
     @staticmethod
     def CreateRental(request,

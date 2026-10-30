@@ -218,3 +218,63 @@ export function reactivarVehiculo(id: number) {
 export function reactivarCliente(id: number) {
   return request<void>(`/gateway/clientes/${id}/reactivar`,{method: 'PATCH'})
 }
+
+/** Operaciones GraphQL expuestas exclusivamente por el API Gateway. */
+async function graphqlRequest<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
+  const result = await request<{ data?: T; errors?: Array<{message: string}> }>('/gateway/graphql', {
+    method: 'POST', headers: jsonHeaders, body: JSON.stringify({ query, variables }),
+  })
+  if (result.errors?.length) throw new Error(result.errors.map(e => e.message).join(' | '))
+  if (!result.data) throw new Error('GraphQL no devolvió resultados.')
+  return result.data
+}
+
+export interface DisponibilidadFiltro {
+  fechaInicio: string
+  fechaFin: string
+  tipoVehiculo?: string
+  marca?: string
+  modelo?: string
+  precioMin?: number
+  precioMax?: number
+}
+export interface Disponible {
+  id: string
+  patente: string
+  marca: string
+  modelo: string
+  anio: number
+  color: string
+  tipoVehiculo: string
+  precioDiario: number
+}
+export interface AlquilerHistorico {
+  id: string
+  vehiculo: string
+  patente: string
+  fechaInicio: string
+  fechaFin: string
+  cantidadDias: number
+  importeTotal: number
+  estado: string
+}
+
+export async function consultarDisponibilidad(filtro: DisponibilidadFiltro): Promise<Disponible[]> {
+  const response = await graphqlRequest<{ disponibilidad: Disponible[] }>(`
+    query ConsultarDisponibilidad($filtro: DisponibilidadFiltro!) {
+      disponibilidad(filtro: $filtro) {
+        id patente marca modelo anio color tipoVehiculo precioDiario
+      }
+    }`, { filtro })
+  return response.disponibilidad
+}
+
+export async function consultarHistorial(): Promise<AlquilerHistorico[]> {
+  const response = await graphqlRequest<{ historialAlquileres: AlquilerHistorico[] }>(`
+    query ConsultarHistorial {
+      historialAlquileres {
+        id vehiculo patente fechaInicio fechaFin cantidadDias importeTotal estado
+      }
+    }`)
+  return response.historialAlquileres
+}

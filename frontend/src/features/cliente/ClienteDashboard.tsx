@@ -5,6 +5,7 @@ import { ReservationGrid } from '../dashboard/components/ReservationGrid'
 import { DetailModal, type DetailRegistro } from '../dashboard/components/DetailModal'
 import { Disponibilidad } from './Disponibilidad'
 import { HistorialAlquileres } from './HistorialAlquileres'
+import { RegistrationModal } from '../dashboard/components/RegistrationModal'
 
 export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogout: () => void }) {
   const [seccion, setSeccion] = useState<'reservas' | 'disponibilidad' | 'historial'>('reservas')
@@ -19,6 +20,7 @@ export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogou
   const [hasta, setHasta] = useState('')
   const [filtro, setFiltro] = useState<ReservaFiltro>({})
   const [cancelando, setCancelando] = useState(false)
+  const [creandoReserva, setCreandoReserva] = useState(false)
   const [detalle, setDetalle] = useState<DetailRegistro | null>(null)
   const [cargandoDetalle, setCargandoDetalle] = useState(false)
   const [errorDetalle, setErrorDetalle] = useState('')
@@ -69,8 +71,10 @@ export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogou
         {seccion === 'disponibilidad' ? <Disponibilidad /> : seccion === 'historial' ? <HistorialAlquileres /> : <>
         <section className="welcome"><div>
           <p className="eyebrow">Reservas</p><h1>Mis reservas</h1>
-          <p className="subtitle">Consultá tus reservas y cancelá las que todavía no comenzaron.</p>
-        </div></section>
+          <p className="subtitle">Consultá tus reservas, creá una nueva y cancelá las que todavía no comenzaron.<br /></p>
+          <p><button type="button" className="primary-button" onClick={() => setCreandoReserva(true)}>+ Nueva reserva</button></p>
+        </div>
+        </section>
         <section className="reservations-section">
           <div className="section-heading"><h2>Consulta de reservas</h2><span className="count-badge">{resultados.length} reservas</span></div>
           <div className="table-toolbar">
@@ -112,6 +116,13 @@ export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogou
         </>}
       </main>
     </div>
+    {creandoReserva && sesion.clienteId != null && <RegistrationModal
+      key="nueva-reserva-cliente"
+      type="reserva"
+      clienteId={sesion.clienteId}
+      onClose={() => setCreandoReserva(false)}
+      onSaved={() => { setCreandoReserva(false); setSuccess('Reserva creada correctamente.'); void cargar() }}
+    />}
     {detalle && <DetailModal detail={detalle} loading={cargandoDetalle} error={errorDetalle} onClose={() => {
       if (!cargandoDetalle) { setDetalle(null); setErrorDetalle('') }
     }} />}

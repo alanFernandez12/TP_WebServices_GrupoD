@@ -92,6 +92,11 @@ export function crearCliente(data: unknown) {
   return request<Cliente>('/gateway/clientes', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
 }
 
+/** Alta de reserva del cliente: el Gateway determina la identidad desde la sesión. */
+export function crearMiReserva(data: { idVehiculo: number; horaInicio: string; horaFin: string }) {
+  return request<Reserva>('/gateway/reservas', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
+}
+
 export function crearReserva(data: unknown) {
   return request<Reserva>('/gateway/reservas', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
 }

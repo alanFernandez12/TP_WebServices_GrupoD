@@ -1,7 +1,6 @@
 # Mensajería de Rentar
 
-Este paquete contiene la topología compartida de RabbitMQ. La primera versión
-declara únicamente el Flujo A de verificación de vehículos:
+Este paquete contiene la topología compartida de RabbitMQ. La topología declara el Flujo A y los canales independientes del Flujo B:
 
 ```text
 rentar.events (topic)
@@ -9,10 +8,23 @@ rentar.events (topic)
 │   └── rentar.verificador.vehiculos
 └── vehiculos.verificacion.resultado
     └── rentar.vehiculos.verificacion.resultado
+
+vehiculos.externos.registrados
+├── rentar.verificador.externos.patente
+└── rentar.verificador.externos.titularidad
+
+vehiculos.externos.validacion.patente
+└── rentar.correlador.externos
+
+vehiculos.externos.validacion.titularidad
+└── rentar.correlador.externos
+
+vehiculos.externos.validacion.completada
+└── rentar.incorporacion.externos
 ```
 
-Las colas son durables y cada consumidor tiene su propia cola. La topología no
-publica ni consume mensajes todavía.
+Las colas son durables y cada consumidor tiene su propia cola. El Flujo A conserva sus routing keys y colas. El Flujo B reutiliza el mismo
+exchange, pero tiene contratos y colas propias.
 
 ## Iniciar RabbitMQ
 

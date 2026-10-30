@@ -5,6 +5,7 @@ import * as customerService from "../services/customerService";
 const permisos: Record<string, string[]> = {
   "/api/clientes": ["ADMIN"],
   "/api/vehiculos": ["ADMIN"],
+  "/api/vehiculos-externos": ["CLIENTE"],
   "/api/reservas": ["ADMIN", "CLIENTE"],
 };
 

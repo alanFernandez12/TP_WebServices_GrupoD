@@ -1,4 +1,4 @@
 USE `Rentar`;
 
-ALTER TABLE `lk_vehiculos`
-    ADD COLUMN `desc_verificacion` VARCHAR(20) NULL DEFAULT 'PENDIENTE';
+-- El Flujo A utiliza únicamente lk_vehiculos.flag_activo.
+-- No se requiere una modificación estructural para procesar sus resultados.

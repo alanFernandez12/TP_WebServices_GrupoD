@@ -8,6 +8,9 @@ service VehicleService {
   // Registra un nuevo vehículo.
   rpc CreateVehicle(CreateVehicleRequest) returns (VehicleResponse);
 
+  // Registra un vehículo de un cliente para incorporación asíncrona.
+  rpc CreateExternalVehicle(CreateExternalVehicleRequest) returns (VehicleResponse);
+
   // Obtiene la lista de todos los vehículos.
   rpc GetVehicles(GetVehiclesRequest) returns (VehicleListResponse);
 
@@ -39,6 +42,18 @@ message CreateVehicleRequest {
   string tipoVehiculo = 5;  // Tipo o categoría del vehículo.
   string color = 6;         // Color del vehículo.
   string precio_diario = 7; // Precio diario del alquiler.
+}
+
+// Datos necesarios para registrar un vehículo perteneciente a un cliente.
+message CreateExternalVehicleRequest {
+  string patente = 1;
+  string marca = 2;
+  string modelo = 3;
+  int32 anio = 4;
+  string tipoVehiculo = 5;
+  string color = 6;
+  string precio_diario = 7;
+  int64 cliente_id = 8;
 }
 
 // Solicitud para obtener todos los vehículos.
@@ -95,4 +110,5 @@ message Vehicle {
   string color = 8;         // Color del vehículo.
   string precio_diario = 9; // Precio diario del alquiler.
   bool activo = 10;         // Indica si el vehículo sigue activo en el sistema.
+  int64 cliente_id = 11;    // Cliente propietario; 0 para altas administrativas.
 }

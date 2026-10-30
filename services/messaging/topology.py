@@ -33,6 +33,12 @@ VEHICLE_VERIFICATION_REQUESTED = "vehiculos.verificacion.solicitada"
 # policial simulado. El payload contiene vehiculoId, patente y resultado.
 VEHICLE_VERIFICATION_RESULT = "vehiculos.verificacion.resultado"
 
+# Eventos de incorporación de vehículos registrados por clientes.
+EXTERNAL_VEHICLE_REGISTERED = "vehiculos.externos.registrados"
+EXTERNAL_PATENT_VALIDATION = "vehiculos.externos.validacion.patente"
+EXTERNAL_OWNERSHIP_VALIDATION = "vehiculos.externos.validacion.titularidad"
+EXTERNAL_VALIDATION_COMPLETED = "vehiculos.externos.validacion.completada"
+
 # Cola exclusiva del componente verificador. Recibe solicitudes desde Rentar
 # mediante VEHICLE_VERIFICATION_REQUESTED.
 VERIFIER_QUEUE = "rentar.verificador.vehiculos"
@@ -40,6 +46,11 @@ VERIFIER_QUEUE = "rentar.verificador.vehiculos"
 # Cola del componente Rentar. Recibe los resultados publicados por el
 # verificador mediante VEHICLE_VERIFICATION_RESULT.
 RENTAR_QUEUE = "rentar.vehiculos.verificacion.resultado"
+
+EXTERNAL_PATENT_QUEUE = "rentar.verificador.externos.patente"
+EXTERNAL_OWNERSHIP_QUEUE = "rentar.verificador.externos.titularidad"
+EXTERNAL_CORRELATOR_QUEUE = "rentar.correlador.externos"
+EXTERNAL_INCORPORATION_QUEUE = "rentar.incorporacion.externos"
 
 
 @dataclass(frozen=True)
@@ -114,6 +125,39 @@ def declare_flow_a_topology(channel: pika.adapters.blocking_connection.BlockingC
         queue=RENTAR_QUEUE,
         exchange=EXCHANGE_NAME,
         routing_key=VEHICLE_VERIFICATION_RESULT,
+    )
+
+    channel.queue_declare(queue=EXTERNAL_PATENT_QUEUE, durable=True)
+    channel.queue_bind(
+        queue=EXTERNAL_PATENT_QUEUE,
+        exchange=EXCHANGE_NAME,
+        routing_key=EXTERNAL_VEHICLE_REGISTERED,
+    )
+
+    channel.queue_declare(queue=EXTERNAL_OWNERSHIP_QUEUE, durable=True)
+    channel.queue_bind(
+        queue=EXTERNAL_OWNERSHIP_QUEUE,
+        exchange=EXCHANGE_NAME,
+        routing_key=EXTERNAL_VEHICLE_REGISTERED,
+    )
+
+    channel.queue_declare(queue=EXTERNAL_CORRELATOR_QUEUE, durable=True)
+    channel.queue_bind(
+        queue=EXTERNAL_CORRELATOR_QUEUE,
+        exchange=EXCHANGE_NAME,
+        routing_key=EXTERNAL_PATENT_VALIDATION,
+    )
+    channel.queue_bind(
+        queue=EXTERNAL_CORRELATOR_QUEUE,
+        exchange=EXCHANGE_NAME,
+        routing_key=EXTERNAL_OWNERSHIP_VALIDATION,
+    )
+
+    channel.queue_declare(queue=EXTERNAL_INCORPORATION_QUEUE, durable=True)
+    channel.queue_bind(
+        queue=EXTERNAL_INCORPORATION_QUEUE,
+        exchange=EXCHANGE_NAME,
+        routing_key=EXTERNAL_VALIDATION_COMPLETED,
     )
 
 

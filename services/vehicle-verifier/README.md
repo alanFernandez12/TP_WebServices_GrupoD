@@ -47,3 +47,14 @@ El proceso queda esperando mensajes en
 `rentar.verificador.vehiculos`. Al procesar una solicitud, confirma el mensaje
 solo después de publicar el resultado. Los mensajes inválidos no se reintentan;
 los errores inesperados se vuelven a poner en la cola.
+
+Para iniciar el verificador de patentes del Flujo B:
+
+```powershell
+cd services\vehicle-verifier
+python app\external_verifier.py
+```
+
+Este proceso consume `rentar.verificador.externos.patente` y publica
+`vehiculos.externos.validacion.patente`. No modifica la base principal ni
+interfiere con el verificador del Flujo A.

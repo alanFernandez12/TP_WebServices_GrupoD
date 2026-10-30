@@ -32,6 +32,7 @@ def main() -> int:
     mvnw = ROOT / "mvnw.cmd"
     rental_directory = ROOT / "services" / "rental-service"
     verifier_directory = ROOT / "services" / "vehicle-verifier"
+    correlator_directory = ROOT / "services" / "vehicle-correlator"
 
     required_paths = {
         "Python del vehicle-service": python_executable,
@@ -41,6 +42,7 @@ def main() -> int:
         "Customer Service": ROOT / "services" / "customer-service",
         "Vehicle Service": ROOT / "services" / "vehicle-service",
         "Vehicle Verifier": verifier_directory,
+        "Vehicle Correlator": correlator_directory,
         "Rental Service": rental_directory,
     }
 
@@ -79,6 +81,11 @@ def main() -> int:
             verifier_directory,
         ))
         services.append(start_service(
+            "Vehicle Correlator",
+            [str(python_executable), "app/correlator.py"],
+            correlator_directory,
+        ))
+        services.append(start_service(
             "Rental Service gRPC",
             [str(python_executable), "app/server.py"],
             rental_directory,
@@ -108,6 +115,7 @@ def main() -> int:
     print("- API Gateway:    http://localhost:8085")
     print("- Vehicle gRPC:   localhost:9091")
     print("- Vehicle Verifier: RabbitMQ")
+    print("- Vehicle Correlator: RabbitMQ + MySQL")
     print("- Customer gRPC:  localhost:9092")
     print("- Rental gRPC:    localhost:9093")
     print()

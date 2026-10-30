@@ -63,9 +63,9 @@ publica en RabbitMQ el evento `vehiculos.verificacion.solicitada`:
 
 El evento se publica en el exchange `rentar.events` y queda disponible en la
 cola durable `rentar.verificador.vehiculos`. El mismo proceso inicia un
-consumidor de `rentar.vehiculos.verificacion.resultado`, que guarda
-`VALIDADO`/`ROBADO` en `desc_verificacion` y pone `flag_activo = 0` para un
-vehículo robado.
+consumidor de `rentar.vehiculos.verificacion.resultado`; si el resultado es
+`ROBADO`, establece `flag_activo = 0`. Un resultado `VALIDADO` no modifica la
+base principal.
 
 ## Configuración
 

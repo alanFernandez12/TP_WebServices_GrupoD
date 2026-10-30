@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 
 //import authRoutes from "./routes/authRoutes";
 import vehicleRoutes from "./routes/vehicleRoutes";
+import externalVehicleRoutes from "./routes/externalVehicleRoutes";
 import customerRoutes from "./routes/customerRoutes";
 import rentalRoutes from "./routes/rentalRoutes";
 import { errorHandler } from "./middleware/errorHandler";
@@ -23,6 +24,7 @@ app.get("/api/auth/me", (_req, res) => {
   res.json(res.locals.sesion);
 });
 app.use("/api/vehiculos", vehicleRoutes);
+app.use("/api/vehiculos-externos", externalVehicleRoutes);
 app.use("/api/clientes", customerRoutes);
 app.use("/api/reservas", rentalRoutes);
 
@@ -33,4 +35,3 @@ const PORT = process.env.PORT || 8085;
 app.listen(PORT, () => {
     console.log(`API Gateway running on port ${PORT}`);
 });
-

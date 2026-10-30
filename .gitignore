@@ -62,3 +62,7 @@ services/rental-service/app/*_pb2.py
 services/rental-service/app/*_pb2_grpc.py
 services/rental-service/app/__pycache__/
 services/rental-service/.env
+
+services/ownership-verifier/.env
+services/ownership-verifier/.venv/
+services/ownership-verifier/app/__pycache__/

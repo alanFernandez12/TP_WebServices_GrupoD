@@ -165,11 +165,14 @@ Payload:
 {
   "vehiculoExternoId": 50,
   "clienteId": 89,
-  "patente": "DEF456"
+  "patente": "DEF456",
+  "documento": "30123456"
 }
 ```
 
-Este evento se publica después de insertar correctamente el vehículo.
+El documento se obtiene del cliente autenticado mediante Customer Service; no
+se acepta desde el body del frontend. Este evento se publica después de
+insertar correctamente el vehículo.
 
 ### Resultado de validación de patente
 
@@ -264,6 +267,12 @@ El registro policial de prueba contiene, entre otras, estas patentes:
 | `AA123BB` | `VALIDADO` |
 | `ROBO123` | `RECHAZADO` |
 
+La validación de patente simula una demora de consulta externa antes de
+consultar el registro policial. Se configura con
+`EXTERNAL_PATENT_VERIFIER_DELAY_SECONDS`, utiliza 30 segundos por defecto y
+puede establecerse en `0` para pruebas. La validación de titularidad mantiene
+su demora configurable mediante `OWNERSHIP_VERIFIER_DELAY_SECONDS`.
+
 ## Archivos principales modificados o agregados
 
 ### Base de datos
@@ -314,8 +323,12 @@ Cliente autenticado
   -> POST /api/vehiculos-externos
   -> lk_vehiculos en estado PENDIENTE
   -> vehiculos.externos.registrados
-  -> verificador de patente
+  -> verificador de patente (demora simulada)
   -> vehiculos.externos.validacion.patente
+  -> validador de titularidad (demora simulada)
+  -> vehiculos.externos.validacion.titularidad
+  -> correlador
+  -> vehiculos.externos.validacion.completada
 ```
 
 También se implementó el correlador independiente con persistencia en MySQL:
@@ -325,20 +338,14 @@ services/vehicle-correlator/app/correlator.py
 ```
 
 El correlador consume `rentar.correlador.externos`, conserva los resultados en
-`incorporacion_correlacion` y publica
+`ft_incorporacion_correlacion` y publica
 `vehiculos.externos.validacion.completada` cuando recibe `VALIDADO` para
 patente y titularidad. Un `RECHAZADO` cierra la correlación sin publicar el
 evento de completada.
 
-## Pendiente de implementación
-
-Todavía no están implementados:
-
-1. consumidor de validación de titularidad;
-2. endpoint y pantalla frontend para que el cliente utilice el alta;
-3. consulta para que el cliente pueda visualizar el estado de su solicitud.
-
-La siguiente integración debe respetar el contrato de titularidad:
+El evento de alta incluye el documento del cliente autenticado, obtenido por el
+API Gateway desde Customer Service. El validador de titularidad recibe y
+publica el siguiente contrato:
 
 ```json
 {

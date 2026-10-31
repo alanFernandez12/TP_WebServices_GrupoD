@@ -117,6 +117,10 @@ Datos de prueba incluidos:
 | `AA123BB` | `VALIDADO` |
 | `ROBO123` | `ROBADO` |
 
+El verificador simula una demora de consulta externa antes de consultar el
+registro. Se configura con `VEHICLE_VERIFIER_DELAY_SECONDS`, utiliza 30
+segundos por defecto y puede establecerse en `0` para pruebas.
+
 ### Consumidor final en Rentar
 
 - `services/vehicle-service/app/vehicle_verification_result_consumer.py`

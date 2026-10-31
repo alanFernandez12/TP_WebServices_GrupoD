@@ -57,6 +57,7 @@ message CreateExternalVehicleRequest {
   string color = 6;
   string precio_diario = 7;
   int64 cliente_id = 8;
+  string documento = 9;
 }
 
 message GetExternalVehiclesRequest {
@@ -122,6 +123,7 @@ message ExternalVehicleStatus {
   string color = 10;
   string precio_diario = 11;
   bool activo = 12;
+  string resultado_final = 13;
 }
 
 // Representación de un vehículo en el sistema.

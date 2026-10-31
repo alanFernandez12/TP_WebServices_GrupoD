@@ -91,6 +91,7 @@ export const createExternalVehicle = (vehicle: {
   color: string;
   precio_diario: string;
   cliente_id: number;
+  documento: string;
 }): Promise<any> => {
   return new Promise((resolve, reject) => {
     vehicleClient.CreateExternalVehicle(

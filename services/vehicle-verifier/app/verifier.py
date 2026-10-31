@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sys
+import time
 from pathlib import Path
 
 import pika
@@ -29,6 +31,7 @@ from police_registry import PoliceRegistry  # noqa: E402
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("vehicle-verifier")
+DELAY_SECONDS = float(os.getenv("VEHICLE_VERIFIER_DELAY_SECONDS", "30"))
 
 
 class VehicleVerifier:
@@ -51,6 +54,12 @@ class VehicleVerifier:
             if vehicle_id <= 0 or not patente:
                 raise ValueError("vehiculoId y patente son obligatorios")
 
+            logger.info(
+                "Consulta policial simulada: vehiculoId=%s demora=%ss",
+                vehicle_id,
+                DELAY_SECONDS,
+            )
+            time.sleep(DELAY_SECONDS)
             resultado = "ROBADO" if self.registry.is_stolen(patente) else "VALIDADO"
             payload = {
                 "vehiculoId": vehicle_id,

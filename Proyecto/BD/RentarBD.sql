@@ -99,9 +99,9 @@ DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
 -- -----------------------------------------------------
--- Table `Rentar`.`incorporacion_correlacion`
+-- Table `Rentar`.`ft_incorporacion_correlacion`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `Rentar`.`incorporacion_correlacion` (
+CREATE TABLE IF NOT EXISTS `Rentar`.`ft_incorporacion_correlacion` (
   `id_correlacion` BIGINT NOT NULL AUTO_INCREMENT,
   `vehiculo_externo_id` BIGINT NOT NULL,
   `cliente_id` BIGINT NULL,

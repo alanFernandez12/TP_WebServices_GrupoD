@@ -7,7 +7,7 @@ ALTER TABLE `lk_vehiculos`
         FOREIGN KEY (`id_cliente`)
         REFERENCES `lk_clientes` (`id_cliente`);
 
-CREATE TABLE `incorporacion_correlacion` (
+CREATE TABLE `ft_incorporacion_correlacion` (
     `id_correlacion` BIGINT NOT NULL AUTO_INCREMENT,
     `vehiculo_externo_id` BIGINT NOT NULL,
     `cliente_id` BIGINT NULL,

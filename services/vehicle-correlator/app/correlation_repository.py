@@ -53,7 +53,7 @@ class CorrelationRepository:
                     SELECT id_correlacion, resultado_patente,
                            resultado_titularidad, resultado_final,
                            evento_completada_publicado
-                    FROM incorporacion_correlacion
+                    FROM ft_incorporacion_correlacion
                     WHERE vehiculo_externo_id = %s
                     FOR UPDATE
                     """,
@@ -63,7 +63,7 @@ class CorrelationRepository:
                 if state is None:
                     cursor.execute(
                         """
-                        INSERT INTO incorporacion_correlacion (
+                        INSERT INTO ft_incorporacion_correlacion (
                             vehiculo_externo_id, cliente_id, patente
                         )
                         SELECT id_vehiculo, %s, cod_patente
@@ -81,7 +81,7 @@ class CorrelationRepository:
                         SELECT id_correlacion, resultado_patente,
                                resultado_titularidad, resultado_final,
                                evento_completada_publicado
-                        FROM incorporacion_correlacion
+                        FROM ft_incorporacion_correlacion
                         WHERE vehiculo_externo_id = %s
                         FOR UPDATE
                         """,
@@ -101,7 +101,7 @@ class CorrelationRepository:
 
                 cursor.execute(
                     f"""
-                    UPDATE incorporacion_correlacion
+                    UPDATE ft_incorporacion_correlacion
                     SET {column} = %s,
                         patente = CASE
                             WHEN %s <> '' THEN %s
@@ -114,52 +114,51 @@ class CorrelationRepository:
                     (result, patente, patente, client_id, vehicle_id),
                 )
 
-                if result == "RECHAZADO":
-                    cursor.execute(
-                        """
-                        UPDATE incorporacion_correlacion
-                        SET resultado_final = 'RECHAZADO',
-                            fecha_finalizacion = CURRENT_TIMESTAMP
-                        WHERE vehiculo_externo_id = %s
-                          AND resultado_final IS NULL
-                        """,
-                        (vehicle_id,),
-                    )
-                    cursor.execute(
-                        """
-                        UPDATE lk_vehiculos
-                        SET desc_estado_vehiculo = 'PENDIENTE',
-                            flag_activo = 0
-                        WHERE id_vehiculo = %s
-                        """,
-                        (vehicle_id,),
-                    )
-                    connection.commit()
-                    return False
-
                 cursor.execute(
                     """
-                    UPDATE incorporacion_correlacion
-                    SET resultado_final = 'VALIDADO',
-                        fecha_finalizacion = CURRENT_TIMESTAMP
+                    SELECT resultado_patente, resultado_titularidad
+                    FROM ft_incorporacion_correlacion
                     WHERE vehiculo_externo_id = %s
-                      AND resultado_patente = 'VALIDADO'
-                      AND resultado_titularidad = 'VALIDADO'
-                      AND resultado_final IS NULL
                     """,
                     (vehicle_id,),
                 )
-                completed = cursor.rowcount == 1
-                if completed:
-                    cursor.execute(
-                        """
-                        UPDATE lk_vehiculos
-                        SET desc_estado_vehiculo = 'DISPONIBLE',
-                            flag_activo = 1
-                        WHERE id_vehiculo = %s
-                        """,
-                        (vehicle_id,),
+                outcomes = cursor.fetchone()
+                if outcomes["resultado_patente"] is None or outcomes["resultado_titularidad"] is None:
+                    connection.commit()
+                    return False
+
+                final_result = (
+                    "RECHAZADO"
+                    if "RECHAZADO" in (
+                        outcomes["resultado_patente"],
+                        outcomes["resultado_titularidad"],
                     )
+                    else "VALIDADO"
+                )
+                cursor.execute(
+                    """
+                    UPDATE ft_incorporacion_correlacion
+                    SET resultado_final = %s,
+                        fecha_finalizacion = CURRENT_TIMESTAMP
+                    WHERE vehiculo_externo_id = %s
+                      AND resultado_final IS NULL
+                    """,
+                    (final_result, vehicle_id),
+                )
+                completed = final_result == "VALIDADO" and cursor.rowcount == 1
+                cursor.execute(
+                    """
+                    UPDATE lk_vehiculos
+                    SET desc_estado_vehiculo = %s,
+                        flag_activo = %s
+                    WHERE id_vehiculo = %s
+                    """,
+                    (
+                        "DISPONIBLE" if final_result == "VALIDADO" else "PENDIENTE",
+                        1 if final_result == "VALIDADO" else 0,
+                        vehicle_id,
+                    ),
+                )
                 connection.commit()
                 return completed
             except Exception:
@@ -175,7 +174,7 @@ class CorrelationRepository:
             try:
                 cursor.execute(
                     """
-                    UPDATE incorporacion_correlacion
+                    UPDATE ft_incorporacion_correlacion
                     SET evento_completada_publicado = 1
                     WHERE vehiculo_externo_id = %s
                       AND resultado_final = 'VALIDADO'

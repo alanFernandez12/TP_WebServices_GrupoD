@@ -5,8 +5,11 @@ del Flujo B y los correlaciona en MySQL usando `vehiculoExternoId`.
 
 ## Comportamiento
 
-- Si recibe un resultado `RECHAZADO`, marca la solicitud como terminalmente
-  rechazada y no publica `vehiculos.externos.validacion.completada`.
+- Conserva siempre los resultados de patente y titularidad, aunque uno de ellos
+  sea `RECHAZADO`; no interrumpe la espera del otro resultado.
+- Cuando recibe ambos resultados, marca la solicitud como `RECHAZADO` si alguno
+  fue rechazado y como `VALIDADO` solo si ambos fueron validados. Solo publica
+  `vehiculos.externos.validacion.completada` en el segundo caso.
 - Si recibe `VALIDADO` para patente y titularidad, publica:
 
 ```json

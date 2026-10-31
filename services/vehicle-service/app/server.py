@@ -121,6 +121,7 @@ class VehicleService(vehicle_pb2_grpc.VehicleServiceServicer):
                 vehicle["id"],
                 request.cliente_id,
                 vehicle["patente"],
+                request.documento,
             )
             return self._vehicle_response(vehicle)
         except IntegrityError:

@@ -310,11 +310,12 @@ export interface SolicitudVehiculoExterno {
   patente: string
   marca: string
   modelo: string
+  resultadoFinal: 'PENDIENTE' | 'VALIDADO' | 'RECHAZADO'
   estado: 'PENDIENTE' | 'RECHAZADO' | 'DISPONIBLE'
-  validacionPatente?: 'PENDIENTE' | 'VALIDADO' | 'RECHAZADO' | null
-  validacionTitularidad?: 'PENDIENTE' | 'VALIDADO' | 'RECHAZADO' | null
   anio: number
   tipoVehiculo: string
+  resultadoPatente: string
+  resultadoTitularidad: string
   color: string
   precio_diario: string
   activo: boolean

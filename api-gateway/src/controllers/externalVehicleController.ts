@@ -16,6 +16,22 @@ const normalizeVehicle = (vehicle: any) => ({
   clienteId: Number(vehicle.cliente_id),
 });
 
+const normalizeExternalVehicle = (vehicle: any) => ({
+  id: Number(vehicle.id),
+  patente: vehicle.patente,
+  marca: vehicle.marca,
+  modelo: vehicle.modelo,
+  tipoVehiculo: vehicle.tipoVehiculo,
+  anio: Number(vehicle.anio),
+  color: vehicle.color || "",
+  precio_diario: vehicle.precio_diario || "0",
+  resultadoPatente: vehicle.validacion_patente || "",
+  resultadoTitularidad: vehicle.validacion_titularidad || "",
+  resultadoFinal: vehicle.resultado_final || "PENDIENTE",
+  estado: vehicle.estado,
+  activo: Boolean(vehicle.activo),
+});
+
 const isValidPrice = (price: unknown) =>
   (typeof price === "string" || typeof price === "number") &&
   /^\d{1,10}(\.\d{1,2})?$/.test(String(price)) &&
@@ -68,6 +84,15 @@ export const createExternalVehicle = async (
       });
       return;
     }
+    const customerResponse = await customerService.getCustomer(clienteId);
+    const documento = String(customerResponse.customer?.documento || "").trim();
+    if (!documento) {
+      res.status(403).json({
+        status: 403,
+        message: "El cliente no tiene un documento registrado.",
+      });
+      return;
+    }
 
     const response = await vehicleService.createExternalVehicle({
       patente: req.body.patente.trim(),
@@ -78,6 +103,7 @@ export const createExternalVehicle = async (
       color: req.body.color.trim(),
       precio_diario: String(req.body.precio_diario),
       cliente_id: clienteId,
+      documento,
     });
 
     res.status(201).json(normalizeVehicle(response.vehicle));
@@ -101,7 +127,7 @@ export const getExternalVehicles = async (
       return;
     }
     const response = await vehicleService.getExternalVehicles(clienteId);
-    res.status(200).json(response.vehicles);
+    res.status(200).json(response.vehicles.map(normalizeExternalVehicle));
   } catch (error) {
     next(error);
   }

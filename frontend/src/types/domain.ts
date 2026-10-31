@@ -11,6 +11,9 @@ export interface Vehiculo {
   color?: string
   precio_diario: number
   activo: boolean
+  resultadoPatente?: string
+  resultadoTitularidad?: string
+  resultadoFinal?: string
 }
 
 export interface Cliente {

@@ -35,6 +35,13 @@ export function DetailModal({ detail, loading, error, onClose }: Props) {
           ['Año', String(detail.registro.anio)],
           ['Color', detail.registro.color || '—'],
           ['Precio diario', money(detail.registro.precio_diario)],
+          ...(detail.registro.resultadoPatente !== undefined
+            ? [
+                ['Resultado patente', detail.registro.resultadoPatente || 'Pendiente'],
+                ['Resultado titularidad', detail.registro.resultadoTitularidad || 'Pendiente'],
+                ['Resultado final', detail.registro.resultadoFinal || 'Pendiente'],
+              ]
+            : []),
           ['Estado', detail.registro.estado],
           ['Activo', detail.registro.activo ? 'SÍ' : 'NO'],
         ]

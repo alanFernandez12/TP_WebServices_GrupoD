@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 
 import pika
 from dotenv import load_dotenv
@@ -31,6 +32,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("external-vehicle-verifier")
+DELAY_SECONDS = float(os.getenv("EXTERNAL_PATENT_VERIFIER_DELAY_SECONDS", "30"))
 
 
 class ExternalVehicleVerifier:
@@ -52,6 +54,12 @@ class ExternalVehicleVerifier:
             if vehicle_id <= 0 or not patente:
                 raise ValueError("vehiculoExternoId y patente son obligatorios")
 
+            logger.info(
+                "Consulta policial simulada Flujo B: vehiculoExternoId=%s demora=%ss",
+                vehicle_id,
+                DELAY_SECONDS,
+            )
+            time.sleep(DELAY_SECONDS)
             resultado = "ROBADO" if self.registry.is_stolen(patente) else "VALIDADO"
             payload = {
                 "vehiculoExternoId": vehicle_id,

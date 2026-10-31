@@ -26,11 +26,18 @@ class ExternalVehiclePublisher:
     def __init__(self, settings: RabbitMqSettings | None = None):
         self.settings = settings or RabbitMqSettings()
 
-    def publish(self, vehicle_id: int, client_id: int, patente: str) -> None:
+    def publish(
+        self,
+        vehicle_id: int,
+        client_id: int,
+        patente: str,
+        documento: str,
+    ) -> None:
         payload = {
             "vehiculoExternoId": vehicle_id,
             "clienteId": client_id,
             "patente": patente,
+            "documento": documento,
         }
         connection = pika.BlockingConnection(self.settings.parameters())
         try:

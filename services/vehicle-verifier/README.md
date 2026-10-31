@@ -58,3 +58,8 @@ python app\external_verifier.py
 Este proceso consume `rentar.verificador.externos.patente` y publica
 `vehiculos.externos.validacion.patente`. No modifica la base principal ni
 interfiere con el verificador del Flujo A.
+
+Ambos verificadores incluyen una demora simulada antes de consultar el registro
+externo. Se configura en `.env` con `VEHICLE_VERIFIER_DELAY_SECONDS` para el
+Flujo A y `EXTERNAL_PATENT_VERIFIER_DELAY_SECONDS` para el Flujo B; el valor
+predeterminado es `30`. Para pruebas se puede usar `0`.

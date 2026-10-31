@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0crental.proto\x12\x06rental\"g\n\x13\x43reateRentalRequest\x12\x12\n\ncliente_id\x18\x01 \x01(\x03\x12\x13\n\x0bvehiculo_id\x18\x02 \x01(\x03\x12\x14\n\x0c\x66\x65\x63ha_inicio\x18\x03 \x01(\t\x12\x11\n\tfecha_fin\x18\x04 \x01(\t\"\x13\n\x11GetRentalsRequest\"\x1e\n\x10GetRentalRequest\x12\n\n\x02id\x18\x01 \x01(\x03\"!\n\x13\x43\x61ncelRentalRequest\x12\n\n\x02id\x18\x01 \x01(\x03\"-\n\x17GetRentalHistoryRequest\x12\x12\n\ncliente_id\x18\x01 \x01(\x03\"5\n\x12RentalListResponse\x12\x1f\n\x07rentals\x18\x01 \x03(\x0b\x32\x0e.rental.Rental\"0\n\x0eRentalResponse\x12\x1e\n\x06rental\x18\x01 \x01(\x0b\x32\x0e.rental.Rental\"\xc5\x01\n\x06Rental\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x12\n\ncliente_id\x18\x02 \x01(\x03\x12\x13\n\x0bvehiculo_id\x18\x03 \x01(\x03\x12\x14\n\x0c\x66\x65\x63ha_inicio\x18\x04 \x01(\t\x12\x11\n\tfecha_fin\x18\x05 \x01(\t\x12\x0e\n\x06\x65stado\x18\x06 \x01(\t\x12\x15\n\rduracion_dias\x18\x07 \x01(\x05\x12\x1f\n\x17precio_diario_historico\x18\x08 \x01(\t\x12\x15\n\rimporte_total\x18\t \x01(\t2\xee\x02\n\rRentalService\x12\x43\n\x0c\x43reateRental\x12\x1b.rental.CreateRentalRequest\x1a\x16.rental.RentalResponse\x12\x43\n\nGetRentals\x12\x19.rental.GetRentalsRequest\x1a\x1a.rental.RentalListResponse\x12=\n\tGetRental\x12\x18.rental.GetRentalRequest\x1a\x16.rental.RentalResponse\x12\x43\n\x0c\x43\x61ncelRental\x12\x1b.rental.CancelRentalRequest\x1a\x16.rental.RentalResponse\x12O\n\x10GetRentalHistory\x12\x1f.rental.GetRentalHistoryRequest\x1a\x1a.rental.RentalListResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0crental.proto\x12\x06rental\"g\n\x13\x43reateRentalRequest\x12\x12\n\ncliente_id\x18\x01 \x01(\x03\x12\x13\n\x0bvehiculo_id\x18\x02 \x01(\x03\x12\x14\n\x0c\x66\x65\x63ha_inicio\x18\x03 \x01(\t\x12\x11\n\tfecha_fin\x18\x04 \x01(\t\"\x13\n\x11GetRentalsRequest\"\x1e\n\x10GetRentalRequest\x12\n\n\x02id\x18\x01 \x01(\x03\"!\n\x13\x43\x61ncelRentalRequest\x12\n\n\x02id\x18\x01 \x01(\x03\"-\n\x17GetRentalHistoryRequest\x12\x12\n\ncliente_id\x18\x01 \x01(\x03\"5\n\x12RentalListResponse\x12\x1f\n\x07rentals\x18\x01 \x03(\x0b\x32\x0e.rental.Rental\"0\n\x0eRentalResponse\x12\x1e\n\x06rental\x18\x01 \x01(\x0b\x32\x0e.rental.Rental\"\xe1\x01\n\x06Rental\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x12\n\ncliente_id\x18\x02 \x01(\x03\x12\x13\n\x0bvehiculo_id\x18\x03 \x01(\x03\x12\x14\n\x0c\x66\x65\x63ha_inicio\x18\x04 \x01(\t\x12\x11\n\tfecha_fin\x18\x05 \x01(\t\x12\x0e\n\x06\x65stado\x18\x06 \x01(\t\x12\x15\n\rduracion_dias\x18\x07 \x01(\x05\x12\x1f\n\x17precio_diario_historico\x18\x08 \x01(\t\x12\x15\n\rimporte_total\x18\t \x01(\t\x12\x1a\n\x12\x64\x65sc_mantenimiento\x18\n \x01(\t2\xee\x02\n\rRentalService\x12\x43\n\x0c\x43reateRental\x12\x1b.rental.CreateRentalRequest\x1a\x16.rental.RentalResponse\x12\x43\n\nGetRentals\x12\x19.rental.GetRentalsRequest\x1a\x1a.rental.RentalListResponse\x12=\n\tGetRental\x12\x18.rental.GetRentalRequest\x1a\x16.rental.RentalResponse\x12\x43\n\x0c\x43\x61ncelRental\x12\x1b.rental.CancelRentalRequest\x1a\x16.rental.RentalResponse\x12O\n\x10GetRentalHistory\x12\x1f.rental.GetRentalHistoryRequest\x1a\x1a.rental.RentalListResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -46,7 +46,7 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_RENTALRESPONSE']._serialized_start=319
   _globals['_RENTALRESPONSE']._serialized_end=367
   _globals['_RENTAL']._serialized_start=370
-  _globals['_RENTAL']._serialized_end=567
-  _globals['_RENTALSERVICE']._serialized_start=570
-  _globals['_RENTALSERVICE']._serialized_end=936
+  _globals['_RENTAL']._serialized_end=595
+  _globals['_RENTALSERVICE']._serialized_start=598
+  _globals['_RENTALSERVICE']._serialized_end=964
 # @@protoc_insertion_point(module_scope)

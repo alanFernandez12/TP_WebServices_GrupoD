@@ -139,10 +139,13 @@ class VehicleRepository:
         """Devuelve solicitudes externas y sus resultados de validación."""
         query = """
             SELECT v.id_vehiculo, v.cod_patente, v.desc_marca,
-                   v.desc_modelo, v.desc_estado_vehiculo,
-                   c.resultado_patente, c.resultado_titularidad
+                   v.desc_modelo, v.desc_tipo_vehiculo, v.num_anio,
+                   v.desc_color, v.f_val_precio_diario,
+                   v.desc_estado_vehiculo, v.flag_activo,
+                   c.resultado_patente, c.resultado_titularidad,
+                   c.resultado_final
             FROM lk_vehiculos v
-            LEFT JOIN incorporacion_correlacion c
+            LEFT JOIN ft_incorporacion_correlacion c
               ON c.vehiculo_externo_id = v.id_vehiculo
             WHERE v.id_cliente = %s
             ORDER BY v.id_vehiculo DESC
@@ -158,9 +161,15 @@ class VehicleRepository:
                 "patente": row[1],
                 "marca": row[2],
                 "modelo": row[3],
-                "estado": row[4],
-                "validacion_patente": row[5] or "",
-                "validacion_titularidad": row[6] or "",
+                "tipoVehiculo": row[4],
+                "anio": int(row[5]),
+                "color": row[6] or "",
+                "precio_diario": str(row[7]) if row[7] is not None else "0",
+                "estado": row[8],
+                "activo": bool(row[9]),
+                "validacion_patente": row[10] or "",
+                "validacion_titularidad": row[11] or "",
+                "resultado_final": row[12] or "PENDIENTE",
             }
             for row in rows
         ]

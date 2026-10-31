@@ -30,28 +30,29 @@ export function MisVehiculos() {
   return <>
     <section className="welcome"><div>
       <p className="eyebrow">Vehículos de propietarios</p><h1>Mis vehículos</h1>
-      <p className="subtitle">Solicitá incorporar un vehículo propio y consultá el resultado de las verificaciones.</p>
+      <p className="subtitle">Podes añadir un vehículo propio a Rentar.</p>
     </div><button type="button" className="primary-button" onClick={() => { setError(''); setSuccess(''); setAbierto(true) }}>+ Incorporar vehículo</button></section>
     {error && <div className="alert error" role="alert">{error}</div>}
     {success && <div className="alert success" role="status">{success}</div>}
     <section className="reservations-section">
-      <div className="section-heading"><h2>Solicitudes de incorporación</h2><button type="button" className="secondary-button" disabled={loading} onClick={() => void cargar()}>Actualizar estados</button></div>
+      <div className="section-heading"><h2>Vehículos</h2><button type="button" className="secondary-button" disabled={loading} onClick={() => void cargar()}>Actualizar estados</button></div>
       {loading ? <p role="status">Cargando solicitudes...</p> : solicitudes.length === 0 ?
         <div className="empty-state"><strong>Sin solicitudes para mostrar</strong><span>Podés solicitar la incorporación de tu primer vehículo.</span></div> :
-        <div className="table-wrap"><table><thead><tr><th>Vehículo</th><th>Patente</th><th>Tipo</th><th>Año</th><th>Color</th><th>Precio diario</th><th>Estado</th><th>¿Activo?</th><th>Acciones</th></tr></thead><tbody>
+        <div className="table-wrap"><table><thead><tr><th>Marca</th><th>Modelo</th><th>Patente</th><th>Tipo</th><th>Año</th><th>Resultado final</th><th>Estado</th><th>¿Activo?</th><th>Acciones</th></tr></thead><tbody>
           {solicitudes.map(s => <tr key={s.id}>
-            <td><strong className="strong">{s.marca} {s.modelo}</strong></td>
-            <td>{s.patente}</td><td>{s.tipoVehiculo}</td><td>{s.anio}</td>
-            <td>{s.color || '—'}</td>
-            <td className="strong">${Number(s.precio_diario).toLocaleString('es-AR')}</td>
+            <td>{s.marca}</td><td>{s.modelo}</td><td>{s.patente}</td>
+            <td>{s.tipoVehiculo}</td><td>{s.anio}</td><td>{s.resultadoFinal}</td>
             <td>{s.estado}</td>
-            <td><span className={`status ${s.activo ? 'status-confirmada' : 'status-cancelada'}`}>{s.activo ? 'ACTIVO' : 'INACTIVO'}</span></td>
+            <td><span className={`status ${s.activo ? 'status-confirmada' : 'status-cancelada'}`}>{s.activo ? 'SI' : 'NO'}</span></td>
             <td><div className="table-actions">
               <button type="button" className="secondary-button" onClick={() => {
                 const vehiculo: Vehiculo = {
                   id: s.id, patente: s.patente, marca: s.marca, modelo: s.modelo,
                   anio: s.anio, tipoVehiculo: s.tipoVehiculo, estado: s.estado,
                   color: s.color, precio_diario: Number(s.precio_diario), activo: s.activo,
+                  resultadoPatente: s.resultadoPatente,
+                  resultadoTitularidad: s.resultadoTitularidad,
+                  resultadoFinal: s.resultadoFinal,
                 }
                 setDetalle({ type: 'vehiculo', registro: vehiculo })
               }}>Ver</button>
@@ -62,7 +63,6 @@ export function MisVehiculos() {
             </div></td>
           </tr>)}
         </tbody></table></div>}
-      <p className="subtitle" style={{ fontSize: 13 }}>Una solicitud pendiente no habilita el vehículo para alquiler. Solo se incorpora cuando ambas validaciones son satisfactorias.</p>
     </section>
     {abierto && (
       <RegistrationModal

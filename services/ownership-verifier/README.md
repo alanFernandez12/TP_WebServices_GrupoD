@@ -1,12 +1,10 @@
-docker run -d --name ownership-verifier `
-  --env-file services\ownership-verifier\.env `
--p 8094:8094 ownership-verifier:local# Ownership Verifier — Validador de titularidad
+# Ownership Verifier — Validador de titularidad
 
 ## Propósito
 
 `ownership-verifier` es un servicio REST que verifica si el número de documento informado corresponde al titular registrado para una patente.
 
-Para realizar la comprobación, consulta directamente la tabla `lk_registro_titularidad` de la base configurada para el registro automotor. No consulta Customer Service, Vehicle Service ni otros servicios, ni utiliza RabbitMQ actualmente.
+La validación REST consulta `lk_registro_titularidad` directamente. Para la incorporación asíncrona de vehículos externos, el consumer RabbitMQ de este servicio recibe `vehiculos.externos.registrados` y publica `vehiculos.externos.validacion.titularidad`. No consulta Customer Service ni Vehicle Service.
 
 ## Funcionamiento
 
@@ -86,13 +84,13 @@ Los dos últimos casos son resultados de negocio: la solicitud pudo procesarse, 
 
 ## Base de datos
 
-La aplicación usa las variables `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`. Si no se define `DB_NAME`, el valor por defecto configurado actualmente en `app/main.py` es `Rentar_RegistroAutomotor`.
+La aplicación usa las variables `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`. El registro externo del Hito 3 vive en la base independiente `rentar_titularidad`; si no se define `DB_NAME`, ese es el valor predeterminado. `sql\schema.sql` crea esta base, la tabla y un registro de ejemplo.
 
 La tabla consultada tiene esta estructura esperada:
 
 ```sql
-Create Database Rentar_RegistroAutomotor;
-USE Rentar_RegistroAutomotor;
+CREATE DATABASE rentar_titularidad;
+USE rentar_titularidad;
 CREATE TABLE IF NOT EXISTS lk_registro_titularidad (
     id_registro BIGINT NOT NULL AUTO_INCREMENT,
     cod_patente VARCHAR(20) NOT NULL,
@@ -119,14 +117,19 @@ La tabla debe existir en la base indicada por `DB_NAME`. El servicio no crea bas
 
 ## Configuración local
 
-Crear `services\ownership-verifier\.env` con los datos de conexión del entorno local. Para valores de ejemplo, consultar `.env.example`:
+Crear `services\ownership-verifier\.env` con la conexión a MySQL y RabbitMQ. Para Docker Desktop con ambos servicios publicados en el host, se puede copiar `.env.example` y completar la contraseña de MySQL:
 
 ```env
-DB_HOST=localhost
+DB_HOST=host.docker.internal
 DB_PORT=3306
-DB_NAME=Rentar_RegistroAutomotor
+DB_NAME=rentar_titularidad
 DB_USER=root
 DB_PASSWORD=colocar-la-clave-local
+RABBITMQ_HOST=host.docker.internal
+RABBITMQ_PORT=5672
+RABBITMQ_USERNAME=guest
+RABBITMQ_PASSWORD=guest
+RABBITMQ_VIRTUAL_HOST=/
 ```
 
 No subir el archivo `.env` ni contraseñas reales al repositorio.
@@ -138,7 +141,7 @@ Desde la raíz del repositorio:
 ```powershell
 $env:DB_HOST = "localhost"
 $env:DB_PORT = "3306"
-$env:DB_NAME = "Rentar_RegistroAutomotor"
+$env:DB_NAME = "rentar_titularidad"
 $env:DB_USER = "root"
 $env:DB_PASSWORD = "Tu_password_local"
 python -m venv .\services\ownership-verifier\.venv
@@ -156,12 +159,50 @@ Set-Location .\services\ownership-verifier
 El servicio queda disponible en `http://localhost:8094`. La documentación interactiva de FastAPI está en `http://localhost:8094/docs`.
 `GET /health` devuelve el estado de la API sin consultar MySQL.
 
+Para ejecutar el consumer en una terminal independiente, desde la raíz:
+
+```powershell
+Set-Location .\services\ownership-verifier
+& .\.venv\Scripts\python.exe -m app.ownership_consumer
+```
+
+El consumer procesa mensajes de `rentar.verificador.titularidad`. El evento de
+entrada debe tener esta estructura (el `documento` se obtiene del cliente
+autenticado y es necesario para verificar la titularidad):
+
+```json
+{
+  "vehiculoExternoId": 50,
+  "clienteId": 89,
+  "patente": "DEF456",
+  "documento": "30123456"
+}
+```
+
+El resultado publicado en `vehiculos.externos.validacion.titularidad` conserva
+los identificadores y datos de correlación, e incluye `resultado`:
+
+```json
+{
+  "vehiculoExternoId": 50,
+  "clienteId": 89,
+  "documento": "30123456",
+  "patente": "DEF456",
+  "resultado": "VALIDADO"
+}
+```
+
+Si la patente no existe en el registro o el documento no coincide, el
+resultado es `RECHAZADO`. El consumer confirma la solicitud después de
+publicar el resultado; los errores de infraestructura vuelven a poner el
+mensaje en la cola y los mensajes con formato inválido se rechazan.
+
 ## Docker
 
 Construir la imagen desde la raíz del repositorio:
 
 ```powershell
-docker build -t ownership-verifier:local -f services\ownership-verifier\Dockerfile services\ownership-verifier
+docker build -t ownership-verifier:local -f services\ownership-verifier\Dockerfile .
 ```
 
 Iniciarla en la misma red Docker que MySQL:
@@ -170,11 +211,53 @@ Iniciarla en la misma red Docker que MySQL:
 docker run --rm --name ownership-verifier --env-file services\ownership-verifier\.env -p 8094:8094 ownership-verifier:local
 ```
 
-Si MySQL corre en el host, configurar `DB_HOST=host.docker.internal` en el archivo `.env` usado por el contenedor (en vez de `localhost`). El servicio responde en `http://localhost:8094`; `GET /health` comprueba que la API está activa y no verifica la conectividad con MySQL.
+En otra terminal, iniciar el consumer con la misma imagen y variables:
+
+```powershell
+docker run -d --name ownership-verifier-consumer --no-healthcheck --env-file services\ownership-verifier\.env ownership-verifier:local python -m app.ownership_consumer
+```
+
+Configurar `DB_HOST=host.docker.internal`, `DB_NAME=rentar_titularidad` y
+`RABBITMQ_HOST=host.docker.internal` en el `.env` cuando MySQL y RabbitMQ corren
+en el host y publican sus puertos. Si el consumer y el broker están en una
+misma red Docker, usar el nombre DNS del contenedor RabbitMQ en `RABBITMQ_HOST`.
+El servicio REST responde en `http://localhost:8094`; `GET /health` comprueba
+la API, no la conectividad con MySQL o RabbitMQ.
 
 > Si `python` no está disponible en el PATH, usar `py -3.11` en lugar de `python`.
 
 ## Prueba desde PowerShell
+
+Con RabbitMQ, MySQL y el registro de prueba de `sql\schema.sql` disponibles,
+primero inicia el consumer en una terminal:
+
+```powershell
+docker run --rm --name ownership-verifier-test `
+  --no-healthcheck `
+  --env-file services\ownership-verifier\.env `
+  -e DB_NAME=rentar_titularidad `
+  -e RABBITMQ_HOST=host.docker.internal `
+  -e OWNERSHIP_VERIFIER_DELAY_SECONDS=0 `
+  ownership-verifier:local python -m app.ownership_consumer
+```
+
+En otra terminal, desde la raíz del repositorio, ejecuta la prueba dentro de la
+imagen:
+
+```powershell
+docker run --rm `
+  --env-file services\ownership-verifier\.env `
+  -e RABBITMQ_HOST=host.docker.internal `
+  -e OWNERSHIP_TEST_TIMEOUT_SECONDS=90 `
+  ownership-verifier:local python probar_rabbitmq.py
+```
+
+El script publica dos solicitudes, comprueba los resultados en una cola
+temporal y la elimina al finalizar. Usa el fixture `AA123BB` /
+`30111222`: un caso debe resultar `VALIDADO` y otro `RECHAZADO`. Si no hay un
+consumer activo, si no se recibe respuesta dentro del tiempo límite o si el
+resultado no coincide, termina con error. El tiempo límite puede cambiarse
+con `--timeout 120` o `OWNERSHIP_TEST_TIMEOUT_SECONDS`.
 
 Con el servicio iniciado y la tabla cargada con un registro de prueba:
 
@@ -194,6 +277,7 @@ Invoke-RestMethod `
 ## Componentes principales
 
 - `app\main.py`: define el endpoint REST, las validaciones de entrada y la consulta a MySQL.
+- `app\ownership_consumer.py`: consume solicitudes de incorporación y publica la validación de titularidad.
 - `sql\schema.sql`: crea la base y la tabla del registro de titularidad, con un dato de ejemplo.
 - `Dockerfile` y `.dockerignore`: construyen la imagen de ejecución del servicio.
 - `requirements.txt`: dependencias de FastAPI, Uvicorn, MySQL Connector y python-dotenv.

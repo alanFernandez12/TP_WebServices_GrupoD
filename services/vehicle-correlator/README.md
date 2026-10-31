@@ -26,8 +26,7 @@ en `vehiculos.externos.validacion.completada`.
   sin volver a publicar el evento final.
 
 El estado se conserva si se reinicia el proceso, porque la correlación se
-guarda en MySQL. La tabla se crea ejecutando
-`Proyecto/BD/Hito3_FlujoB.sql`.
+guarda en MySQL.
 
 ## Ejecución
 

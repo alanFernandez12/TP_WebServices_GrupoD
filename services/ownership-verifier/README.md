@@ -84,7 +84,7 @@ Los dos últimos casos son resultados de negocio: la solicitud pudo procesarse, 
 
 ## Base de datos
 
-La aplicación usa las variables `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`. El registro externo del Hito 3 vive en la base independiente `rentar_titularidad`; si no se define `DB_NAME`, ese es el valor predeterminado. `sql\schema.sql` crea esta base, la tabla y un registro de ejemplo.
+La aplicación usa las variables `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`. El registro externo del Hito 3 vive en la base independiente `rentar_titularidad`; si no se define `DB_NAME`, ese es el valor predeterminado.
 
 La tabla consultada tiene esta estructura esperada:
 
@@ -113,7 +113,7 @@ ON DUPLICATE KEY UPDATE
     cod_documento_titular = '30111222';
 ```
 
-La tabla debe existir en la base indicada por `DB_NAME`. El servicio no crea bases ni tablas automáticamente. `sql\schema.sql` contiene el esquema y un registro de ejemplo para preparar el registro local.
+La tabla debe existir en la base indicada por `DB_NAME`. El servicio no crea bases ni tablas automáticamente.
 
 ## Configuración local
 
@@ -278,7 +278,6 @@ Invoke-RestMethod `
 
 - `app\main.py`: define el endpoint REST, las validaciones de entrada y la consulta a MySQL.
 - `app\ownership_consumer.py`: consume solicitudes de incorporación y publica la validación de titularidad.
-- `sql\schema.sql`: crea la base y la tabla del registro de titularidad, con un dato de ejemplo.
 - `Dockerfile` y `.dockerignore`: construyen la imagen de ejecución del servicio.
 - `requirements.txt`: dependencias de FastAPI, Uvicorn, MySQL Connector y python-dotenv.
 - `.env`: configuración local de conexión a la base; no debe versionarse. `.env.example` documenta las variables requeridas.

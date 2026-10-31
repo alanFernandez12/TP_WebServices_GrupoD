@@ -183,10 +183,6 @@ docker start rentar-rabbitmq
    de RabbitMQ usando **Get messages**. Si el verificador ya está ejecutándose,
    la cola puede quedar en cero porque el mensaje fue consumido.
 
-10. **Preparar el registro policial simulado.** Ejecutar
-    `services\vehicle-verifier\sql\schema.sql` en MySQL. El seed contiene
-    `AA123BB` como patente validada y `ROBO123` como patente robada.
-
 11. **Configurar e iniciar el verificador.**
 
     ```powershell

@@ -1,42 +1,129 @@
-"""Consultas disponibles para los clientes de Rentar."""
+"""
+Consultas disponibles en la API GraphQL de Rentar.
+
+Permite consultar vehículos disponibles, historial de alquileres
+y reservas. El acceso a la información depende del rol del usuario
+autenticado.
+"""
 type Query {
+
     """
-    Busca vehículos activos y sin reservas superpuestas durante todo el período indicado.
+    Busca vehículos activos y disponibles durante todo el período indicado.
+
+    Considera las reservas que se superponen con el período solicitado.
     Las reservas canceladas no bloquean la disponibilidad.
+
+    Permite aplicar filtros opcionales por tipo de vehículo, marca,
+    modelo y rango de precio.
+
+    Argumentos:
+    - filtro: criterios de búsqueda y período de disponibilidad.
+
+    Devuelve una lista de vehículos que cumplen con los criterios.
     """
-    vehiculosDisponibles(filtro: DisponibilidadFiltroInput!): [VehiculoDisponible!]!
+    vehiculosDisponibles(
+        filtro: DisponibilidadFiltroInput!
+    ): [VehiculoDisponible!]!
 
-     """Consulta el historial propio. El administrador debe indicar clienteId; un cliente puede omitirlo."""
-    historialAlquileres(clienteId: ID): [HistorialAlquiler!]!
+    """
+    Consulta el historial de alquileres de un cliente.
 
-    """Consulta reservas con filtros opcionales. El cliente solo accede a sus reservas; el administrador puede consultar todas. Las fechas delimitan reservas contenidas en el rango."""
-    reservas(filtro: ReservaFilterInput): [Reserva!]!
+    Si el usuario autenticado es CLIENTE, puede consultar únicamente
+    su propio historial y puede omitir clienteId.
+
+    Si el usuario autenticado es ADMIN, debe indicar clienteId
+    para consultar el historial del cliente correspondiente.
+
+    Devuelve los alquileres registrados con sus datos principales,
+    incluyendo período, duración, importe y estado.
+    """
+    historialAlquileres(
+        clienteId: ID
+    ): [HistorialAlquiler!]!
+
+    """
+    Consulta reservas aplicando filtros opcionales combinados mediante AND.
+
+    Los clientes solamente pueden consultar sus propias reservas.
+    Los administradores pueden consultar reservas de distintos clientes
+    o todas las reservas, según los filtros indicados.
+
+    Los filtros de fecha delimitan las reservas contenidas en el rango
+    especificado.
+
+    Argumentos:
+    - filtro: criterios opcionales para filtrar las reservas.
+
+    Devuelve una lista de reservas con información del cliente,
+    vehículo, período e importe.
+    """
+    reservas(
+        filtro: ReservaFilterInput
+    ): [Reserva!]!
 }
 
-"""Filtros para consultar disponibilidad. Inicio y fin usan formato ISO-8601."""
+"""
+Criterios para consultar vehículos disponibles.
+
+Las fechas deben expresarse en formato ISO-8601,
+sin zona horaria, incluyendo fecha y hora.
+La fecha de finalización debe ser posterior a la fecha de inicio.
+"""
 input DisponibilidadFiltroInput {
+
+    """Tipo de vehículo requerido."""
     tipoVehiculo: TipoVehiculo
+
+    """Marca del vehículo. Permite aplicar un filtro por marca."""
     marca: String
+
+    """Modelo del vehículo. Permite aplicar un filtro por modelo."""
     modelo: String
+
+    """Precio diario mínimo permitido."""
     precioMinimo: Float
+
+    """Precio diario máximo permitido."""
     precioMaximo: Float
-    """Ejemplo: 2026-10-01T10:00:00"""
+
+    """Inicio del período de alquiler. Ejemplo: 2026-10-01T10:00:00."""
     fechaInicio: String!
-    """Ejemplo: 2026-10-05T10:00:00"""
+
+    """Fin del período de alquiler. Ejemplo: 2026-10-05T10:00:00."""
     fechaFin: String!
 }
 
-"""Vehículo disponible para alquilar durante el período solicitado."""
+"""
+Vehículo que se encuentra disponible para alquilar
+durante el período solicitado.
+"""
 type VehiculoDisponible {
+
+    """Patente identificatoria del vehículo."""
     patente: String!
+
+    """Marca del vehículo."""
     marca: String!
+
+    """Modelo del vehículo."""
     modelo: String!
+
+    """Año de fabricación."""
     anio: Int!
+
+    """Color del vehículo. Puede no estar informado."""
     color: String
+
+    """Categoría o tipo de vehículo."""
     tipoVehiculo: TipoVehiculo!
+
+    """Precio diario de alquiler."""
     precioDiario: Float!
 }
 
+"""
+Tipos de vehículos admitidos por el sistema.
+"""
 enum TipoVehiculo {
     SEDAN
     SUV
@@ -45,66 +132,165 @@ enum TipoVehiculo {
     HATCHBACK
 }
 
-"""Registro perteneciente al historial de alquileres de un cliente."""
+"""
+Registro de un alquiler incluido en el historial de un cliente.
+"""
 type HistorialAlquiler {
+
+    """Información descriptiva del vehículo alquilado."""
     vehiculo: VehiculoHistorial!
+
+    """Patente del vehículo alquilado."""
     patente: String!
+
+    """Fecha y hora de inicio del alquiler."""
     fechaInicio: String!
+
+    """Fecha y hora de finalización del alquiler."""
     fechaFin: String!
+
+    """Cantidad de días correspondientes al alquiler."""
     cantidadDias: Int!
+
+    """Importe total del alquiler."""
     importeTotal: Float!
+
+    """Estado actual del alquiler."""
     estado: EstadoReserva!
 }
 
-"""Datos identificatorios del vehículo alquilado."""
+"""
+Información del vehículo asociada a un registro del historial.
+"""
 type VehiculoHistorial {
+
+    """Marca del vehículo."""
     marca: String!
+
+    """Modelo del vehículo."""
     modelo: String!
 }
 
+"""
+Estados posibles de una reserva o alquiler.
+"""
 enum EstadoReserva {
+    """Reserva pendiente de confirmación."""
     PENDIENTE
+
+    """Reserva confirmada."""
     CONFIRMADA
+
+    """Reserva cancelada."""
     CANCELADA
+
+    """Alquiler finalizado."""
     TERMINADA
 }
 
-"""Filtros opcionales combinados con AND. Fechas ISO-8601 sin zona horaria."""
+"""
+Criterios opcionales para consultar reservas.
+
+Los filtros se combinan mediante AND: una reserva debe cumplir
+todos los criterios informados.
+
+Las fechas deben expresarse en formato ISO-8601,
+sin zona horaria.
+"""
 input ReservaFilterInput {
+
+    """Identificador del cliente asociado a la reserva."""
     clienteId: ID
+
+    """Identificador del vehículo reservado."""
     vehiculoId: ID
+
+    """Tipo de vehículo reservado."""
     tipoVehiculo: TipoVehiculo
+
+    """Estado de la reserva."""
     estadoReserva: EstadoReserva
+
+    """Fecha inicial del rango de búsqueda."""
     fechaDesde: String
+
+    """Fecha final del rango de búsqueda."""
     fechaHasta: String
 }
 
-"""Reserva con datos del cliente, vehículo y precio diario guardado al reservar."""
+"""
+Reserva registrada en el sistema, con información del cliente,
+vehículo y condiciones económicas acordadas al momento de reservar.
+"""
 type Reserva {
+
+    """Identificador único de la reserva."""
     id: ID!
+
+    """Datos del cliente que realizó la reserva."""
     cliente: Cliente!
+
+    """Datos del vehículo asociado a la reserva."""
     vehiculo: Vehiculo!
+
+    """Patente del vehículo reservado."""
     patente: String!
+
+    """Fecha y hora de inicio de la reserva."""
     horaInicio: String!
+
+    """Fecha y hora de finalización de la reserva."""
     horaFin: String!
+
+    """Duración del alquiler expresada en días."""
     duracionDias: Int!
+
+    """Precio diario registrado al momento de realizar la reserva."""
     precioDiarioHistorico: Float!
+
+    """Importe total de la reserva."""
     importeTotal: Float!
+
+    """Estado actual de la reserva."""
     estadoReserva: EstadoReserva!
 }
 
+"""
+Información identificatoria del cliente asociado a una reserva.
+"""
 type Cliente {
+
+    """Identificador único del cliente."""
     id: ID!
+
+    """Nombre del cliente."""
     nombre: String!
+
+    """Apellido del cliente."""
     apellido: String!
+
+    """Documento identificatorio del cliente."""
     documento: String!
 }
 
+"""
+Información del vehículo asociado a una reserva.
+"""
 type Vehiculo {
+
+    """Identificador único del vehículo."""
     id: ID!
+
+    """Patente del vehículo."""
     patente: String!
+
+    """Marca del vehículo."""
     marca: String!
+
+    """Modelo del vehículo."""
     modelo: String!
+
+    """Tipo de vehículo."""
     tipoVehiculo: TipoVehiculo!
 }
 

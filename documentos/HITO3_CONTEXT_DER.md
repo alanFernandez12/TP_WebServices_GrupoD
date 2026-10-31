@@ -357,19 +357,3 @@ El incumplimiento de **cualquiera** implica desaprobación del TP.
 
 > Al implementar, conviene ir dejando evidencia (logs de productores/consumidores, capturas de la consola del broker, requests de prueba)
 > para armar la sección de pruebas del documento.
-
----
-
-## 12. Instrucciones para el agente
-
-1. Explorar primero el repositorio (servicios existentes, `.proto`, gateway, entidades/DB, docker-compose) antes de proponer cambios.
-2. Reutilizar convenciones, lenguaje y frameworks ya usados en el proyecto.
-3. Implementar flujo por flujo (A → B → C), verificando cada uno de punta a punta.
-4. No renombrar tópicos ni campos definidos en este documento.
-5. No introducir `ROBADO` como estado operativo del vehículo; usar
-   `flag_activo = 0` para inhabilitarlo.
-6. Respetar el modelo de datos de la sección 7: los vehículos externos se
-   registran directamente en `lk_vehiculos` y se actualizan cuando finalizan
-   las dos validaciones; los registros simulados están en las bases
-   `rentar_policial` y `rentar_titularidad`.
-7. Ante ambigüedad, preguntar al usuario en lugar de asumir.

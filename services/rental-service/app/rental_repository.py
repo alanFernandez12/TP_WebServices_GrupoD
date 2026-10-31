@@ -15,7 +15,7 @@ class RentalRepository:
             """
             SELECT id_reserva, id_cliente, id_vehiculo, hora_inicio, hora_fin,
                    num_duracion_dias, f_val_precio_diario_historico,
-                   f_val_importe_total, desc_estado_reserva
+                   f_val_importe_total, desc_estado_reserva, desc_mantenimiento
             FROM ft_reservas
             WHERE id_reserva = %s
             """,
@@ -150,6 +150,21 @@ class RentalRepository:
                 connection.rollback()
                 raise
 
+    def update_maintenance(self, rental_id, result):
+        """Guarda el resultado de mantenimiento. Es idempotente."""
+        with self.database.connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE ft_reservas
+                    SET desc_mantenimiento = %s
+                    WHERE id_reserva = %s
+                    """,
+                    (result, rental_id),
+                )
+                connection.commit()
+                return cursor.rowcount > 0
+
     def find_all(self):
         with self.database.connection() as connection:
             with connection.cursor(dictionary=True) as cursor:
@@ -158,7 +173,7 @@ class RentalRepository:
                     SELECT id_reserva, id_cliente, id_vehiculo, hora_inicio,
                            hora_fin, num_duracion_dias,
                            f_val_precio_diario_historico, f_val_importe_total,
-                           desc_estado_reserva
+                           desc_estado_reserva, desc_mantenimiento
                     FROM ft_reservas
                     ORDER BY id_reserva
                     """
@@ -228,7 +243,7 @@ class RentalRepository:
                     SELECT id_reserva, id_cliente, id_vehiculo, hora_inicio,
                            hora_fin, num_duracion_dias,
                            f_val_precio_diario_historico, f_val_importe_total,
-                           desc_estado_reserva
+                           desc_estado_reserva, desc_mantenimiento
                     FROM ft_reservas
                     WHERE id_cliente = %s
                       AND desc_estado_reserva IN ('TERMINADA', 'CANCELADA')

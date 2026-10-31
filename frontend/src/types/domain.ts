@@ -42,4 +42,5 @@ export interface Reserva {
   horaFin: string
   importeTotal: number
   estadoReserva: EstadoReserva
+  descMantenimiento?: string
 }

@@ -92,6 +92,11 @@ export function crearCliente(data: unknown) {
   return request<Cliente>('/gateway/clientes', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
 }
 
+/** Alta de reserva del cliente: el Gateway determina la identidad desde la sesión. */
+export function crearMiReserva(data: { idVehiculo: number; horaInicio: string; horaFin: string }) {
+  return request<Reserva>('/gateway/reservas', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
+}
+
 export function crearReserva(data: unknown) {
   return request<Reserva>('/gateway/reservas', { method: 'POST', headers: jsonHeaders, body: JSON.stringify(data) })
 }
@@ -183,6 +188,26 @@ export async function obtenerReservas(filtro: ReservaFiltro = {}): Promise<Reser
   )
 }
 
+/** Solo consulta reservas del cliente autenticado, sin endpoints administrativos. */
+export async function obtenerMisReservas(filtro: ReservaFiltro = {}): Promise<Reserva[]> {
+  const data = await graphqlRequest<{ misReservas: Reserva[] }>(`
+    query MisReservas {
+      misReservas {
+        id cliente { id nombre apellido documento }
+        vehiculo { id marca modelo patente tipoVehiculo }
+        patente precioDiarioHistorico horaInicio horaFin importeTotal estadoReserva
+      }
+    }
+  `)
+  return data.misReservas.filter((reserva) =>
+    (!filtro.vehiculoId || reserva.vehiculo.id === filtro.vehiculoId) &&
+    (!filtro.tipoVehiculo || reserva.vehiculo.tipoVehiculo === filtro.tipoVehiculo) &&
+    (!filtro.estadoReserva || reserva.estadoReserva === filtro.estadoReserva) &&
+    (!filtro.fechaDesde || reserva.horaInicio >= filtro.fechaDesde) &&
+    (!filtro.fechaHasta || reserva.horaFin <= filtro.fechaHasta)
+  )
+}
+
 export function cancelarReserva(id: number) {
   return request<Reserva>(`/gateway/reservas/${id}/cancelar`, { method: 'PATCH' })
 }
@@ -218,3 +243,96 @@ export function reactivarVehiculo(id: number) {
 export function reactivarCliente(id: number) {
   return request<void>(`/gateway/clientes/${id}/reactivar`,{method: 'PATCH'})
 }
+
+/** Operaciones GraphQL expuestas exclusivamente por el API Gateway. */
+async function graphqlRequest<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
+  const result = await request<{ data?: T; errors?: Array<{message: string}> }>('/gateway/graphql', {
+    method: 'POST', headers: jsonHeaders, body: JSON.stringify({ query, variables }),
+  })
+  if (result.errors?.length) throw new Error(result.errors.map(e => e.message).join(' | '))
+  if (!result.data) throw new Error('GraphQL no devolvió resultados.')
+  return result.data
+}
+
+export interface DisponibilidadFiltro {
+  fechaInicio: string
+  fechaFin: string
+  tipoVehiculo?: string
+  marca?: string
+  modelo?: string
+  precioMin?: number
+  precioMax?: number
+}
+export interface Disponible {
+  id: string
+  patente: string
+  marca: string
+  modelo: string
+  anio: number
+  color: string
+  tipoVehiculo: string
+  precioDiario: number
+}
+export interface AlquilerHistorico {
+  id: string
+  vehiculo: string
+  patente: string
+  fechaInicio: string
+  fechaFin: string
+  cantidadDias: number
+  importeTotal: number
+  estado: string
+}
+
+export async function consultarDisponibilidad(filtro: DisponibilidadFiltro): Promise<Disponible[]> {
+  const response = await graphqlRequest<{ disponibilidad: Disponible[] }>(`
+    query ConsultarDisponibilidad($filtro: DisponibilidadFiltro!) {
+      disponibilidad(filtro: $filtro) {
+        id patente marca modelo anio color tipoVehiculo precioDiario
+      }
+    }`, { filtro })
+  return response.disponibilidad
+}
+
+export async function consultarHistorial(): Promise<AlquilerHistorico[]> {
+  const response = await graphqlRequest<{ historialAlquileres: AlquilerHistorico[] }>(`
+    query ConsultarHistorial {
+      historialAlquileres {
+        id vehiculo patente fechaInicio fechaFin cantidadDias importeTotal estado
+      }
+    }`)
+  return response.historialAlquileres
+}
+
+/*Funciones para incorporar vehiculo externo*/
+export interface SolicitudVehiculoExterno {
+  id: number
+  patente: string
+  marca: string
+  modelo: string
+  estado: 'PENDIENTE' | 'RECHAZADO' | 'DISPONIBLE'
+  validacionPatente?: 'PENDIENTE' | 'VALIDADO' | 'RECHAZADO' | null
+  validacionTitularidad?: 'PENDIENTE' | 'VALIDADO' | 'RECHAZADO' | null
+}
+
+export interface IncorporacionVehiculoInput {
+  patente: string
+  marca: string
+  modelo: string
+  anio: number
+  color: string | null
+  tipoVehiculo: string
+  precio_diario: number
+}
+
+export function solicitarIncorporacionVehiculo(datos: IncorporacionVehiculoInput) {
+  return request<SolicitudVehiculoExterno>('/gateway/vehiculos/externos', {
+    method: 'POST', headers: jsonHeaders, body: JSON.stringify(datos),
+  })
+}
+
+export function consultarMisSolicitudesVehiculosExternos() {
+  return request<SolicitudVehiculoExterno[]>('/gateway/vehiculos/externos/mis-solicitudes')
+}
+
+

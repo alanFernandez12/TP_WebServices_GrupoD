@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
-import { cancelarReserva, obtenerReserva, obtenerReservas, type Sesion } from '../../services/api'
+import { cancelarReserva, obtenerReserva, obtenerMisReservas, type Sesion } from '../../services/api'
 import type { EstadoReserva, Reserva, ReservaFiltro } from '../../types/domain'
 import { ReservationGrid } from '../dashboard/components/ReservationGrid'
 import { DetailModal, type DetailRegistro } from '../dashboard/components/DetailModal'
+import { Disponibilidad } from './Disponibilidad'
+import { HistorialAlquileres } from './HistorialAlquileres'
+import { MisVehiculos } from './MisVehiculos'
+import { RegistrationModal } from '../dashboard/components/RegistrationModal'
+
 
 export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogout: () => void }) {
+  const [seccion, setSeccion] = useState<'reservas' | 'disponibilidad' | 'historial' | 'mis-vehiculos'>('reservas')
   const [reservas, setReservas] = useState<Reserva[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -16,13 +22,14 @@ export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogou
   const [hasta, setHasta] = useState('')
   const [filtro, setFiltro] = useState<ReservaFiltro>({})
   const [cancelando, setCancelando] = useState(false)
+  const [creandoReserva, setCreandoReserva] = useState(false)
   const [detalle, setDetalle] = useState<DetailRegistro | null>(null)
   const [cargandoDetalle, setCargandoDetalle] = useState(false)
   const [errorDetalle, setErrorDetalle] = useState('')
 
   const cargar = useCallback(async () => {
     setLoading(true); setError('')
-    try { setReservas(await obtenerReservas(filtro)) }
+    try { setReservas(await obtenerMisReservas(filtro)) }
     catch (e) { setError(e instanceof Error ? e.message : 'No se pudieron consultar las reservas.') }
     finally { setLoading(false) }
   }, [filtro])
@@ -57,14 +64,18 @@ export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogou
       <aside className="sidebar">
         <p className="sidebar-label">Mi cuenta</p>
         <nav className="main-nav" aria-label="Secciones del cliente">
-          <button type="button" className="nav-item active"><span className="nav-icon nav-icon-reservas" />Mis reservas</button>
+          <button type="button" className={`nav-item ${seccion === 'reservas' ? 'active' : ''}`} onClick={() => setSeccion('reservas')}><span className="nav-icon nav-icon-reservas" />Mis reservas</button>
+          <button type="button" className={`nav-item ${seccion === 'disponibilidad' ? 'active' : ''}`} onClick={() => setSeccion('disponibilidad')}><span className="nav-icon" />Disponibilidad</button>
+          <button type="button" className={`nav-item ${seccion === 'historial' ? 'active' : ''}`} onClick={() => setSeccion('historial')}><span className="nav-icon nav-icon-reservas" />Historial de alquileres</button>
+          <button type="button" className={`nav-item ${seccion === 'mis-vehiculos' ? 'active' : ''}`} onClick={() => setSeccion('mis-vehiculos')}><span className="nav-icon" />Mis vehículos</button>
         </nav>
       </aside>
       <main className="dashboard" style={{ minWidth: 0 }}>
+        {seccion === 'disponibilidad' ? <Disponibilidad /> : seccion === 'historial' ? <HistorialAlquileres /> : seccion === 'mis-vehiculos' ? <MisVehiculos /> : <>
         <section className="welcome"><div>
           <p className="eyebrow">Reservas</p><h1>Mis reservas</h1>
-          <p className="subtitle">Consultá tus reservas y cancelá las que todavía no comenzaron.</p>
-        </div></section>
+          <p className="subtitle">Consultá tus reservas, creá una nueva y cancelá las que todavía no comenzaron.</p>
+        </div><button type="button" className="primary-button" onClick={() => setCreandoReserva(true)}>+ Nueva reserva</button></section>
         <section className="reservations-section">
           <div className="section-heading"><h2>Consulta de reservas</h2><span className="count-badge">{resultados.length} reservas</span></div>
           <div className="table-toolbar">
@@ -103,8 +114,16 @@ export function ClienteDashboard({ sesion, onLogout }: { sesion: Sesion; onLogou
             }} />
           </div>
         </section>
+        </>}
       </main>
     </div>
+    {creandoReserva && sesion.clienteId != null && <RegistrationModal
+      key="nueva-reserva-cliente"
+      type="reserva"
+      clienteId={sesion.clienteId}
+      onClose={() => setCreandoReserva(false)}
+      onSaved={() => { setCreandoReserva(false); setSuccess('Reserva creada correctamente.'); void cargar() }}
+    />}
     {detalle && <DetailModal detail={detalle} loading={cargandoDetalle} error={errorDetalle} onClose={() => {
       if (!cargandoDetalle) { setDetalle(null); setErrorDetalle('') }
     }} />}

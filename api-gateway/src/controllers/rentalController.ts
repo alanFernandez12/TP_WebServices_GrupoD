@@ -26,7 +26,11 @@ export const createRental = async (
 ) => {
   try {
     const body = req.body ?? {};
-    const clienteId = Number(body.clienteId ?? body.idCliente);
+    // El CLIENTE nunca puede elegir en nombre de quién reservar.
+    const sesion = res.locals.sesion;
+    const clienteId = sesion?.rol === "CLIENTE"
+      ? Number(sesion.clienteId)
+      : Number(body.clienteId ?? body.idCliente);
     const vehiculoId = Number(body.vehiculoId ?? body.idVehiculo);
     const fechaInicio = body.fechaInicio ?? body.horaInicio;
     const fechaFin = body.fechaFin ?? body.horaFin;

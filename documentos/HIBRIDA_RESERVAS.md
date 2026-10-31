@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Las reservas fueron migradas al flujo gRPC porque el contrato `proto/rental.proto` ya define las operaciones necesarias:
+Las reservas fueron migradas al flujo gRPC porque el contrato `../proto/rental.proto` ya define las operaciones necesarias:
 
 - `CreateRental`: alta de una reserva.
 - `GetRentals`: listado de reservas.
@@ -54,7 +54,7 @@ cancelarReserva    -> PATCH /gateway/reservas/:id/cancelar
 ```
 
 La consulta GraphQL anterior no se elimina: se conserva como `obtenerReservasGraphQL()` en
-`frontend/src/services/api.ts` para poder comparar contratos o volver a utilizarla.
+`../frontend/src/services/api.ts` para poder comparar contratos o volver a utilizarla.
 La función activa del dashboard es `obtenerReservas()`, que consume la nueva ruta gRPC
 mediante el gateway.
 
@@ -64,7 +64,7 @@ mediante el gateway.
 
 ## Configuración
 
-El archivo `services/rental-service/.env` debe contener:
+El archivo `../services/rental-service/.env` debe contener:
 
 ```env
 RENTAL_GRPC_PORT=9093
@@ -75,7 +75,7 @@ DB_USER=root
 DB_PASSWORD=tu_password
 ```
 
-El gateway debe tener en `api-gateway/.env`:
+El gateway debe tener en `../api-gateway/.env`:
 
 ```env
 PORT=8085

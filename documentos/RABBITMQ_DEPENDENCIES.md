@@ -6,7 +6,7 @@
 
 ## Python
 
-- `pika==1.3.2`: cliente Python para conectarse a RabbitMQ mediante AMQP. La topología compartida del Flujo A se encuentra en `services/messaging`.
+- `pika==1.3.2`: cliente Python para conectarse a RabbitMQ mediante AMQP. La topología compartida del Flujo A se encuentra en `../services/messaging`.
 
 La configuración inicial de conexión utiliza `localhost:5672` y las credenciales
 locales `guest`/`guest`. `vehicle-service` publica las solicitudes y consume

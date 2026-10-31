@@ -5,7 +5,7 @@
 La funcionalidad de clientes utiliza dos caminos de comunicación:
 
 - **Escrituras:** el frontend llama al servidor Spring Boot en `http://localhost:8080`.
-- **Lecturas:** el frontend llama al API Gateway en `http://localhost:8085`; el gateway consulta `customer-service` mediante gRPC usando `proto/customer.proto`.
+- **Lecturas:** el frontend llama al API Gateway en `http://localhost:8085`; el gateway consulta `customer-service` mediante gRPC usando `../proto/customer.proto`.
 
 Las altas, modificaciones, bajas y reactivaciones continúan utilizando los endpoints REST existentes de Spring, mientras que el listado de clientes se obtiene a través del contrato gRPC.
 
@@ -80,7 +80,7 @@ El servicio gRPC debe escuchar en `localhost:9092`.
 
 ### API Gateway
 
-Crear `api-gateway/.env`:
+Crear `../api-gateway/.env`:
 
 ```env
 PORT=8085

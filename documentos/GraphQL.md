@@ -164,7 +164,7 @@ En GraphQL, `!` indica que el campo no admite `null` y `[Tipo!]!` representa una
 
 ## 6. Ejecución y pruebas
 
-1. Ejecutar la aplicación con su configuración Java/Spring y base de datos correspondiente. El `pom.xml` está en la raíz del proyecto. Para las base de datos, estas estan provistas en la carpeta `Proyecto/BD`
+1. Ejecutar la aplicación con su configuración Java/Spring y base de datos correspondiente. El `../pom.xml` está en la raíz del proyecto. Para las base de datos, estas estan provistas en la carpeta `Proyecto/BD`
 2. Usar GraphiQL en `http://localhost:8080/graphiql` o Postman con `POST http://localhost:8080/graphql`, `Content-Type: application/json` y HTTP Basic con una cuenta habilitada. En la base de datos de prueba se provee el admin `admin@rentar.com` y cliente `juan.perez@mail.com`. Para ambos la contraseña es `admin123`
 
 **Ejemplo de cuerpo JSON en Postman:**

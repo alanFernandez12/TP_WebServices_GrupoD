@@ -5,7 +5,7 @@
 La funcionalidad de vehículos utiliza dos caminos de comunicación:
 
 - **Escrituras:** el frontend llama al servidor Spring Boot en `http://localhost:8080`.
-- **Lecturas:** el frontend llama al API Gateway en `http://localhost:8085`; el gateway consulta el `vehicle-service` mediante gRPC usando `proto/vehicle.proto`.
+- **Lecturas:** el frontend llama al API Gateway en `http://localhost:8085`; el gateway consulta el `vehicle-service` mediante gRPC usando `../proto/vehicle.proto`.
 
 De esta forma, las altas, modificaciones, bajas y reactivaciones continúan utilizando los endpoints REST existentes de Spring, mientras que el listado de vehículos se obtiene a través del contrato gRPC.
 
@@ -77,7 +77,7 @@ Luego iniciar el servicio en el puerto `9091`.
 
 ### API Gateway
 
-Crear `api-gateway/.env`:
+Crear `../api-gateway/.env`:
 
 ```env
 PORT=8085

@@ -323,33 +323,33 @@ El componente utiliza las variables `DB_HOST`, `DB_PORT`, `DB_NAME`,
 
 - `Proyecto/BD/RentarBD.sql`
 - `Proyecto/BD/Hito3_FlujoB.sql`
-- `services/vehicle-correlator/app/correlation_repository.py`
-- `services/vehicle-correlator/README.md`
+- `../services/vehicle-correlator/app/correlation_repository.py`
+- `../services/vehicle-correlator/README.md`
 
 ### Contrato y Gateway
 
-- `proto/vehicle.proto`
-- `api-gateway/src/app.ts`
-- `api-gateway/src/middleware/auth.ts`
-- `api-gateway/src/routes/externalVehicleRoutes.ts`
-- `api-gateway/src/controllers/externalVehicleController.ts`
-- `api-gateway/src/services/vehicleService.ts`
+- `../proto/vehicle.proto`
+- `../api-gateway/src/app.ts`
+- `../api-gateway/src/middleware/auth.ts`
+- `../api-gateway/src/routes/externalVehicleRoutes.ts`
+- `../api-gateway/src/controllers/externalVehicleController.ts`
+- `../api-gateway/src/services/vehicleService.ts`
 
 ### Servicio de vehículos
 
-- `services/vehicle-service/app/server.py`
-- `services/vehicle-service/app/vehicle_repository.py`
-- `services/vehicle-service/app/external_vehicle_publisher.py`
-- `services/vehicle-service/app/vehicle_pb2.py`
-- `services/vehicle-service/app/vehicle_pb2_grpc.py`
+- `../services/vehicle-service/app/server.py`
+- `../services/vehicle-service/app/vehicle_repository.py`
+- `../services/vehicle-service/app/external_vehicle_publisher.py`
+- `../services/vehicle-service/app/vehicle_pb2.py`
+- `../services/vehicle-service/app/vehicle_pb2_grpc.py`
 
 ### Mensajería y verificación
 
-- `services/messaging/topology.py`
-- `services/messaging/README.md`
-- `services/vehicle-correlator/app/correlator.py`
-- `services/vehicle-verifier/app/external_verifier.py`
-- `services/vehicle-verifier/README.md`
+- `../services/messaging/topology.py`
+- `../services/messaging/README.md`
+- `../services/vehicle-correlator/app/correlator.py`
+- `../services/vehicle-verifier/app/external_verifier.py`
+- `../services/vehicle-verifier/README.md`
 
 ## Migración de la base de datos
 
@@ -429,6 +429,6 @@ Se verificó:
 
 - compilación TypeScript del API Gateway;
 - compilación sintáctica de los servicios Python, incluido el correlador;
-- regeneración de los bindings Python desde `proto/vehicle.proto`;
+- regeneración de los bindings Python desde `../proto/vehicle.proto`;
 - ausencia de referencias al nombre anterior de la tabla;
 - ausencia de errores de whitespace en el diff.

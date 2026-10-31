@@ -31,7 +31,7 @@ directamente la base principal `Rentar`.
 
 ## Topología RabbitMQ
 
-La topología se define en `services/messaging/topology.py`.
+La topología se define en `../services/messaging/topology.py`.
 
 | Elemento | Valor |
 |---|---|
@@ -56,19 +56,19 @@ La topología puede declararse desde la raíz del proyecto:
 
 ### Mensajería compartida
 
-- `services/messaging/__init__.py`
+- `../services/messaging/__init__.py`
   - Define el paquete común de mensajería.
-- `services/messaging/topology.py`
+- `../services/messaging/topology.py`
   - Centraliza nombres del exchange, routing keys, colas y configuración de
     RabbitMQ.
-- `services/messaging/requirements.txt`
+- `../services/messaging/requirements.txt`
   - Dependencia `pika`.
-- `services/messaging/README.md`
+- `../services/messaging/README.md`
   - Descripción de la topología.
 
 ### Publicación desde Rentar
 
-- `services/vehicle-service/app/vehicle_verification_publisher.py`
+- `../services/vehicle-service/app/vehicle_verification_publisher.py`
   - Publica `vehiculos.verificacion.solicitada` después de insertar el
     vehículo.
   - El mensaje contiene `vehiculoId` y `patente`.
@@ -85,18 +85,18 @@ Ejemplo:
 
 ### Verificador policial
 
-- `services/vehicle-verifier/app/verifier.py`
+- `../services/vehicle-verifier/app/verifier.py`
   - Consume `rentar.verificador.vehiculos`.
   - Consulta la base `rentar_policial`.
   - Publica el resultado en el exchange.
   - Confirma la solicitud solo después de publicar el resultado.
-- `services/vehicle-verifier/app/police_registry.py`
+- `../services/vehicle-verifier/app/police_registry.py`
   - Consulta `lk_registro_policial`.
-- `services/vehicle-verifier/requirements.txt`
+- `../services/vehicle-verifier/requirements.txt`
   - Dependencias de MySQL, dotenv y RabbitMQ.
-- `services/vehicle-verifier/.env.example`
+- `../services/vehicle-verifier/.env.example`
   - Variables de entorno del verificador.
-- `services/vehicle-verifier/README.md`
+- `../services/vehicle-verifier/README.md`
   - Instrucciones de instalación y ejecución.
 
 El registro policial utiliza:
@@ -121,7 +121,7 @@ segundos por defecto y puede establecerse en `0` para pruebas.
 
 ### Consumidor final en Rentar
 
-- `services/vehicle-service/app/vehicle_verification_result_consumer.py`
+- `../services/vehicle-service/app/vehicle_verification_result_consumer.py`
   - Consume `rentar.vehiculos.verificacion.resultado`.
   - Valida el payload.
   - Actualiza la base principal.
@@ -154,7 +154,7 @@ Proyecto/BD/SQLGENERAL.sql
 
 ### Método de persistencia
 
-En `services/vehicle-service/app/vehicle_repository.py` se agregó
+En `../services/vehicle-service/app/vehicle_repository.py` se agregó
 `update_verification(...)`.
 
 La operación:
@@ -168,7 +168,7 @@ La base policial solo se consulta; nunca se modifica.
 
 ## Cambios en `vehicle-service`
 
-En `services/vehicle-service/app/server.py`:
+En `../services/vehicle-service/app/server.py`:
 
 - Se crea el repositorio de vehículos.
 - Se inicia `VehicleVerificationResultConsumer` en un hilo daemon.
@@ -217,7 +217,7 @@ Copy-Item `
   .\services\vehicle-verifier\.env
 ```
 
-Configurar en `services/vehicle-verifier/.env` las credenciales de la base
+Configurar en `../services/vehicle-verifier/.env` las credenciales de la base
 policial:
 
 ```env
@@ -342,6 +342,6 @@ podía conectarse a RabbitMQ pero cerrarse al recibir el primer mensaje.
 
 - `HITO3_CONTEXT_DER.md`
 - `RABBITMQ_DEPENDENCIES.md`
-- `services/messaging/README.md`
-- `services/vehicle-service/README.md`
-- `services/vehicle-verifier/README.md`
+- `../services/messaging/README.md`
+- `../services/vehicle-service/README.md`
+- `../services/vehicle-verifier/README.md`

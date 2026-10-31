@@ -187,9 +187,9 @@ En el Hito 2 se amplió la arquitectura de **Rentar** mediante la incorporación
 
 La implementación y el uso de cada módulo se documentan en los siguientes archivos:
 
-- **[Gestión de vehículos](./HIBRIDA_VEHICULOS.md):** documentación de la implementación y el uso de los servicios relacionados con vehículos.
-- **[Gestión de clientes](./HIBRIDA_CLIENTES.md):** documentación de la implementación y el uso de los servicios relacionados con clientes.
-- **[Gestión de reservas](./HIBRIDA_RESERVAS.md):** documentación de la implementación y el uso de los servicios relacionados con reservas.
+- **[Gestión de vehículos](documentos/HIBRIDA_VEHICULOS.md):** documentación de la implementación y el uso de los servicios relacionados con vehículos.
+- **[Gestión de clientes](documentos/HIBRIDA_CLIENTES.md):** documentación de la implementación y el uso de los servicios relacionados con clientes.
+- **[Gestión de reservas](documentos/HIBRIDA_RESERVAS.md):** documentación de la implementación y el uso de los servicios relacionados con reservas.
 
 ## Equipo
 

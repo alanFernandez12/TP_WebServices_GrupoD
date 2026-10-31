@@ -14,7 +14,11 @@ Hasta el momento se implementaron:
 - topología RabbitMQ propia del Flujo B;
 - verificador independiente de patentes;
 - evento `vehiculos.externos.validacion.patente`;
-- conversión de patente robada a resultado `RECHAZADO`.
+- verificador independiente de titularidad;
+- correlación persistente de los resultados de patente y titularidad;
+- evento `vehiculos.externos.validacion.completada`;
+- actualización del estado del vehículo al finalizar la correlación;
+- conversión de resultados rechazados a estado final `RECHAZADO`.
 
 El Flujo A continúa utilizando sus propios endpoints, eventos, colas y
 consumidores.
@@ -52,6 +56,12 @@ También se agregaron:
 - índice `idx_vehiculos_cliente`;
 - clave foránea `fk_vehiculo_cliente`.
 
+La correlación de las validaciones se persiste en la tabla
+`Rentar.ft_incorporacion_correlacion`. La tabla conserva los resultados
+independientes de patente y titularidad asociados mediante
+`vehiculo_externo_id`, junto con el resultado final, las fechas del proceso y
+la marca de publicación del evento de completada.
+
 Interpretación:
 
 - `id_cliente = NULL`: vehículo registrado por un administrador;
@@ -80,9 +90,10 @@ desc_estado_vehiculo = DISPONIBLE
 ```
 
 Cuando una validación de patente detecta que el vehículo fue robado, el
-verificador publica `resultado: RECHAZADO`. La modificación final de
-`flag_activo` y del estado operativo queda pendiente del consumidor final del
-Flujo B.
+verificador publica `resultado: RECHAZADO`. El correlador espera ambos
+resultados, marca la correlación como `RECHAZADO` si alguno fue rechazado y
+mantiene el vehículo en estado `PENDIENTE` e inactivo. Solo cuando ambos
+resultados son `VALIDADO`, el vehículo pasa a estado `DISPONIBLE` y activo.
 
 ## Endpoint de alta externa
 
@@ -273,11 +284,47 @@ consultar el registro policial. Se configura con
 puede establecerse en `0` para pruebas. La validación de titularidad mantiene
 su demora configurable mediante `OWNERSHIP_VERIFIER_DELAY_SECONDS`.
 
+## Correlador de validaciones
+
+Archivo:
+
+```text
+services/vehicle-correlator/app/correlator.py
+```
+
+El correlador consume los resultados de patente y titularidad desde
+`rentar.correlador.externos` y los persiste de forma transaccional en
+`ft_incorporacion_correlacion`. Los resultados pueden llegar en cualquier
+orden y se conservan hasta completar la correlación:
+
+- ambos resultados `VALIDADO`: marca el vehículo como `DISPONIBLE`, activa el
+  registro y publica `vehiculos.externos.validacion.completada`;
+- al menos un resultado `RECHAZADO`: marca la correlación como `RECHAZADO`,
+  mantiene el vehículo `PENDIENTE` e inactivo y no publica el evento final;
+- mensajes repetidos después de una decisión terminal: se confirman sin
+  volver a publicar el evento final.
+
+La marca `evento_completada_publicado` evita publicaciones duplicadas cuando
+se reintenta el procesamiento del mensaje.
+
+### Ejecución
+
+```powershell
+cd services\vehicle-correlator
+python app\correlator.py
+```
+
+El componente utiliza las variables `DB_HOST`, `DB_PORT`, `DB_NAME`,
+`DB_USER` y `DB_PASSWORD` para conectarse a la base `Rentar`.
+
 ## Archivos principales modificados o agregados
 
 ### Base de datos
 
-- `Proyecto/BD/SQLGENERAL.sql`
+- `Proyecto/BD/RentarBD.sql`
+- `Proyecto/BD/Hito3_FlujoB.sql`
+- `services/vehicle-correlator/app/correlation_repository.py`
+- `services/vehicle-correlator/README.md`
 
 ### Contrato y Gateway
 
@@ -300,8 +347,29 @@ su demora configurable mediante `OWNERSHIP_VERIFIER_DELAY_SECONDS`.
 
 - `services/messaging/topology.py`
 - `services/messaging/README.md`
+- `services/vehicle-correlator/app/correlator.py`
 - `services/vehicle-verifier/app/external_verifier.py`
 - `services/vehicle-verifier/README.md`
+
+## Migración de la base de datos
+
+Para una base nueva, ejecutar:
+
+```powershell
+mysql -u root -p Rentar < .\Proyecto\BD\RentarBD.sql
+```
+
+Para una base existente que todavía utiliza el nombre anterior, realizar un
+respaldo y ejecutar una sola vez:
+
+```sql
+RENAME TABLE incorporacion_correlacion
+TO ft_incorporacion_correlacion;
+```
+
+El script `Hito3_FlujoB.sql` agrega `id_cliente`, su índice, la clave foránea
+y crea `ft_incorporacion_correlacion` cuando todavía no existe. No se debe
+ejecutar el `RENAME TABLE` si la tabla ya tiene el nombre nuevo.
 
 ## Estado actual del recorrido
 
@@ -360,6 +428,7 @@ El evento final solo debe publicarse cuando patente y titularidad sean
 Se verificó:
 
 - compilación TypeScript del API Gateway;
-- compilación sintáctica de los servicios Python;
+- compilación sintáctica de los servicios Python, incluido el correlador;
 - regeneración de los bindings Python desde `proto/vehicle.proto`;
+- ausencia de referencias al nombre anterior de la tabla;
 - ausencia de errores de whitespace en el diff.

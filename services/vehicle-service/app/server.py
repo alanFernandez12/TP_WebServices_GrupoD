@@ -41,7 +41,7 @@ class VehicleService(vehicle_pb2_grpc.VehicleServiceServicer):
         self.verification_publisher = verification_publisher
 
     def GetVehicles(self, request, context):
-        """Devuelve todos los vehículos activos de la base."""
+        """Devuelve todos los vehículos, activos e inactivos, de la base."""
         try:
             vehicles = self.repository.find_all()
             return vehicle_pb2.VehicleListResponse(

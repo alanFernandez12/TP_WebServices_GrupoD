@@ -27,13 +27,12 @@ class VehicleRepository:
         }
 
     def find_all(self) -> list[dict]:
-        """Devuelve todos los vehículos activos."""
+        """Devuelve todos los vehículos, activos e inactivos."""
         query = """
             SELECT id_vehiculo, cod_patente, desc_marca, desc_modelo,
                    desc_estado_vehiculo, num_anio, desc_tipo_vehiculo,
                    desc_color, f_val_precio_diario, flag_activo, id_cliente
             FROM lk_vehiculos
-            WHERE flag_activo = 1
             ORDER BY id_vehiculo
         """
         with self.database.connection() as connection:

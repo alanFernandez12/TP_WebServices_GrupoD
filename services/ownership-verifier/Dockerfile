@@ -5,11 +5,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY services/ownership-verifier/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
     && adduser --system --uid 10001 --no-create-home appuser
 
-COPY app ./app
+COPY services/ownership-verifier/app ./app
+COPY services/ownership-verifier/probar_rabbitmq.py ./probar_rabbitmq.py
+COPY services/messaging ./messaging
 
 USER appuser
 

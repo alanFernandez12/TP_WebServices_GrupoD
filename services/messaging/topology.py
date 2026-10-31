@@ -1,4 +1,4 @@
-"""Declaración de la topología RabbitMQ del Flujo A.
+"""Declaración compartida de topología RabbitMQ para Rentar.
 
 El flujo completo queda representado por dos recorridos independientes:
 
@@ -42,12 +42,17 @@ VERIFIER_QUEUE = "rentar.verificador.vehiculos"
 RENTAR_QUEUE = "rentar.vehiculos.verificacion.resultado"
 
 
-# Flujo B (mantenimiento preventivo). Rentar publica la reserva confirmada y
+# Flujo C (mantenimiento preventivo). Rentar publica la reserva confirmada y
 # el servicio de mantenimiento responde con el resultado.
 RESERVATION_CONFIRMED = "reserva.confirmada"
 MAINTENANCE_RESULT = "mantenimiento.resultado"
 MAINTENANCE_QUEUE = "rentar.mantenimiento.reservas"
 RESERVATION_MAINTENANCE_QUEUE = "rentar.reservas.mantenimiento.resultado"
+
+# Flujo B: el validador de titularidad consume el alta y publica su resultado.
+EXTERNAL_VEHICLE_REGISTERED = "vehiculos.externos.registrados"
+EXTERNAL_VEHICLE_OWNERSHIP_VALIDATION = "vehiculos.externos.validacion.titularidad"
+EXTERNAL_VEHICLE_OWNERSHIP_QUEUE = "rentar.verificador.titularidad"
 
 
 @dataclass(frozen=True)
@@ -126,7 +131,7 @@ def declare_flow_a_topology(channel: pika.adapters.blocking_connection.BlockingC
 
 
 def declare_flow_b_topology(channel: pika.adapters.blocking_connection.BlockingChannel) -> None:
-    """Declara las colas y los bindings del Flujo B (mantenimiento).
+    """Declara las colas y los bindings del Flujo C (mantenimiento).
 
     Ida:    Rentar -> reserva.confirmada -> cola del servicio de mantenimiento.
     Vuelta: Mantenimiento -> mantenimiento.resultado -> cola de Rentar.
@@ -150,8 +155,26 @@ def declare_flow_b_topology(channel: pika.adapters.blocking_connection.BlockingC
     )
 
 
+def declare_ownership_validation_topology(
+    channel: pika.adapters.blocking_connection.BlockingChannel,
+) -> None:
+    """Conecta el alta externa con la cola exclusiva del validador de titularidad."""
+    channel.exchange_declare(
+        exchange=EXCHANGE_NAME,
+        exchange_type=EXCHANGE_TYPE,
+        durable=True,
+    )
+
+    # El evento de salida se publica al exchange; Rentar declara su propia cola.
+    channel.queue_declare(queue=EXTERNAL_VEHICLE_OWNERSHIP_QUEUE, durable=True)
+    channel.queue_bind(
+        queue=EXTERNAL_VEHICLE_OWNERSHIP_QUEUE,
+        exchange=EXCHANGE_NAME,
+        routing_key=EXTERNAL_VEHICLE_REGISTERED,
+    )
+
 def declare_topology(settings: RabbitMqSettings | None = None) -> None:
-    """Conecta al broker y deja declarada la topología de los Flujos A y B.
+    """Conecta al broker y declara la topología de los Flujos A, B y C.
 
     Esta función solo crea la infraestructura de mensajería. La publicación
     de eventos y el consumo pertenecen a los componentes de Rentar, del
@@ -164,10 +187,11 @@ def declare_topology(settings: RabbitMqSettings | None = None) -> None:
         channel = connection.channel()
         declare_flow_a_topology(channel)
         declare_flow_b_topology(channel)
+        declare_ownership_validation_topology(channel)
     finally:
         connection.close()
 
 
 if __name__ == "__main__":
     declare_topology()
-    print("Topología RabbitMQ de los Flujos A y B declarada correctamente.")
+    print("Topología RabbitMQ de los Flujos A, B y C declarada correctamente.")

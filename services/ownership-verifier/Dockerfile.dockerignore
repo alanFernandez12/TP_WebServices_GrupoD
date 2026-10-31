@@ -1,0 +1,9 @@
+**
+!services/
+!services/messaging/
+!services/messaging/**
+!services/ownership-verifier/
+!services/ownership-verifier/**
+services/ownership-verifier/.env
+services/ownership-verifier/.venv/
+services/ownership-verifier/app/__pycache__/

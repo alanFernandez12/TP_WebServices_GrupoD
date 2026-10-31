@@ -6,6 +6,7 @@ import com.grupo_d_c2_2026_unla.rentar.dto.ErrorResponse;
 import com.grupo_d_c2_2026_unla.rentar.service.ClienteService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -17,6 +18,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -26,7 +28,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.validation.annotation.Validated;
 
 @RestController
 @RequestMapping("/api/clientes")
@@ -41,7 +42,9 @@ public class ClienteController {
     // ALTA
     @Operation(
         summary = "Crear un cliente",
-        description = "Crea un nuevo cliente. El email y documento deben ser únicos."
+        description = "Registra un nuevo cliente en el sistema. "
+                    + "El email y el documento deben ser únicos. "
+                    + "Los datos se envían mediante el cuerpo de la solicitud."
     )
     @ApiResponses({
         @ApiResponse(
@@ -71,7 +74,9 @@ public class ClienteController {
     })
     @PostMapping
     public ResponseEntity<ClienteResponseDTO> crear(
-            @Validated(ClienteRequestDTO.Alta.class) @RequestBody ClienteRequestDTO cliente){
+            @Validated(ClienteRequestDTO.Alta.class)
+            @RequestBody ClienteRequestDTO cliente) {
+
         ClienteResponseDTO creado = clienteService.crear(cliente);
 
         return ResponseEntity
@@ -81,7 +86,8 @@ public class ClienteController {
 
     // LISTADO
     @Operation(
-        summary = "Listar todos los clientes"
+        summary = "Listar todos los clientes",
+        description = "Obtiene el listado de clientes registrados en el sistema."
     )
     @ApiResponses({
         @ApiResponse(
@@ -114,7 +120,8 @@ public class ClienteController {
 
     // BUSCAR POR ID
     @Operation(
-        summary = "Buscar un cliente por ID"
+        summary = "Buscar un cliente por ID",
+        description = "Obtiene los datos de un cliente a partir de su identificador único."
     )
     @ApiResponses({
         @ApiResponse(
@@ -144,6 +151,11 @@ public class ClienteController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<ClienteResponseDTO> buscarPorId(
+            @Parameter(
+                description = "Identificador único del cliente",
+                example = "1",
+                required = true
+            )
             @PathVariable("id") Long id) {
 
         ClienteResponseDTO cliente = clienteService.buscarPorId(id);
@@ -153,7 +165,10 @@ public class ClienteController {
 
     // MODIFICAR
     @Operation(
-        summary = "Modificar un cliente"
+        summary = "Modificar un cliente",
+        description = "Actualiza los datos de un cliente existente. "
+                    + "Se debe indicar su identificador y enviar los nuevos datos "
+                    + "mediante el cuerpo de la solicitud."
     )
     @ApiResponses({
         @ApiResponse(
@@ -191,6 +206,11 @@ public class ClienteController {
     })
     @PutMapping("/{id}")
     public ResponseEntity<ClienteResponseDTO> modificar(
+            @Parameter(
+                description = "Identificador único del cliente que se desea modificar",
+                example = "1",
+                required = true
+            )
             @PathVariable("id") Long id,
             @Valid @RequestBody ClienteRequestDTO cliente) {
 
@@ -202,7 +222,10 @@ public class ClienteController {
 
     // BAJA LOGICA
     @Operation(
-        summary = "Dar de baja un cliente"
+        summary = "Dar de baja un cliente",
+        description = "Realiza la baja lógica de un cliente. "
+                    + "El registro permanece almacenado en la base de datos, "
+                    + "pero queda inactivo en el sistema."
     )
     @ApiResponses({
         @ApiResponse(
@@ -228,6 +251,11 @@ public class ClienteController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> bajaLogica(
+            @Parameter(
+                description = "Identificador único del cliente que se desea dar de baja",
+                example = "1",
+                required = true
+            )
             @PathVariable("id") Long id) {
 
         clienteService.bajaLogica(id);
@@ -235,11 +263,52 @@ public class ClienteController {
         return ResponseEntity.noContent().build();
     }
 
-    //Reactivar cliente
-    @Operation(summary = "Reactivar un cliente")
+    // REACTIVAR
+    @Operation(
+        summary = "Reactivar un cliente",
+        description = "Permite reactivar un cliente que fue dado de baja previamente."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "204",
+            description = "Cliente reactivado correctamente"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Cliente no encontrado",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "El cliente no puede ser reactivado por una regla de negocio",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Error interno del servidor",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
     @PatchMapping("/{id}/reactivar")
-    public ResponseEntity<Void> reactivar(@PathVariable Long id) {
+    public ResponseEntity<Void> reactivar(
+            @Parameter(
+                description = "Identificador único del cliente que se desea reactivar",
+                example = "1",
+                required = true
+            )
+            @PathVariable("id") Long id) {
+
         clienteService.reactivar(id);
+
         return ResponseEntity.noContent().build();
     }
 }

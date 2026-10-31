@@ -5,55 +5,196 @@ import * as vehicleService from "./services/vehicleService";
 import * as rentalService from "./services/rentalService";
 
 const schema = buildSchema(`
-  "Filtros de disponibilidad; fechas ISO-8601 con hora obligatorias"
+  """
+  Filtros para consultar vehículos disponibles en un período determinado.
+
+  Las fechas deben tener el formato YYYY-MM-DDTHH:mm o
+  YYYY-MM-DDTHH:mm:ss. La fecha y hora de finalización
+  deben ser posteriores a las de inicio.
+  """
   input DisponibilidadFiltro {
+    """Fecha y hora de inicio del período de alquiler."""
     fechaInicio: String!
+
+    """Fecha y hora de finalización del período de alquiler."""
     fechaFin: String!
+
+    """Tipo de vehículo requerido. Es opcional."""
     tipoVehiculo: String
+
+    """Marca del vehículo. Permite coincidencias parciales."""
     marca: String
+
+    """Modelo del vehículo. Permite coincidencias parciales."""
     modelo: String
+
+    """Precio diario mínimo permitido."""
     precioMin: Float
+
+    """Precio diario máximo permitido."""
     precioMax: Float
   }
+
+  """
+  Representa un vehículo que se encuentra disponible
+  para el período solicitado y cumple con los filtros aplicados.
+  """
   type VehiculoDisponible {
+    """Identificador único del vehículo."""
     id: ID!
+
+    """Patente del vehículo."""
     patente: String!
+
+    """Marca del vehículo."""
     marca: String!
+
+    """Modelo del vehículo."""
     modelo: String!
+
+    """Año de fabricación."""
     anio: Int!
+
+    """Color del vehículo. Puede no estar informado."""
     color: String
+
+    """Tipo de vehículo."""
     tipoVehiculo: String!
+
+    """Precio diario de alquiler."""
     precioDiario: Float!
   }
+
+  """
+  Representa un alquiler perteneciente al historial del cliente.
+  Incluye alquileres terminados y cancelados.
+  """
   type AlquilerHistorico {
+    """Identificador único del alquiler."""
     id: ID!
+
+    """Marca y modelo del vehículo alquilado."""
     vehiculo: String!
+
+    """Patente del vehículo alquilado."""
     patente: String!
+
+    """Fecha y hora de inicio del alquiler."""
     fechaInicio: String!
+
+    """Fecha y hora de finalización del alquiler."""
     fechaFin: String!
+
+    """Cantidad de días del alquiler."""
     cantidadDias: Int!
+
+    """Importe total del alquiler."""
     importeTotal: Float!
+
+    """Estado del alquiler: TERMINADA o CANCELADA."""
     estado: String!
   }
+
+  """
+  Representa una reserva realizada por el cliente autenticado,
+  incluyendo información del cliente y del vehículo reservado.
+  """
   type ReservaCliente {
+    """Identificador único de la reserva."""
     id: Int!
+
+    """Información del cliente asociado a la reserva."""
     cliente: ClienteReserva!
+
+    """Información del vehículo asociado a la reserva."""
     vehiculo: VehiculoReserva!
+
+    """Patente del vehículo reservado."""
     patente: String!
+
+    """Precio diario registrado al momento de la reserva."""
     precioDiarioHistorico: Float!
+
+    """Fecha y hora de inicio de la reserva."""
     horaInicio: String!
+
+    """Fecha y hora de finalización de la reserva."""
     horaFin: String!
+
+    """Importe total de la reserva."""
     importeTotal: Float!
+
+    """Estado actual de la reserva."""
     estadoReserva: String!
   }
-  type ClienteReserva { id: Int! nombre: String! apellido: String! documento: String! }
-  type VehiculoReserva { id: Int! marca: String! modelo: String! patente: String! tipoVehiculo: String! }
+
+  """
+  Información del cliente asociada a una reserva.
+  """
+  type ClienteReserva {
+    """Identificador único del cliente."""
+    id: Int!
+
+    """Nombre del cliente."""
+    nombre: String!
+
+    """Apellido del cliente."""
+    apellido: String!
+
+    """Documento identificatorio del cliente."""
+    documento: String!
+  }
+
+  """
+  Información del vehículo asociado a una reserva.
+  """
+  type VehiculoReserva {
+    """Identificador único del vehículo."""
+    id: Int!
+
+    """Marca del vehículo."""
+    marca: String!
+
+    """Modelo del vehículo."""
+    modelo: String!
+
+    """Patente del vehículo."""
+    patente: String!
+
+    """Tipo de vehículo."""
+    tipoVehiculo: String!
+  }
+
+  """
+  Consultas disponibles para clientes autenticados.
+  Todas las operaciones utilizan la sesión del cliente actual.
+  """
   type Query {
-    "Reservas correspondientes exclusivamente al cliente autenticado"
+
+    """
+    Obtiene todas las reservas correspondientes al cliente autenticado.
+    No requiere argumentos: el cliente se identifica mediante la sesión.
+    """
     misReservas: [ReservaCliente!]!
-    "Consulta disponibilidad por período y filtros opcionales; solo CLIENTE"
-    disponibilidad(filtro: DisponibilidadFiltro!): [VehiculoDisponible!]!
-    "Historial del cliente autenticado (TERMINADA y CANCELADA)"
+
+    """
+    Consulta los vehículos disponibles para un período determinado.
+
+    Permite aplicar filtros opcionales por tipo de vehículo, marca,
+    modelo y rango de precio diario.
+
+    Requiere que el usuario autenticado tenga rol CLIENTE.
+    """
+    disponibilidad(
+      """Criterios de búsqueda y período de disponibilidad."""
+      filtro: DisponibilidadFiltro!
+    ): [VehiculoDisponible!]!
+
+    """
+    Obtiene el historial de alquileres del cliente autenticado.
+    Incluye únicamente alquileres con estado TERMINADA o CANCELADA.
+    No requiere argumentos porque utiliza el cliente de la sesión.
+    """
     historialAlquileres: [AlquilerHistorico!]!
   }
 `);

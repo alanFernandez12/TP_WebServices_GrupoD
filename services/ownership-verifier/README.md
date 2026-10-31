@@ -228,7 +228,7 @@ la API, no la conectividad con MySQL o RabbitMQ.
 
 ## Prueba desde PowerShell
 
-Con RabbitMQ, MySQL y el registro de prueba de `sql\schema.sql` disponibles,
+Con RabbitMQ, MySQL y los registros de prueba,
 primero inicia el consumer en una terminal:
 
 ```powershell

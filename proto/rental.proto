@@ -69,4 +69,5 @@ message Rental {
   int32 duracion_dias = 7;             // Duración del alquiler expresada en días.
   string precio_diario_historico = 8; // Precio diario registrado al crear el alquiler.
   string importe_total = 9;           // Importe total del alquiler.
+  string desc_mantenimiento = 10;     // Resultado del mantenimiento (vacío si está pendiente).
 }

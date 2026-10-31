@@ -48,6 +48,7 @@ export function DetailModal({ detail, loading, error, onClose }: Props) {
           ['Precio diario', money(detail.registro.precioDiarioHistorico)],
           ['Importe total', money(detail.registro.importeTotal)],
           ['Estado', detail.registro.estadoReserva],
+          ['Mantenimiento', { REALIZADO: 'Realizado', NO_REALIZADO: 'No realizado' }[detail.registro.descMantenimiento ?? ''] ?? 'Pendiente'],
         ]
 
   return (

@@ -19,9 +19,9 @@ const isValidId = (id: number) =>
 
 const isValidDate = (date: unknown): date is string =>
   typeof date === "string" &&
-  /^\d{4}-\d{2}-\d{2}$/.test(date) &&
-  !Number.isNaN(Date.parse(`${date}T00:00:00Z`)) &&
-  new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) === date;
+  /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2})?)?$/.test(date) &&
+  !Number.isNaN(Date.parse(`${date.slice(0, 10)}T00:00:00Z`)) &&
+  new Date(`${date.slice(0, 10)}T00:00:00Z`).toISOString().slice(0, 10) === date.slice(0, 10);
 
 const isValidPrice = (price: unknown) => {
   if (typeof price !== "string" && typeof price !== "number") {

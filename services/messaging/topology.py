@@ -42,6 +42,14 @@ VERIFIER_QUEUE = "rentar.verificador.vehiculos"
 RENTAR_QUEUE = "rentar.vehiculos.verificacion.resultado"
 
 
+# Flujo B (mantenimiento preventivo). Rentar publica la reserva confirmada y
+# el servicio de mantenimiento responde con el resultado.
+RESERVATION_CONFIRMED = "reserva.confirmada"
+MAINTENANCE_RESULT = "mantenimiento.resultado"
+MAINTENANCE_QUEUE = "rentar.mantenimiento.reservas"
+RESERVATION_MAINTENANCE_QUEUE = "rentar.reservas.mantenimiento.resultado"
+
+
 @dataclass(frozen=True)
 class RabbitMqSettings:
     """Configuración de conexión de un componente con RabbitMQ.
@@ -117,22 +125,49 @@ def declare_flow_a_topology(channel: pika.adapters.blocking_connection.BlockingC
     )
 
 
+def declare_flow_b_topology(channel: pika.adapters.blocking_connection.BlockingChannel) -> None:
+    """Declara las colas y los bindings del Flujo B (mantenimiento).
+
+    Ida:    Rentar -> reserva.confirmada -> cola del servicio de mantenimiento.
+    Vuelta: Mantenimiento -> mantenimiento.resultado -> cola de Rentar.
+    """
+    channel.exchange_declare(
+        exchange=EXCHANGE_NAME,
+        exchange_type=EXCHANGE_TYPE,
+        durable=True,
+    )
+    channel.queue_declare(queue=MAINTENANCE_QUEUE, durable=True)
+    channel.queue_bind(
+        queue=MAINTENANCE_QUEUE,
+        exchange=EXCHANGE_NAME,
+        routing_key=RESERVATION_CONFIRMED,
+    )
+    channel.queue_declare(queue=RESERVATION_MAINTENANCE_QUEUE, durable=True)
+    channel.queue_bind(
+        queue=RESERVATION_MAINTENANCE_QUEUE,
+        exchange=EXCHANGE_NAME,
+        routing_key=MAINTENANCE_RESULT,
+    )
+
+
 def declare_topology(settings: RabbitMqSettings | None = None) -> None:
-    """Conecta al broker y deja declarada la topología del Flujo A.
+    """Conecta al broker y deja declarada la topología de los Flujos A y B.
 
     Esta función solo crea la infraestructura de mensajería. La publicación
-    de eventos y el consumo pertenecen a los componentes de Rentar y del
-    verificador.
+    de eventos y el consumo pertenecen a los componentes de Rentar, del
+    verificador y del servicio de mantenimiento.
     """
     connection = pika.BlockingConnection(
         (settings or RabbitMqSettings()).parameters()
     )
     try:
-        declare_flow_a_topology(connection.channel())
+        channel = connection.channel()
+        declare_flow_a_topology(channel)
+        declare_flow_b_topology(channel)
     finally:
         connection.close()
 
 
 if __name__ == "__main__":
     declare_topology()
-    print("Topología RabbitMQ del Flujo A declarada correctamente.")
+    print("Topología RabbitMQ de los Flujos A y B declarada correctamente.")

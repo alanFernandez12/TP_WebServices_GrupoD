@@ -11,6 +11,7 @@ const normalizeRental = (rental: any) => ({
   precioDiarioHistorico: Number(rental.precio_diario_historico),
   importeTotal: Number(rental.importe_total),
   estadoReserva: rental.estado,
+  descMantenimiento: rental.desc_mantenimiento || "",
 });
 
 const normalizeRentalResponse = (response: any) =>

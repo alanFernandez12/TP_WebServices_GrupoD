@@ -4,6 +4,7 @@ import sys
 from concurrent import futures
 from datetime import datetime
 from pathlib import Path
+from threading import Thread
 
 import grpc
 from dotenv import load_dotenv
@@ -15,6 +16,7 @@ import rental_pb2
 import rental_pb2_grpc
 from database import Database
 from errors import InvalidRental, RentalConflict, RentalNotFound, ResourceNotFound
+from maintenance_events import MaintenancePublisher, MaintenanceResultConsumer
 from rental_repository import RentalRepository
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
@@ -49,12 +51,14 @@ def to_proto(row):
         duracion_dias=int(row["num_duracion_dias"]),
         precio_diario_historico=str(row["f_val_precio_diario_historico"]),
         importe_total=str(row["f_val_importe_total"]),
+        desc_mantenimiento=row["desc_mantenimiento"] or "",
     )
 
 
 class RentalService(rental_pb2_grpc.RentalServiceServicer):
-    def __init__(self, repository):
+    def __init__(self, repository, maintenance_publisher):
         self.repository = repository
+        self.maintenance_publisher = maintenance_publisher
 
     @staticmethod
     def _handle_error(error, context):
@@ -100,6 +104,16 @@ class RentalService(rental_pb2_grpc.RentalServiceServicer):
                 end,
                 duration_days,
             )
+
+            # El mantenimiento es informativo: si RabbitMQ falla, la reserva igual se confirma.
+            try:
+                self.maintenance_publisher.publish(
+                    row["id_reserva"], row["id_vehiculo"],
+                    row["hora_inicio"], row["hora_fin"],
+                )
+            except Exception:
+                logger.exception("No se pudo publicar reserva.confirmada")
+
             return rental_pb2.RentalResponse(rental=to_proto(row))
         except Exception as error:
             self._handle_error(error, context)
@@ -147,9 +161,16 @@ def serve():
     database = Database()
     database.check_connection()
 
+    repository = RentalRepository(database)
+    Thread(
+        target=MaintenanceResultConsumer(repository).run,
+        name="maintenance-result-consumer",
+        daemon=True,
+    ).start()
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     rental_pb2_grpc.add_RentalServiceServicer_to_server(
-        RentalService(RentalRepository(database)), server
+        RentalService(repository, MaintenancePublisher()), server
     )
 
     port = os.getenv("RENTAL_GRPC_PORT", "9093")

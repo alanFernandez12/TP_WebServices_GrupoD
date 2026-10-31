@@ -13,7 +13,7 @@ export function ReservationGrid({ reservations, loading, onView, onCancelReserva
       <table>
         <thead><tr>
           <th>Cliente</th><th>Vehículo</th><th>Patente</th><th>Inicio</th><th>Fin</th>
-          <th>Precio diario</th><th>Importe total</th><th>Estado</th><th>Acciones</th>
+          <th>Precio diario</th><th>Importe total</th><th>Estado</th><th>Mantenimiento</th><th>Acciones</th>
         </tr></thead>
         <tbody>{reservations.map((reserva) => (
           <tr key={reserva.id}>
@@ -22,6 +22,7 @@ export function ReservationGrid({ reservations, loading, onView, onCancelReserva
             <td>{formatDate(reserva.horaInicio)}</td><td>{formatDate(reserva.horaFin)}</td>
             <td>{money(reserva.precioDiarioHistorico)}</td><td>{money(reserva.importeTotal)}</td>
             <td><span className={`status status-${reserva.estadoReserva.toLowerCase()}`}>{reserva.estadoReserva}</span></td>
+            <td>{{ REALIZADO: 'Realizado', NO_REALIZADO: 'No realizado' }[reserva.descMantenimiento ?? ''] ?? 'Pendiente'}</td>
             <td><div className="table-actions">
               <button type="button" className="secondary-button" onClick={() => onView(reserva)}>Ver</button>
               {reserva.estadoReserva === 'CONFIRMADA' && new Date(reserva.horaInicio).getTime() > Date.now() && (

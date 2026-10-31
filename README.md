@@ -191,6 +191,19 @@ La implementación y el uso de cada módulo se documentan en los siguientes arch
 - **[Gestión de clientes](documentos/HIBRIDA_CLIENTES.md):** documentación de la implementación y el uso de los servicios relacionados con clientes.
 - **[Gestión de reservas](documentos/HIBRIDA_RESERVAS.md):** documentación de la implementación y el uso de los servicios relacionados con reservas.
 
+## Hito 3: Mensajería con RabbitMQ
+
+En el Hito 3 se evolucionó la arquitectura de **Rentar** mediante la incorporación de un mecanismo de comunicación asíncrona y basada en eventos, utilizando RabbitMQ como intermediario de mensajes.
+
+- **[Flujo A - Verificación de vehículos](documentos\FLUJO_A_IMPLEMENTACION.md):** documentación de la implementación del flujo de verificación de vehículos.
+
+- **[Flujo B - Incorporación de vehículos de clientes](documentos\FLUJO_B_IMPLEMENTACION.md):** documentación de la implementación del flujo de Incorporación de vehículos de clientes.
+
+- **[Documentación GraphQL — Rentar](documentos\GraphQL.md):** documentación de GraphQL.
+
+- **[Dependencias de RabbitMQ](documentos\RABBITMQ_DEPENDENCIES.md):** documentación las dependencias de RabbitMQ.
+
+
 ## Equipo
 
 **Grupo D - C2 - 2026 - UNLa**

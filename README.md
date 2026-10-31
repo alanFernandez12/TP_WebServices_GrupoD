@@ -87,7 +87,7 @@ El sistema utiliza **MySQL** como motor de base de datos.
 - **Java 21** instalado.
 - **MySQL Server** instalado y ejecutándose localmente en el puerto 3306.
 - **Node 22** y **npm** instalado.
-- Base de datos **`rentar`** creada mediante el script `Proyecto/BD/rentarBD.sql`.
+- Base de datos **`rentar`** creada mediante el script `Proyecto/BD/SQLGENERAL.sql`.
 - Configurar las credenciales de MySQL en el proyecto.
 
 ## Ejecución del proyecto
@@ -103,7 +103,7 @@ Una vez cumplidos los requisitos previos:
 2. **Crear la base de datos MySQL** ejecutando el script ubicado en:
 
    ```text
-   Proyecto/BD/rentarBD.sql
+   Proyecto/BD/SQLGENERAL.sql
    ```
 
 3. **Crear los datos de prueba** ejecutando el script:

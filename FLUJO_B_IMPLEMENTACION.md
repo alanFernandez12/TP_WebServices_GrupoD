@@ -277,8 +277,7 @@ su demora configurable mediante `OWNERSHIP_VERIFIER_DELAY_SECONDS`.
 
 ### Base de datos
 
-- `Proyecto/BD/RentarBD.sql`
-- `Proyecto/BD/Hito3_FlujoB.sql`
+- `Proyecto/BD/SQLGENERAL.sql`
 
 ### Contrato y Gateway
 
@@ -303,16 +302,6 @@ su demora configurable mediante `OWNERSHIP_VERIFIER_DELAY_SECONDS`.
 - `services/messaging/README.md`
 - `services/vehicle-verifier/app/external_verifier.py`
 - `services/vehicle-verifier/README.md`
-
-## Migración de una base existente
-
-Ejecutar una sola vez sobre la base `Rentar`:
-
-```powershell
-mysql -u root -p Rentar < .\Proyecto\BD\Hito3_FlujoB.sql
-```
-
-El script agrega `id_cliente`, su índice y la clave foránea.
 
 ## Estado actual del recorrido
 

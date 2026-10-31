@@ -91,13 +91,9 @@ Java. No se debe guardar una contraseña real en el repositorio.
 La base y las tablas deben existir. Los scripts están en:
 
 ```text
-Proyecto/BD/RentarBD.sql
+Proyecto/BD/SQLGENERAL.sql
 Proyecto/BD/DatosPrueba.sql
-Proyecto/BD/Hito3_FlujoA.sql
 ```
-
-En una base existente, ejecutar `Hito3_FlujoA.sql` una sola vez antes de
-iniciar el servicio.
 
 ## Instalación
 

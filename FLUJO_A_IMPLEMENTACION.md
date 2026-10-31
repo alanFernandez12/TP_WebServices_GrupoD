@@ -92,8 +92,6 @@ Ejemplo:
   - Confirma la solicitud solo después de publicar el resultado.
 - `services/vehicle-verifier/app/police_registry.py`
   - Consulta `lk_registro_policial`.
-- `services/vehicle-verifier/sql/schema.sql`
-  - Crea la tabla policial y carga datos de prueba.
 - `services/vehicle-verifier/requirements.txt`
   - Dependencias de MySQL, dotenv y RabbitMQ.
 - `services/vehicle-verifier/.env.example`
@@ -151,16 +149,8 @@ WHERE id_vehiculo = <vehiculoId>
 El esquema actualizado está en:
 
 ```text
-Proyecto/BD/RentarBD.sql
+Proyecto/BD/SQLGENERAL.sql
 ```
-
-No se requiere una migración estructural para el Flujo A. El archivo:
-
-```text
-Proyecto/BD/Hito3_FlujoA.sql
-```
-
-documenta que el flujo utiliza la columna existente `flag_activo`.
 
 ### Método de persistencia
 

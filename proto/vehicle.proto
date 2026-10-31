@@ -11,6 +11,9 @@ service VehicleService {
   // Registra un vehículo de un cliente para incorporación asíncrona.
   rpc CreateExternalVehicle(CreateExternalVehicleRequest) returns (VehicleResponse);
 
+  // Consulta las solicitudes de incorporación de un cliente.
+  rpc GetExternalVehicles(GetExternalVehiclesRequest) returns (ExternalVehicleListResponse);
+
   // Obtiene la lista de todos los vehículos.
   rpc GetVehicles(GetVehiclesRequest) returns (VehicleListResponse);
 
@@ -56,6 +59,10 @@ message CreateExternalVehicleRequest {
   int64 cliente_id = 8;
 }
 
+message GetExternalVehiclesRequest {
+  int64 cliente_id = 1;
+}
+
 // Solicitud para obtener todos los vehículos.
 // No requiere parámetros.
 message GetVehiclesRequest {}
@@ -96,6 +103,25 @@ message VehicleResponse {
 // Respuesta que contiene una lista de vehículos.
 message VehicleListResponse {
   repeated Vehicle vehicles = 1; // Lista de vehículos encontrados.
+}
+
+message ExternalVehicleListResponse {
+  repeated ExternalVehicleStatus vehicles = 1;
+}
+
+message ExternalVehicleStatus {
+  int64 id = 1;
+  string patente = 2;
+  string marca = 3;
+  string modelo = 4;
+  string estado = 5;
+  string validacion_patente = 6;
+  string validacion_titularidad = 7;
+  int32 anio = 8;
+  string tipoVehiculo = 9;
+  string color = 10;
+  string precio_diario = 11;
+  bool activo = 12;
 }
 
 // Representación de un vehículo en el sistema.

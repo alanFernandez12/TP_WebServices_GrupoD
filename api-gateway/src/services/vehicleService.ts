@@ -106,6 +106,21 @@ export const createExternalVehicle = (vehicle: {
   });
 };
 
+export const getExternalVehicles = (clientId: number): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    vehicleClient.GetExternalVehicles(
+      { cliente_id: String(clientId) },
+      (error: any, response: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(response);
+      }
+    );
+  });
+};
+
 // Modifica los datos permitidos de un vehículo.
 export const updateVehicle = (vehicle: {
   id: number;

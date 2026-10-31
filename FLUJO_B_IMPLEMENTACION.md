@@ -26,6 +26,9 @@ consumidores.
 | Alta administrativa | Administrador | `POST /api/vehiculos` | `DISPONIBLE` | Flujo A |
 | Alta externa | Cliente autenticado | `POST /api/vehiculos-externos` | `PENDIENTE` | Flujo B |
 
+El cliente puede consultar sus solicitudes mediante `GET /api/vehiculos-externos/mis-solicitudes`.
+La identidad se obtiene de la sesión autenticada; no se acepta un `clienteId` enviado por el frontend.
+
 El endpoint administrativo no fue reemplazado ni modificado para disparar el
 Flujo B.
 

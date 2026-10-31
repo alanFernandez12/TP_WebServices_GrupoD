@@ -135,6 +135,36 @@ class VehicleRepository:
             cursor.close()
         return self.find_by_id(vehicle_id)
 
+    def find_external_by_client(self, client_id: int) -> list[dict]:
+        """Devuelve solicitudes externas y sus resultados de validación."""
+        query = """
+            SELECT v.id_vehiculo, v.cod_patente, v.desc_marca,
+                   v.desc_modelo, v.desc_estado_vehiculo,
+                   c.resultado_patente, c.resultado_titularidad
+            FROM lk_vehiculos v
+            LEFT JOIN incorporacion_correlacion c
+              ON c.vehiculo_externo_id = v.id_vehiculo
+            WHERE v.id_cliente = %s
+            ORDER BY v.id_vehiculo DESC
+        """
+        with self.database.connection() as connection:
+            cursor = connection.cursor()
+            cursor.execute(query, (client_id,))
+            rows = cursor.fetchall()
+            cursor.close()
+        return [
+            {
+                "id": int(row[0]),
+                "patente": row[1],
+                "marca": row[2],
+                "modelo": row[3],
+                "estado": row[4],
+                "validacion_patente": row[5] or "",
+                "validacion_titularidad": row[6] or "",
+            }
+            for row in rows
+        ]
+
     def update(
         self,
         vehicle_id: int,

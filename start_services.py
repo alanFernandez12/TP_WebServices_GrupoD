@@ -81,6 +81,11 @@ def main() -> int:
             verifier_directory,
         ))
         services.append(start_service(
+            "External Vehicle Verifier",
+            [str(python_executable), "app/external_verifier.py"],
+            verifier_directory,
+        ))
+        services.append(start_service(
             "Vehicle Correlator",
             [str(python_executable), "app/correlator.py"],
             correlator_directory,
@@ -115,6 +120,7 @@ def main() -> int:
     print("- API Gateway:    http://localhost:8085")
     print("- Vehicle gRPC:   localhost:9091")
     print("- Vehicle Verifier: RabbitMQ")
+    print("- External Vehicle Verifier: RabbitMQ")
     print("- Vehicle Correlator: RabbitMQ + MySQL")
     print("- Customer gRPC:  localhost:9092")
     print("- Rental gRPC:    localhost:9093")

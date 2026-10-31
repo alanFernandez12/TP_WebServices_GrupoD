@@ -313,6 +313,11 @@ export interface SolicitudVehiculoExterno {
   estado: 'PENDIENTE' | 'RECHAZADO' | 'DISPONIBLE'
   validacionPatente?: 'PENDIENTE' | 'VALIDADO' | 'RECHAZADO' | null
   validacionTitularidad?: 'PENDIENTE' | 'VALIDADO' | 'RECHAZADO' | null
+  anio: number
+  tipoVehiculo: string
+  color: string
+  precio_diario: string
+  activo: boolean
 }
 
 export interface IncorporacionVehiculoInput {
@@ -326,13 +331,11 @@ export interface IncorporacionVehiculoInput {
 }
 
 export function solicitarIncorporacionVehiculo(datos: IncorporacionVehiculoInput) {
-  return request<SolicitudVehiculoExterno>('/gateway/vehiculos/externos', {
+  return request<SolicitudVehiculoExterno>('/gateway/vehiculos-externos', {
     method: 'POST', headers: jsonHeaders, body: JSON.stringify(datos),
   })
 }
 
 export function consultarMisSolicitudesVehiculosExternos() {
-  return request<SolicitudVehiculoExterno[]>('/gateway/vehiculos/externos/mis-solicitudes')
+  return request<SolicitudVehiculoExterno[]>('/gateway/vehiculos-externos/mis-solicitudes')
 }
-
-

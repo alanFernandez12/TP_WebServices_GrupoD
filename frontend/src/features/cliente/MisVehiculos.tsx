@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { consultarMisSolicitudesVehiculosExternos, type SolicitudVehiculoExterno } from '../../services/api'
+import type { Vehiculo } from '../../types/domain'
 
 import { RegistrationModal } from '../dashboard/components/RegistrationModal'
+import { DetailModal, type DetailRegistro } from '../dashboard/components/DetailModal'
 
 export function MisVehiculos() {
   const [solicitudes, setSolicitudes] = useState<SolicitudVehiculoExterno[]>([])
@@ -9,6 +11,7 @@ export function MisVehiculos() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [detalle, setDetalle] = useState<DetailRegistro | null>(null)
 
   const cargar = useCallback(async () => {
     setLoading(true); setError('')
@@ -35,8 +38,29 @@ export function MisVehiculos() {
       <div className="section-heading"><h2>Solicitudes de incorporación</h2><button type="button" className="secondary-button" disabled={loading} onClick={() => void cargar()}>Actualizar estados</button></div>
       {loading ? <p role="status">Cargando solicitudes...</p> : solicitudes.length === 0 ?
         <div className="empty-state"><strong>Sin solicitudes para mostrar</strong><span>Podés solicitar la incorporación de tu primer vehículo.</span></div> :
-        <div className="table-wrap"><table><thead><tr><th>Patente</th><th>Vehículo</th><th>Verificación de patente</th><th>Titularidad</th><th>Incorporación</th></tr></thead><tbody>
-          {solicitudes.map(s => <tr key={s.id}><td className="strong">{s.patente}</td><td>{s.marca} {s.modelo}</td><td>{s.validacionPatente ?? 'PENDIENTE'}</td><td>{s.validacionTitularidad ?? 'PENDIENTE'}</td><td><span className={`status ${s.estado === 'PENDIENTE' ? 'status-pendiente' : s.estado === 'DISPONIBLE' ? 'status-confirmada' : 'status-cancelada'}`}>{s.estado}</span></td></tr>)}
+        <div className="table-wrap"><table><thead><tr><th>Vehículo</th><th>Patente</th><th>Tipo</th><th>Año</th><th>Color</th><th>Precio diario</th><th>Estado</th><th>¿Activo?</th><th>Acciones</th></tr></thead><tbody>
+          {solicitudes.map(s => <tr key={s.id}>
+            <td><strong className="strong">{s.marca} {s.modelo}</strong></td>
+            <td>{s.patente}</td><td>{s.tipoVehiculo}</td><td>{s.anio}</td>
+            <td>{s.color || '—'}</td>
+            <td className="strong">${Number(s.precio_diario).toLocaleString('es-AR')}</td>
+            <td>{s.estado}</td>
+            <td><span className={`status ${s.activo ? 'status-confirmada' : 'status-cancelada'}`}>{s.activo ? 'ACTIVO' : 'INACTIVO'}</span></td>
+            <td><div className="table-actions">
+              <button type="button" className="secondary-button" onClick={() => {
+                const vehiculo: Vehiculo = {
+                  id: s.id, patente: s.patente, marca: s.marca, modelo: s.modelo,
+                  anio: s.anio, tipoVehiculo: s.tipoVehiculo, estado: s.estado,
+                  color: s.color, precio_diario: Number(s.precio_diario), activo: s.activo,
+                }
+                setDetalle({ type: 'vehiculo', registro: vehiculo })
+              }}>Ver</button>
+              <button type="button" className="secondary-button" disabled>Editar</button>
+              {s.activo
+                ? <button type="button" className="secondary-button danger-button" disabled>Dar de baja</button>
+                : <button type="button" className="secondary-button" disabled>Reactivar</button>}
+            </div></td>
+          </tr>)}
         </tbody></table></div>}
       <p className="subtitle" style={{ fontSize: 13 }}>Una solicitud pendiente no habilita el vehículo para alquiler. Solo se incorpora cuando ambas validaciones son satisfactorias.</p>
     </section>
@@ -48,6 +72,6 @@ export function MisVehiculos() {
         onSaved={guardadoCorrecto}
       />
     )}
+    {detalle && <DetailModal detail={detalle} loading={false} error="" onClose={() => setDetalle(null)} />}
   </>
 }
-

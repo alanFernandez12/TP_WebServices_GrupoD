@@ -85,3 +85,24 @@ export const createExternalVehicle = async (
     next(error);
   }
 };
+
+export const getExternalVehicles = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const clienteId = Number(res.locals.sesion?.clienteId);
+    if (!Number.isSafeInteger(clienteId) || clienteId <= 0) {
+      res.status(403).json({
+        status: 403,
+        message: "La cuenta no tiene un cliente asociado.",
+      });
+      return;
+    }
+    const response = await vehicleService.getExternalVehicles(clienteId);
+    res.status(200).json(response.vehicles);
+  } catch (error) {
+    next(error);
+  }
+};

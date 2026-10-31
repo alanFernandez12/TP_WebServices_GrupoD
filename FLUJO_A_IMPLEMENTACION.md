@@ -117,6 +117,10 @@ Datos de prueba incluidos:
 | `AA123BB` | `VALIDADO` |
 | `ROBO123` | `ROBADO` |
 
+El verificador simula una demora de consulta externa antes de consultar el
+registro. Se configura con `VEHICLE_VERIFIER_DELAY_SECONDS`, utiliza 30
+segundos por defecto y puede establecerse en `0` para pruebas.
+
 ### Consumidor final en Rentar
 
 - `services/vehicle-service/app/vehicle_verification_result_consumer.py`
@@ -132,12 +136,16 @@ separado del servidor gRPC.
 
 ## Cambios en la base de datos
 
-### Nueva columna
+### Persistencia del resultado
 
-Se agregó `desc_verificacion` a `Rentar.lk_vehiculos`:
+El Flujo A no agrega una columna para guardar el texto del resultado. El
+resultado `ROBADO` se refleja directamente desactivando el vehículo:
 
 ```sql
-desc_verificacion VARCHAR(20) NULL DEFAULT 'PENDIENTE'
+UPDATE lk_vehiculos
+SET flag_activo = 0
+WHERE id_vehiculo = <vehiculoId>
+  AND cod_patente = <patente>;
 ```
 
 El esquema actualizado está en:
@@ -146,25 +154,13 @@ El esquema actualizado está en:
 Proyecto/BD/RentarBD.sql
 ```
 
-Para una base ya creada, los registros existentes no agregan la columna por sí
-solos. La columna debe existir antes de iniciar el consumidor. Se puede aplicar
-la migración:
-
-```sql
-USE Rentar;
-
-ALTER TABLE lk_vehiculos
-ADD COLUMN desc_verificacion VARCHAR(20) NULL DEFAULT 'PENDIENTE';
-```
-
-La misma sentencia está en:
+No se requiere una migración estructural para el Flujo A. El archivo:
 
 ```text
 Proyecto/BD/Hito3_FlujoA.sql
 ```
 
-Este script modifica la estructura, pero no elimina ni recrea los vehículos
-existentes.
+documenta que el flujo utiliza la columna existente `flag_activo`.
 
 ### Método de persistencia
 
@@ -174,20 +170,9 @@ En `services/vehicle-service/app/vehicle_repository.py` se agregó
 La operación:
 
 1. Verifica que coincidan `id_vehiculo` y `cod_patente`.
-2. Guarda `VALIDADO` o `ROBADO` en `desc_verificacion`.
-3. Establece `flag_activo = 0` únicamente para `ROBADO`.
-4. Conserva el valor actual de `flag_activo` para `VALIDADO`.
-5. Es idempotente para mensajes repetidos.
-
-Para un resultado `ROBADO`, el efecto es equivalente a:
-
-```sql
-UPDATE lk_vehiculos
-SET desc_verificacion = 'ROBADO',
-    flag_activo = 0
-WHERE id_vehiculo = <vehiculoId>
-  AND cod_patente = <patente>;
-```
+2. Establece `flag_activo = 0` únicamente para `ROBADO`.
+3. No modifica la base para `VALIDADO`.
+4. Es idempotente para mensajes repetidos.
 
 La base policial solo se consulta; nunca se modifica.
 
@@ -264,7 +249,7 @@ Antes de iniciar la aplicación deben estar disponibles:
 
 - RabbitMQ en Docker Desktop, con los puertos `5672` y `15672`.
 - MySQL con las bases `Rentar` y `rentar_policial`.
-- La columna `desc_verificacion` en `Rentar.lk_vehiculos`.
+- La columna `flag_activo` en `Rentar.lk_vehiculos`.
 
 Los scripts:
 
@@ -299,7 +284,7 @@ El lanzador inicia el verificador con un comando equivalente a:
 
 1. Iniciar RabbitMQ desde Docker Desktop.
 2. Confirmar que MySQL está ejecutándose.
-3. Verificar que existe `desc_verificacion`.
+3. Verificar que `lk_vehiculos` utiliza `flag_activo`.
 4. Confirmar que `ROBO123` está marcada como robada:
 
    ```sql
@@ -322,7 +307,6 @@ El lanzador inicia el verificador con un comando equivalente a:
    ```sql
    SELECT id_vehiculo,
           cod_patente,
-          desc_verificacion,
           flag_activo
    FROM Rentar.lk_vehiculos
    WHERE cod_patente = 'ROBO123'
@@ -332,17 +316,11 @@ El lanzador inicia el verificador con un comando equivalente a:
 Resultado esperado:
 
 ```text
-desc_verificacion = ROBADO
-flag_activo       = 0
+flag_activo = 0
 ```
 
-Para una patente como `AA123BB`, el resultado esperado es:
-
-```text
-desc_verificacion = VALIDADO
-```
-
-y `flag_activo` conserva el valor que tenía antes de la verificación.
+Para una patente como `AA123BB`, el resultado `VALIDADO` no modifica
+`flag_activo`, que conserva el valor que tenía antes de la verificación.
 
 ## Estado de las colas
 

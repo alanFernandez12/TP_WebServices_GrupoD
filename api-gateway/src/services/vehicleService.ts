@@ -82,6 +82,46 @@ export const createVehicle = (vehicle: {
   });
 };
 
+export const createExternalVehicle = (vehicle: {
+  patente: string;
+  marca: string;
+  modelo: string;
+  anio: number;
+  tipoVehiculo: string;
+  color: string;
+  precio_diario: string;
+  cliente_id: number;
+  documento: string;
+}): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    vehicleClient.CreateExternalVehicle(
+      { ...vehicle, cliente_id: String(vehicle.cliente_id) },
+      (error: any, response: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(response);
+      }
+    );
+  });
+};
+
+export const getExternalVehicles = (clientId: number): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    vehicleClient.GetExternalVehicles(
+      { cliente_id: String(clientId) },
+      (error: any, response: any) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(response);
+      }
+    );
+  });
+};
+
 // Modifica los datos permitidos de un vehículo.
 export const updateVehicle = (vehicle: {
   id: number;

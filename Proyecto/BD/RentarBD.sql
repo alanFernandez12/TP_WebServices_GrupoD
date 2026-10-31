@@ -86,10 +86,43 @@ CREATE TABLE IF NOT EXISTS `Rentar`.`lk_vehiculos` (
   `desc_tipo_vehiculo` VARCHAR(50) NOT NULL,
   `f_val_precio_diario` DECIMAL(12,2) NOT NULL,
   `desc_estado_vehiculo` VARCHAR(50) NOT NULL DEFAULT 'DISPONIBLE',
-  `desc_verificacion` VARCHAR(20) NULL DEFAULT 'PENDIENTE',
   `flag_activo` TINYINT(1) NOT NULL DEFAULT '1',
+  `id_cliente` BIGINT NULL,
   PRIMARY KEY (`id_vehiculo`),
-  UNIQUE INDEX `cod_patente` (`cod_patente` ASC) VISIBLE)
+  UNIQUE INDEX `cod_patente` (`cod_patente` ASC) VISIBLE,
+  INDEX `idx_vehiculos_cliente` (`id_cliente` ASC) VISIBLE,
+  CONSTRAINT `fk_vehiculo_cliente`
+    FOREIGN KEY (`id_cliente`)
+    REFERENCES `Rentar`.`lk_clientes` (`id_cliente`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+-- -----------------------------------------------------
+-- Table `Rentar`.`ft_incorporacion_correlacion`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `Rentar`.`ft_incorporacion_correlacion` (
+  `id_correlacion` BIGINT NOT NULL AUTO_INCREMENT,
+  `vehiculo_externo_id` BIGINT NOT NULL,
+  `cliente_id` BIGINT NULL,
+  `patente` VARCHAR(20) NULL,
+  `resultado_patente` VARCHAR(20) NULL,
+  `resultado_titularidad` VARCHAR(20) NULL,
+  `resultado_final` VARCHAR(20) NULL,
+  `evento_completada_publicado` TINYINT(1) NOT NULL DEFAULT '0',
+  `fecha_creacion` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `fecha_actualizacion` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+  `fecha_finalizacion` DATETIME NULL,
+  PRIMARY KEY (`id_correlacion`),
+  UNIQUE INDEX `uk_correlacion_vehiculo` (`vehiculo_externo_id` ASC) VISIBLE,
+  INDEX `idx_correlacion_cliente` (`cliente_id` ASC) VISIBLE,
+  CONSTRAINT `fk_correlacion_vehiculo`
+    FOREIGN KEY (`vehiculo_externo_id`)
+    REFERENCES `Rentar`.`lk_vehiculos` (`id_vehiculo`),
+  CONSTRAINT `fk_correlacion_cliente`
+    FOREIGN KEY (`cliente_id`)
+    REFERENCES `Rentar`.`lk_clientes` (`id_cliente`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;

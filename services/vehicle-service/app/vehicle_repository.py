@@ -23,6 +23,7 @@ class VehicleRepository:
             "color": row[7] or "",
             "precio_diario": str(row[8]),
             "activo": bool(row[9]),
+            "cliente_id": int(row[10]) if row[10] is not None else 0,
         }
 
     def find_all(self) -> list[dict]:
@@ -30,7 +31,7 @@ class VehicleRepository:
         query = """
             SELECT id_vehiculo, cod_patente, desc_marca, desc_modelo,
                    desc_estado_vehiculo, num_anio, desc_tipo_vehiculo,
-                   desc_color, f_val_precio_diario, flag_activo
+                   desc_color, f_val_precio_diario, flag_activo, id_cliente
             FROM lk_vehiculos
             WHERE flag_activo = 1
             ORDER BY id_vehiculo
@@ -47,7 +48,7 @@ class VehicleRepository:
         query = """
             SELECT id_vehiculo, cod_patente, desc_marca, desc_modelo,
                    desc_estado_vehiculo, num_anio, desc_tipo_vehiculo,
-                   desc_color, f_val_precio_diario, flag_activo
+                   desc_color, f_val_precio_diario, flag_activo, id_cliente
             FROM lk_vehiculos
             WHERE id_vehiculo = %s
         """
@@ -94,6 +95,84 @@ class VehicleRepository:
             vehicle_id = cursor.lastrowid
             cursor.close()
         return self.find_by_id(vehicle_id)
+
+    def create_external(
+        self,
+        patente: str,
+        marca: str,
+        modelo: str,
+        anio: int,
+        tipo_vehiculo: str,
+        color: str,
+        precio_diario: str,
+        client_id: int,
+    ) -> dict:
+        """Inserta una incorporación externa pendiente y asociada al cliente."""
+        query = """
+            INSERT INTO lk_vehiculos (
+                cod_patente, desc_marca, desc_modelo, num_anio,
+                desc_color, desc_tipo_vehiculo, f_val_precio_diario,
+                desc_estado_vehiculo, flag_activo, id_cliente
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, 'PENDIENTE', 1, %s)
+        """
+        with self.database.connection() as connection:
+            cursor = connection.cursor()
+            cursor.execute(
+                query,
+                (
+                    patente,
+                    marca,
+                    modelo,
+                    anio,
+                    color,
+                    tipo_vehiculo,
+                    precio_diario,
+                    client_id,
+                ),
+            )
+            connection.commit()
+            vehicle_id = cursor.lastrowid
+            cursor.close()
+        return self.find_by_id(vehicle_id)
+
+    def find_external_by_client(self, client_id: int) -> list[dict]:
+        """Devuelve solicitudes externas y sus resultados de validación."""
+        query = """
+            SELECT v.id_vehiculo, v.cod_patente, v.desc_marca,
+                   v.desc_modelo, v.desc_tipo_vehiculo, v.num_anio,
+                   v.desc_color, v.f_val_precio_diario,
+                   v.desc_estado_vehiculo, v.flag_activo,
+                   c.resultado_patente, c.resultado_titularidad,
+                   c.resultado_final
+            FROM lk_vehiculos v
+            LEFT JOIN ft_incorporacion_correlacion c
+              ON c.vehiculo_externo_id = v.id_vehiculo
+            WHERE v.id_cliente = %s
+            ORDER BY v.id_vehiculo DESC
+        """
+        with self.database.connection() as connection:
+            cursor = connection.cursor()
+            cursor.execute(query, (client_id,))
+            rows = cursor.fetchall()
+            cursor.close()
+        return [
+            {
+                "id": int(row[0]),
+                "patente": row[1],
+                "marca": row[2],
+                "modelo": row[3],
+                "tipoVehiculo": row[4],
+                "anio": int(row[5]),
+                "color": row[6] or "",
+                "precio_diario": str(row[7]) if row[7] is not None else "0",
+                "estado": row[8],
+                "activo": bool(row[9]),
+                "validacion_patente": row[10] or "",
+                "validacion_titularidad": row[11] or "",
+                "resultado_final": row[12] or "PENDIENTE",
+            }
+            for row in rows
+        ]
 
     def update(
         self,
@@ -188,7 +267,7 @@ class VehicleRepository:
             SELECT v.id_vehiculo, v.cod_patente, v.desc_marca,
                    v.desc_modelo, v.desc_estado_vehiculo, v.num_anio,
                    v.desc_tipo_vehiculo, v.desc_color, v.f_val_precio_diario,
-                   v.flag_activo
+                   v.flag_activo, v.id_cliente
             FROM lk_vehiculos v
             WHERE v.flag_activo = 1
               AND v.desc_estado_vehiculo = 'DISPONIBLE'
@@ -230,22 +309,12 @@ class VehicleRepository:
         patente: str,
         verification: str,
     ) -> bool:
-        """Guarda el resultado y desactiva el vehículo si fue denunciado.
+        """Aplica el resultado y desactiva el vehículo si fue denunciado.
 
         La patente se incluye en el filtro para evitar aplicar por error un
         resultado a otro vehículo si un mensaje llega con datos inconsistentes.
-        La operación es idempotente: repetir el mismo resultado no cambia el
-        efecto final.
-        """
-        query = """
-            UPDATE lk_vehiculos
-            SET desc_verificacion = %s,
-                flag_activo = CASE
-                    WHEN %s = 'ROBADO' THEN 0
-                    ELSE flag_activo
-                END
-            WHERE id_vehiculo = %s
-              AND cod_patente = %s
+        Los resultados `VALIDADO` no modifican la base. La operación es
+        idempotente para resultados `ROBADO` repetidos.
         """
         with self.database.connection() as connection:
             cursor = connection.cursor()
@@ -265,10 +334,16 @@ class VehicleRepository:
                 connection.rollback()
                 return False
 
-            cursor.execute(
-                query,
-                (verification, verification, vehicle_id, patente),
-            )
-            connection.commit()
+            if verification == "ROBADO":
+                cursor.execute(
+                    """
+                    UPDATE lk_vehiculos
+                    SET flag_activo = 0
+                    WHERE id_vehiculo = %s
+                      AND cod_patente = %s
+                    """,
+                    (vehicle_id, patente),
+                )
+                connection.commit()
             cursor.close()
         return True

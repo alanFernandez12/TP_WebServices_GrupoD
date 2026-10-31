@@ -8,6 +8,12 @@ service VehicleService {
   // Registra un nuevo vehículo.
   rpc CreateVehicle(CreateVehicleRequest) returns (VehicleResponse);
 
+  // Registra un vehículo de un cliente para incorporación asíncrona.
+  rpc CreateExternalVehicle(CreateExternalVehicleRequest) returns (VehicleResponse);
+
+  // Consulta las solicitudes de incorporación de un cliente.
+  rpc GetExternalVehicles(GetExternalVehiclesRequest) returns (ExternalVehicleListResponse);
+
   // Obtiene la lista de todos los vehículos.
   rpc GetVehicles(GetVehiclesRequest) returns (VehicleListResponse);
 
@@ -39,6 +45,23 @@ message CreateVehicleRequest {
   string tipoVehiculo = 5;  // Tipo o categoría del vehículo.
   string color = 6;         // Color del vehículo.
   string precio_diario = 7; // Precio diario del alquiler.
+}
+
+// Datos necesarios para registrar un vehículo perteneciente a un cliente.
+message CreateExternalVehicleRequest {
+  string patente = 1;
+  string marca = 2;
+  string modelo = 3;
+  int32 anio = 4;
+  string tipoVehiculo = 5;
+  string color = 6;
+  string precio_diario = 7;
+  int64 cliente_id = 8;
+  string documento = 9;
+}
+
+message GetExternalVehiclesRequest {
+  int64 cliente_id = 1;
 }
 
 // Solicitud para obtener todos los vehículos.
@@ -83,6 +106,26 @@ message VehicleListResponse {
   repeated Vehicle vehicles = 1; // Lista de vehículos encontrados.
 }
 
+message ExternalVehicleListResponse {
+  repeated ExternalVehicleStatus vehicles = 1;
+}
+
+message ExternalVehicleStatus {
+  int64 id = 1;
+  string patente = 2;
+  string marca = 3;
+  string modelo = 4;
+  string estado = 5;
+  string validacion_patente = 6;
+  string validacion_titularidad = 7;
+  int32 anio = 8;
+  string tipoVehiculo = 9;
+  string color = 10;
+  string precio_diario = 11;
+  bool activo = 12;
+  string resultado_final = 13;
+}
+
 // Representación de un vehículo en el sistema.
 message Vehicle {
   int64 id = 1;             // Identificador único del vehículo.
@@ -95,4 +138,5 @@ message Vehicle {
   string color = 8;         // Color del vehículo.
   string precio_diario = 9; // Precio diario del alquiler.
   bool activo = 10;         // Indica si el vehículo sigue activo en el sistema.
+  int64 cliente_id = 11;    // Cliente propietario; 0 para altas administrativas.
 }

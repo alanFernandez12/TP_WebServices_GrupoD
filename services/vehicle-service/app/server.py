@@ -16,6 +16,7 @@ import vehicle_pb2
 import vehicle_pb2_grpc
 from database import Database
 from vehicle_repository import VehicleRepository
+from external_vehicle_publisher import ExternalVehiclePublisher
 from vehicle_verification_publisher import VehicleVerificationPublisher
 from vehicle_verification_result_consumer import VehicleVerificationResultConsumer
 
@@ -91,6 +92,74 @@ class VehicleService(vehicle_pb2_grpc.VehicleServiceServicer):
                 context,
                 grpc.StatusCode.INTERNAL,
                 "No se pudo crear el vehículo",
+            )
+
+    def CreateExternalVehicle(self, request, context):
+        """Crea un vehículo pendiente y publica el inicio del Flujo B."""
+        if request.cliente_id <= 0:
+            return self._abort(
+                context,
+                grpc.StatusCode.INVALID_ARGUMENT,
+                "El identificador del cliente no es válido",
+            )
+        validation_error = self._validate_vehicle_data(request)
+        if validation_error:
+            return self._abort(context, grpc.StatusCode.INVALID_ARGUMENT, validation_error)
+
+        try:
+            vehicle = self.repository.create_external(
+                request.patente.strip(),
+                request.marca.strip(),
+                request.modelo.strip(),
+                request.anio,
+                request.tipoVehiculo.strip(),
+                request.color.strip(),
+                request.precio_diario.strip(),
+                request.cliente_id,
+            )
+            ExternalVehiclePublisher().publish(
+                vehicle["id"],
+                request.cliente_id,
+                vehicle["patente"],
+                request.documento,
+            )
+            return self._vehicle_response(vehicle)
+        except IntegrityError:
+            return self._abort(
+                context,
+                grpc.StatusCode.ALREADY_EXISTS,
+                "Ya existe un vehículo con esa patente",
+            )
+        except Exception as error:
+            print(f"CreateExternalVehicle error: {error}", flush=True)
+            return self._abort(
+                context,
+                grpc.StatusCode.INTERNAL,
+                "No se pudo registrar el vehículo externo",
+            )
+
+    def GetExternalVehicles(self, request, context):
+        """Consulta las solicitudes externas pertenecientes a un cliente."""
+        if request.cliente_id <= 0:
+            return self._abort_external_list(
+                context,
+                grpc.StatusCode.INVALID_ARGUMENT,
+                "El identificador del cliente no es válido",
+            )
+        try:
+            vehicles = self.repository.find_external_by_client(request.cliente_id)
+            return vehicle_pb2.ExternalVehicleListResponse(
+                vehicles=[
+                    vehicle_pb2.ExternalVehicleStatus(**vehicle)
+                    for vehicle in vehicles
+                ]
+            )
+        except Exception as error:
+            print(f"GetExternalVehicles error: {error}", flush=True)
+            return self._abort_external_list(
+                context,
+                grpc.StatusCode.INTERNAL,
+                "No se pudieron consultar las solicitudes externas",
             )
 
     def UpdateVehicle(self, request, context):
@@ -276,6 +345,12 @@ class VehicleService(vehicle_pb2_grpc.VehicleServiceServicer):
         context.set_code(code)
         context.set_details(message)
         return vehicle_pb2.VehicleResponse()
+
+    @staticmethod
+    def _abort_external_list(context, code, message):
+        context.set_code(code)
+        context.set_details(message)
+        return vehicle_pb2.ExternalVehicleListResponse()
 
     @staticmethod
     def _validate_vehicle_data(request, include_patente=True):

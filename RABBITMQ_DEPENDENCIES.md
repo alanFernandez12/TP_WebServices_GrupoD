@@ -222,20 +222,20 @@ docker start rentar-rabbitmq
     }
     ```
 
-    El `vehicle-service` consume automáticamente esa cola y actualiza
-    `lk_vehiculos.desc_verificacion`. Para `ROBADO`, también establece
-    `flag_activo = 0`.
+    El `vehicle-service` consume automáticamente esa cola. Para `ROBADO`,
+    establece `lk_vehiculos.flag_activo = 0`; para `VALIDADO`, no modifica la
+    base principal.
 
 14. **Verificar la actualización en MySQL.** Ejecutar:
 
     ```sql
-    SELECT id_vehiculo, cod_patente, desc_verificacion, flag_activo
+    SELECT id_vehiculo, cod_patente, flag_activo
     FROM lk_vehiculos
     WHERE cod_patente IN ('AA123BB', 'ROBO123');
     ```
 
-    `AA123BB` debe quedar como `VALIDADO` y conservar su activación.
-    `ROBO123` debe quedar como `ROBADO` y `flag_activo = 0`.
+    `AA123BB` debe conservar `flag_activo = 1`.
+    `ROBO123` debe quedar con `flag_activo = 0`.
 
 15. **Probar errores básicos.** Repetir el alta con la misma patente y
    verificar una respuesta `ALREADY_EXISTS` traducida por el Gateway. Probar

@@ -4,6 +4,7 @@ import * as customerService from "../services/customerService";
 // Roles permitidos por ruta (mismas reglas que tenía Spring Security)
 const permisos: Record<string, string[]> = {
   "/api/clientes": ["ADMIN"],
+  "/api/vehiculos-externos": ["CLIENTE"],
   "/api/vehiculos": ["ADMIN"],
   "/api/reservas": ["ADMIN", "CLIENTE"],
 };
@@ -31,7 +32,9 @@ export const auth = async (
       return res.status(401).json({ status: 401, message: "Correo o contraseña incorrectos" });
     }
 
-    const ruta = Object.keys(permisos).find((r) => req.path.startsWith(r));
+    const ruta = Object.keys(permisos).find(
+      (r) => req.path === r || req.path.startsWith(`${r}/`)
+    );
 
     if (ruta && !permisos[ruta].includes(response.rol)) {
       return res.status(403).json({ status: 403, message: "No tiene permisos" });

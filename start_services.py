@@ -32,6 +32,10 @@ def main() -> int:
     mvnw = ROOT / "mvnw.cmd"
     rental_directory = ROOT / "services" / "rental-service"
     verifier_directory = ROOT / "services" / "vehicle-verifier"
+    correlator_directory = ROOT / "services" / "vehicle-correlator"
+    ownership_directory = ROOT / "services" / "ownership-verifier"
+    maintenance_directory = ROOT / "services" / "maintenance-service"
+    ownership_image = "ownership-verifier:local"
 
     required_paths = {
         "Python del vehicle-service": python_executable,
@@ -41,6 +45,10 @@ def main() -> int:
         "Customer Service": ROOT / "services" / "customer-service",
         "Vehicle Service": ROOT / "services" / "vehicle-service",
         "Vehicle Verifier": verifier_directory,
+        "Vehicle Correlator": correlator_directory,
+        "Ownership Verifier": ownership_directory,
+        "Ownership Verifier Dockerfile": ownership_directory / "Dockerfile",
+        "Maintenance Service": maintenance_directory,
         "Rental Service": rental_directory,
     }
 
@@ -79,6 +87,33 @@ def main() -> int:
             verifier_directory,
         ))
         services.append(start_service(
+            "External Vehicle Verifier",
+            [str(python_executable), "app/external_verifier.py"],
+            verifier_directory,
+        ))
+        services.append(start_service(
+            "Vehicle Correlator",
+            [str(python_executable), "app/correlator.py"],
+            correlator_directory,
+        ))
+        services.append(start_service(
+            "Ownership Verifier",
+            [
+                "docker", "run", "--rm",
+                "--name", "ownership-verifier-consumer",
+                "--no-healthcheck",
+                "--env-file", str(ownership_directory / ".env"),
+                ownership_image,
+                "python", "-m", "app.ownership_consumer",
+            ],
+            ROOT,
+        ))
+        services.append(start_service(
+            "Maintenance Service",
+            [str(python_executable), "app/maintenance.py"],
+            maintenance_directory,
+        ))
+        services.append(start_service(
             "Rental Service gRPC",
             [str(python_executable), "app/server.py"],
             rental_directory,
@@ -108,6 +143,10 @@ def main() -> int:
     print("- API Gateway:    http://localhost:8085")
     print("- Vehicle gRPC:   localhost:9091")
     print("- Vehicle Verifier: RabbitMQ")
+    print("- External Vehicle Verifier: RabbitMQ")
+    print("- Vehicle Correlator: RabbitMQ + MySQL")
+    print("- Ownership Verifier: RabbitMQ + MySQL")
+    print("- Maintenance Service: RabbitMQ")
     print("- Customer gRPC:  localhost:9092")
     print("- Rental gRPC:    localhost:9093")
     print()

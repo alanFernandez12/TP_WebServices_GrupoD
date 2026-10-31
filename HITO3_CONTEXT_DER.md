@@ -28,12 +28,12 @@ mediante un broker de mensajes: **Apache Kafka _o_ RabbitMQ** (elegir uno).
 - `DISPONIBLE`
 - `EN_ALQUILER`
 
-### Estado de incorporación de vehículos externos (solo en la tabla temporal `ft_vehiculo_externo`)
-- `PENDIENTE` (inicio del proceso de incorporación; vive **únicamente** en `ft_vehiculo_externo.desc_estado_incorporacion`, NO en `lk_vehiculos`)
-- `INCORPORADO` (todas las validaciones `VALIDADO`; recién ahí se inserta el vehículo en `lk_vehiculos` con estado `DISPONIBLE`)
-- `RECHAZADO` (alguna validación `RECHAZADO`; el vehículo nunca llega a `lk_vehiculos`)
+### Resultado de incorporación de vehículos externos
+- `PENDIENTE` (alguna validación todavía no terminó o falló; el vehículo queda inactivo)
+- `DISPONIBLE` (las dos validaciones terminaron en `VALIDADO`; el vehículo queda activo)
 
-> Los valores `INCORPORADO` / `RECHAZADO` son una convención sugerida; el enunciado solo exige `PENDIENTE` al inicio. Ver sección 7 (modelo de datos).
+El estado y la activación se persisten directamente en `lk_vehiculos`; no existe
+una tabla temporal `ft_vehiculo_externo`.
 
 ### Resultados de procesos (no son estados del vehículo)
 | Proceso | Resultados posibles |
@@ -42,10 +42,9 @@ mediante un broker de mensajes: **Apache Kafka _o_ RabbitMQ** (elegir uno).
 | Validación de patente / titularidad (vehículo externo) | `VALIDADO`, `RECHAZADO` |
 | Mantenimiento preventivo | `REALIZADO`, `NO_REALIZADO` |
 
-> **Regla clave:** `ROBADO` **no** es un estado operativo nuevo del vehículo. Si el resultado es `ROBADO`, el vehículo
-> queda **inhabilitado para nuevas operaciones**, manteniendo su estado operativo en `DISPONIBLE`/`EN_ALQUILER`.
-> En el modelo de datos, el resultado se guarda en `lk_vehiculos.desc_verificacion` (columna nueva, separada de `desc_estado_vehiculo`)
-> y la inhabilitación se refleja con `flag_activo = false`. Ver sección 7.
+> **Regla clave:** `ROBADO` **no** es un estado operativo nuevo del vehículo. Si
+> el resultado es `ROBADO`, el vehículo queda inhabilitado para nuevas
+> operaciones mediante `flag_activo = false`.
 
 ---
 
@@ -91,14 +90,18 @@ Rentar <--(resultado)--- [Broker] <-- Verificador
 Un **cliente** registra un vehículo propio para incorporarlo a Rentar. El proceso es **asíncrono**.
 
 **[Obligatorio]**
-- El vehículo arranca en estado `PENDIENTE`.
+- El vehículo se registra directamente en `lk_vehiculos` con
+  `desc_estado_vehiculo = PENDIENTE` y `flag_activo = 0`.
 - Validaciones mínimas, **independientes** entre sí (cada una procesada por su propio componente):
   1. **Patente**: que no esté denunciada como robada.
   2. **Titularidad**: que el cliente solicitante sea el titular, usando un **registro externo de titularidad simulado**.
 - Cada validación emite un evento con su resultado: `VALIDADO` | `RECHAZADO`.
-- El sistema debe **correlacionar** los resultados del mismo proceso (por `vehiculoExternoId`).
-- Si **alguna** validación es `RECHAZADO` → el vehículo **no** se incorpora.
-- Si **todas** son `VALIDADO` → se emite un evento de validación completada que permite finalizar la incorporación; el vehículo pasa a `DISPONIBLE` y participa de las operaciones habituales.
+- El sistema debe **correlacionar** los resultados del mismo proceso por
+  `vehiculoExternoId` y conservar ambos resultados hasta completar el proceso.
+- Si **alguna** validación es `RECHAZADO` → el vehículo queda en
+  `desc_estado_vehiculo = PENDIENTE` y `flag_activo = 0`.
+- Si **ambas** son `VALIDADO` → el vehículo pasa a
+  `desc_estado_vehiculo = DISPONIBLE` y `flag_activo = 1`.
 
 **Eventos**
 
@@ -143,12 +146,14 @@ Un **cliente** registra un vehículo propio para incorporarlo a Rentar. El proce
 Rentar --(registrados)--> [Broker] --> Validador de patente      --(validacion.patente)-----+
                                    --> Validador de titularidad  --(validacion.titularidad)-+--> Correlacionador
                                                                                               |
-                                      si ambas VALIDADO --> (validacion.completada) --> Rentar: vehículo DISPONIBLE
-                                      si alguna RECHAZADO --> no se incorpora
+                                      si ambas VALIDADO --> (validacion.completada) --> Rentar: DISPONIBLE + activo
+                                      si alguna RECHAZADO --> Rentar: PENDIENTE + inactivo
 ```
 
-**[Sugerencia]** Persistir el estado de cada proceso de incorporación (p. ej. `patenteResultado`, `titularidadResultado`) para
-poder correlacionar aunque los eventos lleguen en distinto orden o en distintos momentos. El correlacionador debe ser **idempotente**.
+**[Sugerencia]** Persistir el resultado de cada validación en una estructura
+de correlación asociada al `vehiculoExternoId`, sin crear una tabla
+`ft_vehiculo_externo`, para poder procesar eventos en distinto orden. El
+correlacionador debe ser **idempotente**.
 Para la titularidad se necesita el `documento` del cliente (dato que viaja en el evento).
 
 ---
@@ -225,29 +230,26 @@ Relaciones: `lk_tiempo 1—N ft_reservas`, `lk_clientes 1—N ft_reservas`, `lk_
 
 ### 7.2 Cambios y tablas nuevas (Hito 3)
 
-**Columna nueva en `lk_vehiculos`:**
-| Columna | Descripción |
-|---|---|
-| `desc_verificacion` | Resultado de la verificación policial asíncrona (Flujo A). Valores: `VALIDADO` / `ROBADO` (y, **[Sugerencia]**, un valor inicial tipo `PENDIENTE` hasta recibir el resultado). Es independiente de `desc_estado_vehiculo` (`DISPONIBLE` / `EN_ALQUILER`). |
+**Persistencia del Flujo B en `lk_vehiculos`:**
 
-**`ft_vehiculo_externo`** — tabla **temporal/de staging** del Flujo B. El vehículo del cliente permanece acá hasta que termina la validación.
-| Columna | Tipo / Nota |
-|---|---|
-| `id_vehiculo_externo` | PK. Es el `vehiculoExternoId` de los eventos. |
-| `id_cliente` | FK → `lk_clientes` (relación 1—N: un cliente puede registrar varios vehículos externos). |
-| `cod_patente` | Patente declarada por el cliente. |
-| `desc_estado_incorporacion` | `PENDIENTE` al crear; luego `INCORPORADO` o `RECHAZADO`. |
-| `desc_resultado_patente` | Resultado de la validación de patente (`VALIDADO` / `RECHAZADO`); vacío/pendiente hasta recibir el evento. |
-| `desc_resultado_titularidad` | Resultado de la validación de titularidad (`VALIDADO` / `RECHAZADO`); vacío/pendiente hasta recibir el evento. |
-| `id_vehiculo` | FK → `lk_vehiculos`. **NULL hasta que el estado sea `INCORPORADO`.** Relación `lk_vehiculos 1 — 0..1 ft_vehiculo_externo`. |
+El vehículo externo se registra directamente en `lk_vehiculos` con:
 
-Las columnas `desc_resultado_patente` y `desc_resultado_titularidad` son las que permiten **correlacionar** las dos validaciones del mismo `vehiculoExternoId`.
+- `desc_estado_vehiculo = PENDIENTE`
+- `flag_activo = 0`
+
+Los resultados de patente y titularidad se correlacionan por
+`vehiculoExternoId` en el componente consumidor/correlacionador, sin utilizar
+una tabla `ft_vehiculo_externo`.
 
 **Regla de incorporación:**
-1. El cliente registra el vehículo → se inserta en `ft_vehiculo_externo` con `PENDIENTE` y `id_vehiculo = NULL` → se publica `vehiculos.externos.registrados`.
-2. Llegan los dos resultados y se actualizan las columnas `desc_resultado_*`.
-3. Si ambos son `VALIDADO` → se **inserta** el vehículo en `lk_vehiculos` con `desc_estado_vehiculo = DISPONIBLE`, se completa `id_vehiculo` en `ft_vehiculo_externo`, se marca `INCORPORADO` y se publica `vehiculos.externos.validacion.completada`.
-4. Si alguno es `RECHAZADO` → se marca `RECHAZADO`; **no** se inserta nada en `lk_vehiculos`.
+1. El cliente registra el vehículo en `lk_vehiculos` como `PENDIENTE` e
+   inactivo y se publica `vehiculos.externos.registrados`.
+2. Llegan los resultados independientes de patente y titularidad.
+3. Si ambos son `VALIDADO`, se actualiza `lk_vehiculos` a
+   `desc_estado_vehiculo = DISPONIBLE` y `flag_activo = 1`, y se publica
+   `vehiculos.externos.validacion.completada`.
+4. Si alguno es `RECHAZADO`, el vehículo permanece `PENDIENTE` con
+   `flag_activo = 0`.
 
 **`ft_mantenimientos`** — solicitud y resultado del mantenimiento preventivo (Flujo C).
 | Columna | Tipo / Nota |
@@ -288,8 +290,6 @@ Los dos registros simulados **no viven en la base principal de Rentar**: cada un
 
 ### 7.4 Resumen de relaciones nuevas
 ```
-lk_clientes   1 ── N  ft_vehiculo_externo
-lk_vehiculos  1 ── 0..1 ft_vehiculo_externo   (id_vehiculo NULL hasta INCORPORADO)
 ft_reservas   1 ── N  ft_mantenimientos
 lk_vehiculos  1 ── N  ft_mantenimientos
 lk_registro_policial / lk_registro_titularidad: sin FK, se consultan por cod_patente (bases rentar_policial y rentar_titularidad)
@@ -333,10 +333,15 @@ Regla práctica: si el usuario no necesita esperar el resultado para continuar, 
 - [ ] Flujo C: confirmar reserva no se bloquea; mantenimiento procesa async y su resultado queda asociado a la reserva.
 - [ ] Nombres de tópicos y estructuras JSON idénticos al enunciado.
 - [ ] Eventos y estructuras documentados.
-- [ ] Estados del vehículo en `lk_vehiculos` siguen siendo solo `DISPONIBLE` / `EN_ALQUILER`; `PENDIENTE` existe solo en `ft_vehiculo_externo`.
-- [ ] Tablas nuevas creadas según la sección 7: `ft_vehiculo_externo`, `ft_mantenimientos`, columna `lk_vehiculos.desc_verificacion`.
+- [ ] Estados operativos del vehículo en `lk_vehiculos`: `DISPONIBLE` /
+  `EN_ALQUILER`; para el Flujo B, un vehículo pendiente usa
+  `desc_estado_vehiculo = PENDIENTE` y `flag_activo = 0`.
+- [ ] Tablas nuevas creadas según la sección 7: `ft_mantenimientos`; no existe
+  `ft_vehiculo_externo` ni `lk_vehiculos.desc_verificacion`.
 - [ ] Bases `rentar_policial` y `rentar_titularidad` creadas, con datos de prueba, y consultadas solo por los verificadores/validadores.
-- [ ] Vehículo externo validado se inserta en `lk_vehiculos` como `DISPONIBLE` y recién ahí se completa `ft_vehiculo_externo.id_vehiculo`.
+- [ ] Vehículo externo validado actualiza `lk_vehiculos` a `DISPONIBLE` y
+  `flag_activo = 1`; si falla alguna validación permanece `PENDIENTE` e
+  inactivo.
 
 ---
 
@@ -361,6 +366,10 @@ El incumplimiento de **cualquiera** implica desaprobación del TP.
 2. Reutilizar convenciones, lenguaje y frameworks ya usados en el proyecto.
 3. Implementar flujo por flujo (A → B → C), verificando cada uno de punta a punta.
 4. No renombrar tópicos ni campos definidos en este documento.
-5. No introducir `ROBADO` como estado operativo del vehículo (usar `desc_verificacion` + `flag_activo`).
-6. Respetar el modelo de datos de la sección 7: los vehículos externos esperan en `ft_vehiculo_externo` y solo se insertan en `lk_vehiculos` al validarse; los registros simulados están en las bases `rentar_policial` y `rentar_titularidad`.
+5. No introducir `ROBADO` como estado operativo del vehículo; usar
+   `flag_activo = 0` para inhabilitarlo.
+6. Respetar el modelo de datos de la sección 7: los vehículos externos se
+   registran directamente en `lk_vehiculos` y se actualizan cuando finalizan
+   las dos validaciones; los registros simulados están en las bases
+   `rentar_policial` y `rentar_titularidad`.
 7. Ante ambigüedad, preguntar al usuario en lugar de asumir.

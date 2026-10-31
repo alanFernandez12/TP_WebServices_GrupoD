@@ -30,7 +30,6 @@ export function Login({ onLogin, aviso = '' }: { onLogin: (sesion: Sesion) => vo
         </label>
         {(error || aviso) && <p className="form-error" role="alert">{error || aviso}</p>}
         <button className="primary-button" type="submit" disabled={loading}>{loading ? 'Ingresando...' : 'Ingresar'}</button>
-        <a href="#" onClick={e => { e.preventDefault(); setError('Contactá a un administrador') }}>¿Olvidaste tu contraseña?</a>
       </form>
     </div>
   )

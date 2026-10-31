@@ -21,11 +21,6 @@ Resultados posibles:
 
 ## Preparación
 
-Crear la base policial ejecutando `sql\schema.sql` en MySQL. El seed incluye:
-
-- `AA123BB`: `VALIDADO`.
-- `ROBO123`: `ROBADO`.
-
 Copiar `.env.example` como `.env` y completar `POLICE_DB_PASSWORD` si
 corresponde. Instalar dependencias:
 

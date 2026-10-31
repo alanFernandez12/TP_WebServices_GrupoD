@@ -1,24 +1,27 @@
 # Mensajería de Rentar
 
-Este paquete contiene la topología compartida de RabbitMQ. La primera versión
-declara únicamente el Flujo A de verificación de vehículos:
+Este paquete declara el exchange `rentar.events` y las colas durables que usan
+los consumidores. Para la verificación de titularidad de vehículos externos:
 
 ```text
-rentar.events (topic)
-├── vehiculos.verificacion.solicitada
-│   └── rentar.verificador.vehiculos
-└── vehiculos.verificacion.resultado
-    └── rentar.vehiculos.verificacion.resultado
+vehiculos.externos.registrados
+    -> rentar.verificador.titularidad
+ownership-verifier
+    -> vehiculos.externos.validacion.titularidad
 ```
 
-Las colas son durables y cada consumidor tiene su propia cola. La topología no
-publica ni consume mensajes todavía.
+La cola `rentar.verificador.titularidad` recibe la solicitud de alta. El
+validador publica el resultado en el exchange compartido; Rentar es responsable
+de enlazar su cola a `vehiculos.externos.validacion.titularidad`.
+
+El evento de entrada debe incluir `vehiculoExternoId`, `clienteId`, `patente` y
+`documento`. El consumer devuelve los mismos datos con `resultado` igual a
+`VALIDADO` o `RECHAZADO`.
 
 ## Iniciar RabbitMQ
 
-Desde Docker Desktop, iniciar un contenedor con la imagen
-`rabbitmq:3-management`, exponiendo los puertos `5672` y `15672`.
-Como alternativa, desde PowerShell:
+Desde Docker Desktop, iniciar `rabbitmq:3-management` exponiendo los puertos
+`5672` y `15672`. También se puede iniciar desde PowerShell:
 
 ```powershell
 docker run -d --name rentar-rabbitmq `
@@ -30,16 +33,14 @@ docker run -d --name rentar-rabbitmq `
 La consola de administración queda disponible en
 <http://localhost:15672>, con usuario `guest` y contraseña `guest`.
 
-## Declarar el exchange, las colas y los bindings
+## Declarar topología
 
-El paquete utiliza `pika`, que debe instalarse en el entorno Python desde la
-raíz del repositorio:
+Instalar `pika` y declarar las colas desde la raíz del repositorio:
 
 ```powershell
 python -m pip install -r services\messaging\requirements.txt
 python -m services.messaging.topology
 ```
 
-También se pueden cambiar los valores de conexión mediante `RABBITMQ_HOST`,
-`RABBITMQ_PORT`, `RABBITMQ_USERNAME`, `RABBITMQ_PASSWORD` y
-`RABBITMQ_VIRTUAL_HOST`.
+La conexión se configura con `RABBITMQ_HOST`, `RABBITMQ_PORT`,
+`RABBITMQ_USERNAME`, `RABBITMQ_PASSWORD` y `RABBITMQ_VIRTUAL_HOST`.

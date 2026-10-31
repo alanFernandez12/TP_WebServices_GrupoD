@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS Rentar_RegistroAutomotor;
-USE Rentar_RegistroAutomotor;
+CREATE DATABASE IF NOT EXISTS rentar_titularidad;
+USE rentar_titularidad;
 
 CREATE TABLE IF NOT EXISTS lk_registro_titularidad (
     id_registro BIGINT NOT NULL AUTO_INCREMENT,

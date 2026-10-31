@@ -2,7 +2,7 @@ import logging
 import os
 import re
 from pathlib import Path
-
+import time
 import mysql.connector
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -12,6 +12,9 @@ load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Demora simulada de la consulta externa; configurar en segundos.
+DELAY_SECONDS = float(os.getenv("OWNERSHIP_VERIFIER_DELAY_SECONDS", "30"))
 
 app = FastAPI(title="Ownership Verifier")
 
@@ -47,10 +50,11 @@ def consultar_titular(patente: str) -> str | None:
     cursor = None
 
     try:
+        time.sleep(DELAY_SECONDS)
         connection = mysql.connector.connect(
             host=os.getenv("DB_HOST", "localhost"),
             port=int(os.getenv("DB_PORT", "3306")),
-            database=os.getenv("DB_NAME", "Rentar_RegistroAutomotor"),
+            database=os.getenv("DB_NAME", "rentar_titularidad"),
             user=os.getenv("DB_USER", "root"),
             password=os.getenv("DB_PASSWORD", ""),
         )
